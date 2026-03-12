@@ -1,0 +1,38 @@
+[
+  {
+    "id": "CR-1024",
+    "name": "John Miller",
+    "age": 35,
+    "crime": "Burglary",
+    "status": "Wanted",
+    "statusClass": "wanted",
+    "address": "Maple Street",
+    "gang": "Fox Street Gang",
+    "threat": "High",
+    "photo": "https://randomuser.me/api/portraits/men/32.jpg"
+  },
+  {
+    "id": "CR-2156",
+    "name": "Steve Johnson",
+    "age": 42,
+    "crime": "Drug Trafficking",
+    "status": "Arrested",
+    "statusClass": "arrested",
+    "address": "Hill Road",
+    "gang": "North Cartel",
+    "threat": "Medium",
+    "photo": "https://randomuser.me/api/portraits/men/45.jpg"
+  },
+  {
+    "id": "CR-3089",
+    "name": "Lisa Carter",
+    "age": 29,
+    "crime": "Fraud",
+    "status": "Imprisoned",
+    "statusClass": "imprisoned",
+    "address": "Lake Avenue",
+    "gang": "None",
+    "threat": "Low",
+    "photo": "https://randomuser.me/api/portraits/women/44.jpg"
+  }
+]
