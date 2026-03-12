@@ -558,6 +558,140 @@ const CRIMINALS_DATA = [
 
 
 /* ================================================================
+   Gang Data
+   Derived from criminal records + additional intelligence
+   ================================================================ */
+const GANGS_DATA = [
+  {
+    id: "GNG-001",
+    name: "Fox Street Gang",
+    leader: "Eddie 'The Fox' Morales",
+    leaderAlias: "The Fox",
+    foundedYear: 2008,
+    territory: "Downtown Los Angeles, CA",
+    status: "Active",
+    threatLevel: "High",
+    memberCount: 45,
+    primaryCrimes: ["Burglary", "Grand Theft Auto", "Assault"],
+    knownMembers: ["John Miller", "Jake Rogers", "Mike 'The Snake' Smith"],
+    associatedCriminals: ["CR-1024"],
+    description: "Street-level gang specializing in burglary rings and auto theft operations across the Greater LA area.",
+    lastActivity: "2025-11-20",
+    allies: ["South Side Crew"],
+    rivals: ["East Side Wolves", "Dragon Boys"]
+  },
+  {
+    id: "GNG-002",
+    name: "North Cartel",
+    leader: "Carlos 'El Jefe' Rivera",
+    leaderAlias: "El Jefe",
+    foundedYear: 2001,
+    territory: "Miami, FL & Southeast US",
+    status: "Under Investigation",
+    threatLevel: "Critical",
+    memberCount: 120,
+    primaryCrimes: ["Drug Trafficking", "Money Laundering", "Racketeering"],
+    knownMembers: ["Steve Johnson", "Carlos Rivera", "Tommy Wells"],
+    associatedCriminals: ["CR-2156"],
+    description: "Major drug trafficking organization with international supply lines. Under active federal investigation.",
+    lastActivity: "2026-01-15",
+    allies: ["Sombra Cartel"],
+    rivals: []
+  },
+  {
+    id: "GNG-003",
+    name: "East Side Wolves",
+    leader: "Eddie Russo",
+    leaderAlias: "The Alpha",
+    foundedYear: 2012,
+    territory: "Detroit, MI",
+    status: "Active",
+    threatLevel: "Critical",
+    memberCount: 60,
+    primaryCrimes: ["Aggravated Assault", "Intimidation", "Extortion"],
+    knownMembers: ["David Brown", "Marcus 'Tank' Williams", "Eddie Russo"],
+    associatedCriminals: ["CR-4075"],
+    description: "Violent gang known for territory enforcement and underground fight operations. Leader is a fugitive.",
+    lastActivity: "2026-02-28",
+    allies: [],
+    rivals: ["Fox Street Gang", "South Side Crew"]
+  },
+  {
+    id: "GNG-004",
+    name: "Shadow Net Collective",
+    leader: "Alex 'Zero' Petrov",
+    leaderAlias: "Zero",
+    foundedYear: 2019,
+    territory: "Online / Seattle, WA (base)",
+    status: "Active",
+    threatLevel: "High",
+    memberCount: 18,
+    primaryCrimes: ["Cybercrime", "Ransomware", "Data Theft"],
+    knownMembers: ["Sarah Martinez", "Alex 'Zero' Petrov", "Phantom"],
+    associatedCriminals: ["CR-8412"],
+    description: "Decentralized hacking collective responsible for major corporate breaches. Operates primarily through encrypted channels.",
+    lastActivity: "2026-03-01",
+    allies: [],
+    rivals: []
+  },
+  {
+    id: "GNG-005",
+    name: "Sombra Cartel",
+    leader: "Javier 'El Lobo' Mendez",
+    leaderAlias: "El Lobo",
+    foundedYear: 1998,
+    territory: "El Paso, TX & US-Mexico Border",
+    status: "Active",
+    threatLevel: "Critical",
+    memberCount: 200,
+    primaryCrimes: ["Kidnapping", "Human Trafficking", "Extortion"],
+    knownMembers: ["Maria Garcia", "Javier 'El Lobo' Mendez", "Rosa Alvarez"],
+    associatedCriminals: ["CR-1067"],
+    description: "Cross-border cartel with INTERPOL Red Notices. Involved in kidnapping and human trafficking operations spanning multiple states.",
+    lastActivity: "2026-02-10",
+    allies: ["North Cartel"],
+    rivals: []
+  },
+  {
+    id: "GNG-006",
+    name: "Dragon Boys",
+    leader: "Kevin 'K-Pop' Park",
+    leaderAlias: "K-Pop",
+    foundedYear: 2015,
+    territory: "Koreatown, Los Angeles, CA",
+    status: "Active",
+    threatLevel: "High",
+    memberCount: 30,
+    primaryCrimes: ["Drug Trafficking", "Illegal Firearms", "Racketeering"],
+    knownMembers: ["Daniel Lee", "Kevin 'K-Pop' Park", "Johnny Tran", "Lisa 'Lucky' Kwon"],
+    associatedCriminals: ["CR-1337"],
+    description: "Organized gang operating in the Koreatown district. Involved in drug distribution and illegal arms trade.",
+    lastActivity: "2025-12-05",
+    allies: [],
+    rivals: ["Fox Street Gang"]
+  },
+  {
+    id: "GNG-007",
+    name: "South Side Crew",
+    leader: "Marcus 'Big M' Johnson",
+    leaderAlias: "Big M",
+    foundedYear: 2010,
+    territory: "Houston, TX",
+    status: "Disrupted",
+    threatLevel: "Medium",
+    memberCount: 25,
+    primaryCrimes: ["Armed Robbery", "Carjacking", "Assault"],
+    knownMembers: ["Kevin Jackson", "Marcus 'Big M' Johnson", "Darius White"],
+    associatedCriminals: ["CR-1520"],
+    description: "Street gang focused on armed robberies and carjacking. Multiple key members recently arrested.",
+    lastActivity: "2025-10-18",
+    allies: ["Fox Street Gang"],
+    rivals: ["East Side Wolves"]
+  }
+];
+
+
+/* ================================================================
    Data Service
    Handles switching between dummy data and API
    ================================================================ */
@@ -573,6 +707,23 @@ const DataService = {
     // Simulate network delay to showcase skeleton loading
     await this._delay(this.loadDelay);
     return [...CRIMINALS_DATA];
+  },
+
+  async getGangs() {
+    if (this.useAPI) {
+      return this._fetchFromAPI('/gangs');
+    }
+    await this._delay(this.loadDelay);
+    return [...GANGS_DATA];
+  },
+
+  async getGangById(id) {
+    if (this.useAPI) {
+      return this._fetchFromAPI(`/gangs/${id}`);
+    }
+    await this._delay(this.loadDelay);
+    const gang = GANGS_DATA.find(g => g.id === id);
+    return gang ? { ...gang } : null;
   },
 
   async getCriminalById(id) {

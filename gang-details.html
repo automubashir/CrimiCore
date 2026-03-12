@@ -3,14 +3,18 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criminal Profile - CrimiCore</title>
+  <title>CrimiCore - Gang Profile</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-
   <div class="layout">
 
     <!-- Sidebar -->
@@ -31,6 +35,8 @@
         <h2>CrimiCore</h2>
       </div>
 
+
+
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="sidebar-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -42,7 +48,7 @@
           </svg>
           Dashboard
         </a>
-        <a href="index.html" class="sidebar-link active">
+        <a href="index.html" class="sidebar-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -53,7 +59,7 @@
           </svg>
           Criminal Records
         </a>
-        <a href="gangs.html" class="sidebar-link">
+        <a href="gangs.html" class="sidebar-link active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -72,7 +78,7 @@
       <!-- Top Bar -->
       <div class="topbar">
         <div class="topbar-left">
-          <h1 class="topbar-title">Criminal Profile</h1>
+          <h1 class="topbar-title">Gang Profile</h1>
         </div>
         <div class="topbar-right"></div>
       </div>
@@ -80,16 +86,16 @@
       <div class="page-content">
 
         <!-- Back Link -->
-        <a href="index.html" class="profile-back">
+        <a href="gangs.html" class="profile-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <path d="m15 18-6-6 6-6" />
           </svg>
-          Back to Records
+          Back to Gangs
         </a>
 
         <!-- Profile Content (rendered by JS) -->
-        <div id="profile-content">
+        <div id="gang-profile-content">
           <!-- Skeleton or profile rendered here -->
         </div>
 
@@ -99,7 +105,7 @@
   </div>
 
   <script src="js/data.js"></script>
-  <script src="js/details.js"></script>
+  <script src="js/gang-details.js"></script>
 
 </body>
 

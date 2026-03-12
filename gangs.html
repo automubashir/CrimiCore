@@ -3,14 +3,18 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criminal Profile - CrimiCore</title>
+  <title>CrimiCore - Criminal Gangs</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-
   <div class="layout">
 
     <!-- Sidebar -->
@@ -31,6 +35,7 @@
         <h2>CrimiCore</h2>
       </div>
 
+
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="sidebar-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -42,7 +47,7 @@
           </svg>
           Dashboard
         </a>
-        <a href="index.html" class="sidebar-link active">
+        <a href="index.html" class="sidebar-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -53,7 +58,7 @@
           </svg>
           Criminal Records
         </a>
-        <a href="gangs.html" class="sidebar-link">
+        <a href="gangs.html" class="sidebar-link active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -72,25 +77,102 @@
       <!-- Top Bar -->
       <div class="topbar">
         <div class="topbar-left">
-          <h1 class="topbar-title">Criminal Profile</h1>
+          <h1 class="topbar-title">Criminal Gangs</h1>
         </div>
-        <div class="topbar-right"></div>
       </div>
 
+      <!-- Page Content -->
       <div class="page-content">
 
-        <!-- Back Link -->
-        <a href="index.html" class="profile-back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          Back to Records
-        </a>
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-total">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <div class="stat-value" id="stat-total"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+            </div>
+            <div class="stat-value" id="stat-members"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-wanted">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div class="stat-value" id="stat-wanted"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-locked">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div class="stat-value" id="stat-risk"></div>
+          </div>
+        </div>
 
-        <!-- Profile Content (rendered by JS) -->
-        <div id="profile-content">
-          <!-- Skeleton or profile rendered here -->
+        <!-- Toolbar: Search + Filter -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div class="search-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input type="text" class="input" id="search-input" placeholder="Search by gang name, territory, or leader...">
+            </div>
+          </div>
+          <div class="toolbar-right" id="filter-wrapper" style="position:relative">
+            <!-- Filter dropdown rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Active Filter Chips -->
+        <div id="active-filters" class="active-filters" style="display:none"></div>
+
+        <!-- Table -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-sort="name" class="sortable">Gang Name <span class="sort-icon"></span></th>
+                <th data-sort="leader" class="sortable">Leader / Alias <span class="sort-icon"></span></th>
+                <th data-sort="members" class="sortable">Members <span class="sort-icon"></span></th>
+                <th data-sort="territory" class="sortable">Territory <span class="sort-icon"></span></th>
+                <th data-sort="crimes" class="sortable">Primary Crimes <span class="sort-icon"></span></th>
+                <th data-sort="threat" class="sortable">Threat Level <span class="sort-icon"></span></th>
+                <th data-sort="status" class="sortable">Status <span class="sort-icon"></span></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="gangs-tbody">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+          <div class="table-footer">
+            <span class="table-info" id="table-info">Loading...</span>
+            <div class="pagination" id="pagination"></div>
+          </div>
         </div>
 
       </div>
@@ -99,7 +181,7 @@
   </div>
 
   <script src="js/data.js"></script>
-  <script src="js/details.js"></script>
+  <script src="js/gangs.js"></script>
 
 </body>
 
