@@ -1019,11 +1019,154 @@
 
 
 /* ================================================================
+   Toolbar Right (Filter Button)
+   ================================================================ */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.btn-sm {
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+
+/* ================================================================
+   Gang Detail - Sections Layout
+   ================================================================ */
+.gang-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  margin-bottom: var(--sp-6);
+}
+
+.gang-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-5);
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.gang-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.gang-section-title svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.gang-section-count {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-full);
+  margin-left: var(--sp-1);
+}
+
+/* Smaller search for inside sections */
+.search-wrapper-sm {
+  max-width: 240px;
+}
+
+.search-wrapper-sm .input {
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) 32px;
+  font-size: var(--fs-sm);
+  height: 32px;
+}
+
+.search-wrapper-sm svg {
+  width: 14px;
+  height: 14px;
+  left: 10px;
+}
+
+/* 3-column news grid for gang articles */
+.news-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+
+/* ================================================================
+   Media Gallery
+   ================================================================ */
+.media-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-4);
+}
+
+.media-item {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: transform var(--ease-fast), box-shadow var(--ease-fast);
+}
+
+.media-item:hover {
+  transform: scale(1.03);
+  box-shadow: var(--shadow-lg);
+}
+
+.media-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.media-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--sp-3);
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.media-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: #fff;
+}
+
+.media-source {
+  font-size: var(--fs-xs);
+  color: rgba(255,255,255,0.7);
+  text-transform: capitalize;
+}
+
+
+/* ================================================================
    Responsive
    ================================================================ */
 @media (max-width: 1280px) {
   .news-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .news-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1065,6 +1208,14 @@
   .stats-row { grid-template-columns: 1fr; }
 
   .news-grid { grid-template-columns: 1fr; }
+  .news-grid-3 { grid-template-columns: 1fr; }
+  .media-gallery { grid-template-columns: repeat(2, 1fr); }
+
+  .gang-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .search-wrapper-sm { max-width: none; width: 100%; }
 
   .toolbar {
     flex-direction: column;

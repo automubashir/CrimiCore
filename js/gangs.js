@@ -16,7 +16,12 @@
     perPage: 10,
     isLoading: true,
     sortColumn: null,
-    sortDirection: 'asc'
+    sortDirection: 'asc',
+    filters: {
+      location: [],
+      source: []
+    },
+    filterOpen: false
   };
 
   /* --- DOM References --- */
@@ -50,6 +55,109 @@
 
 
   /* ================================================================
+     Filter Dropdown
+     ================================================================ */
+  function getFilterOptions() {
+    const locations = [...new Set(state.gangs.map(g => g.location).filter(l => l && l !== 'Unknown'))].sort();
+    const sources = [...new Set(state.gangs.flatMap(g => g.sources || []).filter(Boolean))].sort();
+    return { locations, sources };
+  }
+
+  function renderFilterDropdown() {
+    const dropdown = $('#filter-dropdown');
+    if (!dropdown) return;
+
+    const opts = getFilterOptions();
+
+    dropdown.innerHTML = `
+      <h4>Location</h4>
+      <div class="filter-section">
+        <div class="filter-options">
+          ${opts.locations.slice(0, 12).map(l => `
+            <button class="filter-chip ${state.filters.location.includes(l) ? 'active' : ''}" data-filter="location" data-value="${l}">${capitalizeFirst(truncate(l, 25))}</button>
+          `).join('')}
+        </div>
+      </div>
+      <h4>Source</h4>
+      <div class="filter-section">
+        <div class="filter-options">
+          ${opts.sources.slice(0, 10).map(s => `
+            <button class="filter-chip ${state.filters.source.includes(s) ? 'active' : ''}" data-filter="source" data-value="${s}">${capitalizeFirst(s)}</button>
+          `).join('')}
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-secondary btn-sm" id="filter-clear">Clear</button>
+        <button class="btn btn-primary btn-sm" id="filter-apply">Apply</button>
+      </div>
+    `;
+
+    dropdown.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => chip.classList.toggle('active'));
+    });
+
+    dropdown.querySelector('#filter-clear').addEventListener('click', () => {
+      dropdown.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    });
+
+    dropdown.querySelector('#filter-apply').addEventListener('click', () => {
+      ['location', 'source'].forEach(key => {
+        state.filters[key] = [...dropdown.querySelectorAll(`.filter-chip.active[data-filter="${key}"]`)].map(c => c.dataset.value);
+      });
+      toggleFilterDropdown(false);
+      applyFilters();
+      renderActiveFilters();
+    });
+  }
+
+  function toggleFilterDropdown(show) {
+    const dropdown = $('#filter-dropdown');
+    if (!dropdown) return;
+    state.filterOpen = show !== undefined ? show : !state.filterOpen;
+    dropdown.style.display = state.filterOpen ? 'block' : 'none';
+    if (state.filterOpen) renderFilterDropdown();
+  }
+
+  function renderActiveFilters() {
+    const container = $('#active-filters');
+    if (!container) return;
+
+    const labels = { location: 'Location', source: 'Source' };
+    const allFilters = [];
+    Object.keys(state.filters).forEach(key => {
+      state.filters[key].forEach(v => allFilters.push({ type: key, label: labels[key], value: v }));
+    });
+
+    if (allFilters.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = allFilters.map(f => `
+      <span class="active-chip">
+        <span class="active-chip-label">${f.label}:</span> ${capitalizeFirst(truncate(f.value, 20))}
+        <button class="active-chip-close" data-type="${f.type}" data-value="${f.value}">&times;</button>
+      </span>
+    `).join('') + `<button class="active-chip-clear" id="clear-all-filters">Clear All</button>`;
+
+    container.querySelectorAll('.active-chip-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.filters[btn.dataset.type] = state.filters[btn.dataset.type].filter(v => v !== btn.dataset.value);
+        applyFilters();
+        renderActiveFilters();
+      });
+    });
+
+    container.querySelector('#clear-all-filters').addEventListener('click', () => {
+      Object.keys(state.filters).forEach(k => state.filters[k] = []);
+      applyFilters();
+      renderActiveFilters();
+    });
+  }
+
+
+  /* ================================================================
      Table Rendering
      ================================================================ */
   function renderTable() {
@@ -67,7 +175,7 @@
             <div class="empty-state">
               ${icons.noResults}
               <p class="empty-state-title">No gangs found</p>
-              <p class="empty-state-text">Try adjusting your search</p>
+              <p class="empty-state-text">Try adjusting your search or filters</p>
             </div>
           </td>
         </tr>`;
@@ -102,6 +210,11 @@
   function capitalizeFirst(str) {
     if (!str) return '';
     return str.replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  function truncate(str, max) {
+    if (!str) return '';
+    return str.length > max ? str.substring(0, max) + '...' : str;
   }
 
 
@@ -215,6 +328,13 @@
       );
     }
 
+    if (state.filters.location.length > 0) {
+      result = result.filter(g => state.filters.location.includes(g.location));
+    }
+    if (state.filters.source.length > 0) {
+      result = result.filter(g => g.sources && g.sources.some(s => state.filters.source.includes(s)));
+    }
+
     result = sortData(result);
     state.filtered = result;
     state.currentPage = 1;
@@ -293,6 +413,24 @@
 
     $$('.data-table th[data-sort]').forEach(th => {
       th.addEventListener('click', () => handleSort(th.dataset.sort));
+    });
+
+    // Filter button
+    const filterBtn = $('#filter-btn');
+    if (filterBtn) {
+      filterBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFilterDropdown();
+      });
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const dropdown = $('#filter-dropdown');
+      const filterBtn = $('#filter-btn');
+      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+        toggleFilterDropdown(false);
+      }
     });
   }
 

@@ -13,7 +13,12 @@
     searchQuery: '',
     currentPage: 1,
     perPage: 8,
-    isLoading: true
+    isLoading: true,
+    filters: {
+      source: [],
+      crimeType: []
+    },
+    filterOpen: false
   };
 
   /* --- DOM References --- */
@@ -81,6 +86,115 @@
 
 
   /* ================================================================
+     Filter Dropdown
+     ================================================================ */
+  function getFilterOptions() {
+    const sources = [...new Set(state.activities.map(a => a.source).filter(Boolean))].sort();
+    const crimes = [...new Set(state.activities.map(a => a.crimeType).filter(Boolean))].sort();
+    return { sources, crimes };
+  }
+
+  function renderFilterDropdown() {
+    const dropdown = $('#filter-dropdown');
+    if (!dropdown) return;
+
+    const opts = getFilterOptions();
+
+    dropdown.innerHTML = `
+      <h4>Filter by Source</h4>
+      <div class="filter-section">
+        <div class="filter-options">
+          ${opts.sources.slice(0, 15).map(s => `
+            <button class="filter-chip ${state.filters.source.includes(s) ? 'active' : ''}" data-filter="source" data-value="${s}">${capitalizeFirst(s)}</button>
+          `).join('')}
+        </div>
+      </div>
+      <h4>Filter by Crime Type</h4>
+      <div class="filter-section">
+        <div class="filter-options">
+          ${opts.crimes.slice(0, 15).map(c => `
+            <button class="filter-chip ${state.filters.crimeType.includes(c) ? 'active' : ''}" data-filter="crimeType" data-value="${c}">${capitalizeFirst(truncate(c, 30))}</button>
+          `).join('')}
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-secondary btn-sm" id="filter-clear">Clear</button>
+        <button class="btn btn-primary btn-sm" id="filter-apply">Apply</button>
+      </div>
+    `;
+
+    // Bind chip toggles
+    dropdown.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+      });
+    });
+
+    // Clear
+    dropdown.querySelector('#filter-clear').addEventListener('click', () => {
+      dropdown.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    });
+
+    // Apply
+    dropdown.querySelector('#filter-apply').addEventListener('click', () => {
+      state.filters.source = [...dropdown.querySelectorAll('.filter-chip.active[data-filter="source"]')].map(c => c.dataset.value);
+      state.filters.crimeType = [...dropdown.querySelectorAll('.filter-chip.active[data-filter="crimeType"]')].map(c => c.dataset.value);
+      toggleFilterDropdown(false);
+      applyFilters();
+      renderActiveFilters();
+    });
+  }
+
+  function toggleFilterDropdown(show) {
+    const dropdown = $('#filter-dropdown');
+    if (!dropdown) return;
+    state.filterOpen = show !== undefined ? show : !state.filterOpen;
+    dropdown.style.display = state.filterOpen ? 'block' : 'none';
+    if (state.filterOpen) renderFilterDropdown();
+  }
+
+  function renderActiveFilters() {
+    const container = $('#active-filters');
+    if (!container) return;
+
+    const allFilters = [
+      ...state.filters.source.map(v => ({ type: 'source', label: 'Source', value: v })),
+      ...state.filters.crimeType.map(v => ({ type: 'crimeType', label: 'Crime', value: v }))
+    ];
+
+    if (allFilters.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = allFilters.map(f => `
+      <span class="active-chip">
+        <span class="active-chip-label">${f.label}:</span> ${capitalizeFirst(truncate(f.value, 20))}
+        <button class="active-chip-close" data-type="${f.type}" data-value="${f.value}">&times;</button>
+      </span>
+    `).join('') + `<button class="active-chip-clear" id="clear-all-filters">Clear All</button>`;
+
+    container.querySelectorAll('.active-chip-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        const value = btn.dataset.value;
+        state.filters[type] = state.filters[type].filter(v => v !== value);
+        applyFilters();
+        renderActiveFilters();
+      });
+    });
+
+    container.querySelector('#clear-all-filters').addEventListener('click', () => {
+      state.filters.source = [];
+      state.filters.crimeType = [];
+      applyFilters();
+      renderActiveFilters();
+    });
+  }
+
+
+  /* ================================================================
      News Cards Rendering
      ================================================================ */
   function renderCards() {
@@ -96,7 +210,7 @@
         <div class="empty-state" style="grid-column:1/-1">
           ${icons.noResults}
           <p class="empty-state-title">No news found</p>
-          <p class="empty-state-text">Try adjusting your search</p>
+          <p class="empty-state-text">Try adjusting your search or filters</p>
         </div>`;
       renderPagination();
       return;
@@ -197,6 +311,14 @@
       );
     }
 
+    if (state.filters.source.length > 0) {
+      result = result.filter(a => state.filters.source.includes(a.source));
+    }
+
+    if (state.filters.crimeType.length > 0) {
+      result = result.filter(a => state.filters.crimeType.includes(a.crimeType));
+    }
+
     state.filtered = result;
     state.currentPage = 1;
     renderCards();
@@ -292,6 +414,24 @@
         }, 300);
       });
     }
+
+    // Filter button
+    const filterBtn = $('#filter-btn');
+    if (filterBtn) {
+      filterBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFilterDropdown();
+      });
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const dropdown = $('#filter-dropdown');
+      const filterBtn = $('#filter-btn');
+      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+        toggleFilterDropdown(false);
+      }
+    });
   }
 
 

@@ -82,7 +82,7 @@
       <!-- Page Content -->
       <div class="page-content">
 
-        <!-- Toolbar: Search -->
+        <!-- Toolbar: Search + Filters -->
         <div class="toolbar">
           <div class="toolbar-left">
             <div class="search-wrapper">
@@ -94,7 +94,15 @@
               <input type="text" class="input" id="search-input" placeholder="Search by name, crime, gang, or location...">
             </div>
           </div>
+          <div class="toolbar-right" style="position:relative">
+            <button class="btn btn-secondary" id="filter-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              Filters
+            </button>
+            <div class="filter-dropdown" id="filter-dropdown" style="display:none"></div>
+          </div>
         </div>
+        <div class="active-filters" id="active-filters" style="display:none"></div>
 
         <!-- Table -->
         <div class="table-container">
