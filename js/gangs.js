@@ -67,13 +67,15 @@
     const rows = Array.from({ length: state.perPage }, () => `
       <tr class="skeleton-row">
         <td><div class="skeleton skeleton-text" style="width:110px;height:14px"></div></td>
-        <td><div class="skeleton skeleton-text" style="width:100px;height:14px"></div></td>
+        <!-- <td><div class="skeleton skeleton-text" style="width:100px;height:14px"></div></td> -->
+
         <td><div class="skeleton skeleton-text" style="width:30px;height:14px"></div></td>
         <td><div class="skeleton skeleton-text" style="width:120px;height:14px"></div></td>
         <td><div class="skeleton skeleton-badge"></div></td>
-        <td><div class="skeleton skeleton-badge"></div></td>
-        <td><div class="skeleton skeleton-text" style="width:65px;height:14px"></div></td>
-        <td><div class="skeleton skeleton-btn"></div></td>
+
+        <!-- <td><div class="skeleton skeleton-badge"></div></td> -->
+        <!-- <td><div class="skeleton skeleton-text" style="width:65px;height:14px"></div></td> -->
+        <!-- <td><div class="skeleton skeleton-btn"></div></td> -->
       </tr>
     `).join('');
 
