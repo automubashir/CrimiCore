@@ -1,6 +1,6 @@
 /* ================================================================
    CrimiCore - Gang Profile Page Logic
-   Skeleton Loading, Dynamic Rendering
+   Fetches members by affiliation, renders profile with tabs
    ================================================================ */
 
 (function () {
@@ -10,55 +10,25 @@
 
   /* --- SVG Icons --- */
   const icons = {
-    back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
     gang: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-    crime: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-    members: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-    territory: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
-    allies: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`,
-    rivals: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
     alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-    calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-    records: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`
+    star: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:10px;height:10px;color:var(--color-primary);flex-shrink:0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
   };
 
-  /* --- Threat Level badge class --- */
-  function threatBadgeClass(level) {
-    return 'risk-' + level.toLowerCase();
-  }
-
-  /* --- Gang Status badge class --- */
-  function gangStatusClass(status) {
-    const map = {
-      'active': 'status-active',
-      'under investigation': 'status-wanted',
-      'disrupted': 'status-arrested',
-      'disbanded': 'status-imprisoned',
-      'inactive': 'status-parole'
-    };
-    return map[status.toLowerCase()] || 'status-active';
-  }
-
-  function getInitials(name) {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  }
-
-  function formatDate(dateStr) {
-    if (!dateStr) return 'Unknown';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  function capitalizeFirst(str) {
+    if (!str) return '';
+    return str.replace(/\b\w/g, l => l.toUpperCase());
   }
 
 
   /* ================================================================
-     Skeleton Rendering
+     Skeleton
      ================================================================ */
   function renderSkeleton() {
     const container = $('#gang-profile-content');
     if (!container) return;
 
     container.innerHTML = `
-      <!-- Profile Header Skeleton -->
       <div class="profile-header">
         <div class="profile-photo-wrapper">
           <div class="skeleton" style="width:160px;height:200px;border-radius:8px"></div>
@@ -66,29 +36,22 @@
         <div class="profile-summary" style="flex:1">
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
             <div class="skeleton" style="width:220px;height:30px;border-radius:4px"></div>
-            <div class="skeleton" style="width:80px;height:22px;border-radius:4px"></div>
           </div>
-          <div class="info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            ${Array.from({ length: 6 }, () => `
-              <div style="display:flex;gap:12px">
-                <div class="skeleton" style="width:80px;height:14px"></div>
-                <div class="skeleton" style="width:120px;height:14px"></div>
-              </div>
+          <div class="skeleton" style="width:200px;height:36px;border-radius:4px;margin-bottom:16px"></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            ${Array.from({ length: 5 }, () => `
+              <div class="skeleton" style="width:70%;height:16px"></div>
             `).join('')}
           </div>
         </div>
       </div>
-
-      <!-- Sections Skeleton -->
       <div class="profile-sections" style="margin-top:24px">
-        ${Array.from({ length: 4 }, () => `
-          <div class="profile-section">
-            <div class="skeleton" style="width:150px;height:18px;margin-bottom:16px"></div>
+        <div class="profile-section profile-section-full">
+          <div class="skeleton" style="width:150px;height:18px;margin-bottom:16px"></div>
+          ${Array.from({ length: 3 }, () => `
             <div class="skeleton" style="width:100%;height:14px;margin-bottom:8px"></div>
-            <div class="skeleton" style="width:85%;height:14px;margin-bottom:8px"></div>
-            <div class="skeleton" style="width:70%;height:14px"></div>
-          </div>
-        `).join('')}
+          `).join('')}
+        </div>
       </div>
     `;
   }
@@ -97,13 +60,19 @@
   /* ================================================================
      Profile Rendering
      ================================================================ */
-  function renderProfile(g) {
+  function renderProfile(gangName, members) {
     const container = $('#gang-profile-content');
     if (!container) return;
 
-    // Generate a gang icon placeholder (no photo for gangs)
+    // Derive gang info from members
+    const locations = [...new Set(members.map(m => m.location).filter(l => l && l !== 'none, none' && l !== ''))];
+    const crimes = [...new Set(members.map(m => m.crimeType).filter(Boolean))];
+    const sources = [...new Set(members.map(m => m.source).filter(Boolean))];
+    const territory = locations[0] || 'Unknown';
+
+    // Gang icon placeholder
     const gangIcon = `
-      <div class="profile-photo avatar-placeholder" style="width:160px;height:200px;font-size:2.5rem">
+      <div class="profile-photo avatar-placeholder" style="width:160px;height:200px;font-size:2.5rem;display:flex;align-items:center;justify-content:center">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:80px;height:80px;color:var(--text-muted)">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
@@ -112,100 +81,120 @@
         </svg>
       </div>`;
 
+    // Tabs
+    const tabsHTML = `
+      <div class="gang-tabs" style="display:flex;gap:0;margin-bottom:var(--sp-6);border-bottom:2px solid var(--border-color)">
+        <button class="gang-tab active" data-tab="profiling">Profiling</button>
+        <button class="gang-tab" data-tab="members">Members</button>
+        <button class="gang-tab" data-tab="activities">Activities</button>
+      </div>`;
+
+    // Profiling tab content (like reference image - bullet list with stars)
+    const profilingHTML = `
+      <div class="gang-tab-content" id="tab-profiling">
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-2) 0">
+          <div class="gang-info-row">
+            ${icons.star}
+            <span class="gang-info-label">Territory:</span>
+            <span class="gang-info-value">${capitalizeFirst(territory)}</span>
+          </div>
+          <div class="gang-info-row">
+            ${icons.star}
+            <span class="gang-info-label">Members:</span>
+            <span class="gang-info-value" style="color:var(--status-active);font-weight:var(--fw-bold)">${members.length}</span>
+          </div>
+          <div class="gang-info-row">
+            ${icons.star}
+            <span class="gang-info-label">Sources:</span>
+            <span class="gang-info-value">${sources.map(s => capitalizeFirst(s)).join(', ') || 'Unknown'}</span>
+          </div>
+          <div class="gang-info-row">
+            ${icons.star}
+            <span class="gang-info-label">Locations:</span>
+            <span class="gang-info-value">${locations.slice(0, 5).map(l => capitalizeFirst(l)).join('; ') || 'Unknown'}</span>
+          </div>
+          <div class="gang-info-row">
+            ${icons.star}
+            <span class="gang-info-label">Primary Activities:</span>
+            <span class="gang-info-value">${crimes.slice(0, 5).map(c => capitalizeFirst(c)).join(', ') || 'Unknown'}</span>
+          </div>
+        </div>
+      </div>`;
+
+    // Members tab content
+    const membersHTML = `
+      <div class="gang-tab-content" id="tab-members" style="display:none">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Crime</th>
+                <th>Location</th>
+                <th>Source</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${members.map(m => `
+                <tr>
+                  <td><span class="font-medium">${capitalizeFirst(m.criminalName)}</span></td>
+                  <td><span class="text-secondary">${m.crimeType ? capitalizeFirst(m.crimeType).substring(0, 50) : 'N/A'}${m.crimeType && m.crimeType.length > 50 ? '...' : ''}</span></td>
+                  <td><span class="text-secondary">${capitalizeFirst(m.location) || 'Unknown'}</span></td>
+                  <td><span class="text-muted" style="text-transform:capitalize">${m.source || 'Unknown'}</span></td>
+                  <td><a href="details.html?name=${encodeURIComponent(m.criminalName)}" class="btn-view">View</a></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+    // Activities tab content (news articles from members)
+    const activitiesHTML = `
+      <div class="gang-tab-content" id="tab-activities" style="display:none">
+        ${members.filter(m => m.title).length > 0
+          ? members.filter(m => m.title).map(m => `
+            <div class="note-item" style="border-bottom:1px solid var(--border-color);padding:var(--sp-3) 0">
+              <div style="flex:1">
+                <div class="font-medium" style="margin-bottom:4px">${capitalizeFirst(m.title)}</div>
+                <div class="text-muted text-sm">${m.publishedDate ? new Date(m.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }) : ''} | ${capitalizeFirst(m.source || '')}</div>
+                ${m.linkToArticle ? `<a href="${m.linkToArticle}" target="_blank" rel="noopener" class="text-link text-sm" style="display:inline-block;margin-top:4px">Read Article</a>` : ''}
+              </div>
+            </div>
+          `).join('')
+          : '<p class="text-muted">No activity reports available</p>'
+        }
+      </div>`;
+
     container.innerHTML = `
-      <!-- Profile Header -->
-      <div class="profile-header animate-fade-in">
+      <!-- Gang Header -->
+      <div class="profile-header animate-fade-in" style="margin-bottom:var(--sp-6)">
         <div class="profile-photo-wrapper">
           ${gangIcon}
         </div>
         <div class="profile-summary">
           <div class="profile-name-row">
-            <h1 class="profile-name">${g.name}</h1>
-            <span class="profile-id">${g.id}</span>
-            <span class="risk-badge ${threatBadgeClass(g.threatLevel)}">${g.threatLevel} Threat</span>
-            <span class="status-badge ${gangStatusClass(g.status)}" style="font-size:var(--fs-md)">${g.status}</span>
+            <h1 class="profile-name">${capitalizeFirst(gangName)}</h1>
           </div>
-          <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
-            <div class="info-item"><span class="info-label">Leader:</span><span class="info-value">${g.leader}</span></div>
-            <div class="info-item"><span class="info-label">Alias:</span><span class="info-value">"${g.leaderAlias}"</span></div>
-            <div class="info-item"><span class="info-label">Territory:</span><span class="info-value">${g.territory}</span></div>
-            <div class="info-item"><span class="info-label">Founded:</span><span class="info-value">${g.foundedYear}</span></div>
-            <div class="info-item"><span class="info-label">Members:</span><span class="info-value font-semibold">${g.memberCount}</span></div>
-            <div class="info-item"><span class="info-label">Last Activity:</span><span class="info-value">${formatDate(g.lastActivity)}</span></div>
-          </div>
+          ${tabsHTML}
+          ${profilingHTML}
+          ${membersHTML}
+          ${activitiesHTML}
         </div>
-      </div>
-
-      <!-- Profile Sections -->
-      <div class="profile-sections animate-slide-up">
-
-        <!-- Description -->
-        <div class="profile-section profile-section-full">
-          <h3>${icons.records} Intelligence Summary</h3>
-          <p style="color:var(--text-primary);font-size:var(--fs-md);line-height:var(--lh-relaxed)">${g.description}</p>
-        </div>
-
-        <!-- Primary Crimes -->
-        <div class="profile-section">
-          <h3>${icons.crime} Primary Crimes</h3>
-          <div class="tag-list">
-            ${g.primaryCrimes.map(crime => `<span class="tag">${crime}</span>`).join('')}
-          </div>
-        </div>
-
-        <!-- Known Members -->
-        <div class="profile-section">
-          <h3>${icons.members} Known Members</h3>
-          ${g.knownMembers.length > 0
-            ? g.knownMembers.map(member => `
-              <div class="associate-item">
-                <div class="associate-avatar">${getInitials(member)}</div>
-                <div>
-                  <div class="associate-name">${member}</div>
-                  ${g.associatedCriminals.length > 0
-                    ? `<div class="associate-relation text-xs">Criminal Record Linked</div>`
-                    : ''
-                  }
-                </div>
-              </div>
-            `).join('')
-            : '<p class="text-muted">No known members on file</p>'
-          }
-        </div>
-
-        <!-- Allies -->
-        <div class="profile-section">
-          <h3>${icons.allies} Allied Organizations</h3>
-          ${g.allies.length > 0
-            ? `<div class="tag-list">${g.allies.map(a => `<span class="tag" style="border-color:var(--status-active);color:var(--status-active)">${a}</span>`).join('')}</div>`
-            : '<p class="text-muted">No known alliances</p>'
-          }
-        </div>
-
-        <!-- Rivals -->
-        <div class="profile-section">
-          <h3>${icons.rivals} Rival Organizations</h3>
-          ${g.rivals.length > 0
-            ? `<div class="tag-list">${g.rivals.map(r => `<span class="tag" style="border-color:var(--color-danger);color:var(--color-danger)">${r}</span>`).join('')}</div>`
-            : '<p class="text-muted">No known rivals</p>'
-          }
-        </div>
-
-        <!-- Associated Criminal Records -->
-        <div class="profile-section profile-section-full">
-          <h3>${icons.gang} Linked Criminal Records</h3>
-          ${g.associatedCriminals.length > 0
-            ? `<div class="tag-list">${g.associatedCriminals.map(id => `
-                <a href="details.html?id=${id}" class="tag" style="cursor:pointer;border-color:var(--color-primary);color:var(--color-primary);text-decoration:none">
-                  ${id} — View Record
-                </a>
-              `).join('')}</div>`
-            : '<p class="text-muted">No linked criminal records</p>'
-          }
-        </div>
-
       </div>
     `;
+
+    // Bind tab clicks
+    container.querySelectorAll('.gang-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        container.querySelectorAll('.gang-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.gang-tab-content').forEach(c => c.style.display = 'none');
+        tab.classList.add('active');
+        const target = container.querySelector(`#tab-${tab.dataset.tab}`);
+        if (target) target.style.display = 'block';
+      });
+    });
   }
 
 
@@ -214,27 +203,25 @@
      ================================================================ */
   async function loadProfile() {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
+    const name = params.get('name');
 
-    if (!id) {
-      showError('No gang ID specified');
+    if (!name) {
+      showError('No gang name specified');
       return;
     }
 
     renderSkeleton();
 
     try {
-      const gang = await DataService.getGangById(id);
+      const members = await DataService.getCriminalsByAffiliation(name);
 
-      if (!gang) {
-        showError(`No record found for ID: ${id}`);
+      if (!members || members.length === 0) {
+        showError(`No records found for gang: ${name}`);
         return;
       }
 
-      renderProfile(gang);
-
-      // Update page title
-      document.title = `${gang.name} - CrimiCore`;
+      renderProfile(name, members);
+      document.title = `${capitalizeFirst(name)} - CrimiCore`;
     } catch (error) {
       showError(error.message);
     }

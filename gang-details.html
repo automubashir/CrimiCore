@@ -15,6 +15,7 @@
 </head>
 
 <body>
+
   <div class="layout">
 
     <!-- Sidebar -->
@@ -36,28 +37,13 @@
       </div>
 
 
-
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="sidebar-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="9" />
-            <rect x="14" y="3" width="7" height="5" />
-            <rect x="14" y="12" width="7" height="9" />
-            <rect x="3" y="16" width="7" height="5" />
-          </svg>
-          Dashboard
-        </a>
         <a href="index.html" class="sidebar-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
-            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-            <polyline points="14,2 14,8 20,8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-            <line x1="10" y1="9" x2="8" y2="9" />
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
-          Criminal Records
+          Activities
         </a>
         <a href="gangs.html" class="sidebar-link active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -67,7 +53,18 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          Criminal Gangs
+          Gangs
+        </a>
+        <a href="criminals.html" class="sidebar-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14,2 14,8 20,8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <line x1="10" y1="9" x2="8" y2="9" />
+          </svg>
+          Criminals
         </a>
       </nav>
     </aside>
@@ -80,7 +77,6 @@
         <div class="topbar-left">
           <h1 class="topbar-title">Gang Profile</h1>
         </div>
-        <div class="topbar-right"></div>
       </div>
 
       <div class="page-content">
@@ -94,7 +90,7 @@
           Back to Gangs
         </a>
 
-        <!-- Profile Content (rendered by JS) -->
+        <!-- Gang Profile Content (rendered by JS) -->
         <div id="gang-profile-content">
           <!-- Skeleton or profile rendered here -->
         </div>
