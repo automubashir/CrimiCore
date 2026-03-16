@@ -94,7 +94,7 @@ export default function GangDetailPage() {
           } else {
             setMembers(prev => currentPage === 1 ? data : [...prev, ...data]);
             setHasMore(data.length >= 10);
-            document.title = `${capitalizeFirst(decodedName)} - CrimiCore`;
+            document.title = `${capitalizeFirst(decodedName)} - CrimePanel`;
           }
           setIsLoading(false);
           setIsLoadingMore(false);

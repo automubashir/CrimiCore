@@ -43,10 +43,10 @@ export default function Sidebar() {
         <div className="sidebar-brand-icon">
           <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 48, height: 48 }}>
             <rect width="48" height="48" rx="10" fill="#3b82f6" />
-            <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="22" fontWeight="bold" fontFamily="system-ui">CC</text>
+            <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="22" fontWeight="bold" fontFamily="system-ui">CP</text>
           </svg>
         </div>
-        <h2>CrimiCore</h2>
+        <h2>CrimePanel</h2>
       </div>
       <nav className="sidebar-nav">
         {navItems.map(item => (

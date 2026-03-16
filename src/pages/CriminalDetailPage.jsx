@@ -34,7 +34,7 @@ export default function CriminalDetailPage() {
             setError(`No record found for: ${decodeURIComponent(name)}`);
           } else {
             setCriminal(results[0]);
-            document.title = `${capitalizeFirst(results[0].criminalName)} - CrimiCore`;
+            document.title = `${capitalizeFirst(results[0].criminalName)} - CrimePanel`;
           }
           setIsLoading(false);
         }

@@ -23,7 +23,6 @@ export default function Topbar({ title }) {
             <option value="All">All Countries</option>
             <option value="uae">UAE</option>
             <option value="uk">UK</option>
-            <option value="china">China</option>
           </select>
         </div>
       </div>
