@@ -5,6 +5,20 @@ import { capitalizeFirst, truncate, formatDate } from '../../utils/formatters';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
+// SVG marker: person silhouette with crosshair
+function createMarkerIcon(count) {
+  const size = 36 + Math.min(count * 2, 12);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="22" fill="#1e293b" stroke="#3b82f6" stroke-width="2.5"/>
+      <circle cx="24" cy="16" r="6" fill="#3b82f6"/>
+      <path d="M14 36c0-5.5 4.5-10 10-10s10 4.5 10 10" fill="#3b82f6"/>
+      <circle cx="36" cy="10" r="9" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+      <text x="36" y="14" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" font-family="Arial">${count}</text>
+    </svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 const DARK_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#0f1724' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#0a0f1a' }] },
@@ -66,6 +80,7 @@ export default function MembersMap({ members }) {
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
+          gestureHandling: 'greedy',
         });
         mapInstanceRef.current = map;
 
@@ -109,23 +124,15 @@ export default function MembersMap({ members }) {
           const position = { lat, lng };
           const membersAtLocation = locationMap[location];
 
+          const iconSize = 36 + Math.min(membersAtLocation.length * 2, 12);
           const marker = new maps.Marker({
             position,
             map,
             title: `${capitalizeFirst(location)} (${membersAtLocation.length})`,
             icon: {
-              path: maps.SymbolPath.CIRCLE,
-              fillColor: '#3b82f6',
-              fillOpacity: 1,
-              strokeColor: '#1e40af',
-              strokeWeight: 2,
-              scale: 8 + Math.min(membersAtLocation.length * 2, 8),
-            },
-            label: {
-              text: String(membersAtLocation.length),
-              color: '#ffffff',
-              fontSize: '11px',
-              fontWeight: 'bold',
+              url: createMarkerIcon(membersAtLocation.length),
+              scaledSize: new maps.Size(iconSize, iconSize),
+              anchor: new maps.Point(iconSize / 2, iconSize / 2),
             },
           });
 
@@ -200,11 +207,17 @@ export default function MembersMap({ members }) {
             <div className="map-panel-body">
               {selectedMembers.map((m, i) => (
                 <div key={`${m.criminalName}-${i}`} className="map-panel-card">
-                  {m.imageUrl && (
-                    <div className="map-panel-card-img">
-                      <img src={m.imageUrl} alt={m.criminalName} onError={(e) => { e.target.parentElement.style.display = 'none'; }} />
+                  <div className="map-panel-card-img">
+                    {m.imageUrl ? (
+                      <img src={m.imageUrl} alt={m.criminalName} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                    ) : null}
+                    <div className="map-panel-card-img-fallback" style={m.imageUrl ? { display: 'none' } : {}}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" />
+                      </svg>
                     </div>
-                  )}
+                  </div>
                   <div className="map-panel-card-body">
                     <Link to={`/criminals/${encodeURIComponent(m.criminalName)}`} className="map-panel-card-name">
                       {capitalizeFirst(m.criminalName)}
