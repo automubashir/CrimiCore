@@ -1211,6 +1211,21 @@
 
 
 /* ================================================================
+   Members Scrollable Table
+   ================================================================ */
+.members-scroll-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.members-scroll-container thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
+
+/* ================================================================
    Members Map
    ================================================================ */
 .map-wrapper {

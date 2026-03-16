@@ -107,7 +107,9 @@ export default function GangDetailPage() {
     return () => { cancelled = true; };
   }, [name, currentPage]);
 
-  // Infinite scroll observer for members
+  const scrollContainerRef = useRef(null);
+
+  // Infinite scroll observer for members (scoped to the scrollable container)
   useEffect(() => {
     if (!sentinelRef.current || !hasMore || isLoading || isLoadingMore) return;
 
@@ -117,7 +119,7 @@ export default function GangDetailPage() {
           setCurrentPage(prev => prev + 1);
         }
       },
-      { rootMargin: '200px' }
+      { root: scrollContainerRef.current, rootMargin: '200px' }
     );
 
     observer.observe(sentinelRef.current);
@@ -249,7 +251,7 @@ export default function GangDetailPage() {
                 </h2>
                 <SearchInput value={membersSearch} onChange={setMembersSearch} placeholder="Search members..." className="search-wrapper-sm" />
               </div>
-              <div className="table-container">
+              <div className="table-container members-scroll-container" ref={scrollContainerRef}>
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -280,15 +282,14 @@ export default function GangDetailPage() {
 
                 {/* Infinite scroll sentinel */}
                 {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
-
-                <div className="table-footer">
-                  <span className="table-info">
-                    {members.length > 0 ? `${members.length} members loaded` : 'No entries'}
-                  </span>
-                  {!hasMore && members.length > 0 && (
-                    <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All members loaded</span>
-                  )}
-                </div>
+              </div>
+              <div className="table-footer">
+                <span className="table-info">
+                  {members.length > 0 ? `${members.length} members loaded` : 'No entries'}
+                </span>
+                {!hasMore && members.length > 0 && (
+                  <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All members loaded</span>
+                )}
               </div>
             </div>
 
