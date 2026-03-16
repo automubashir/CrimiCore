@@ -356,7 +356,9 @@
     } else {
       grid.innerHTML = page.map((a, i) => {
         const date = formatDate(a.publishedDate);
-        const desc = truncate(capitalizeFirst(a.criminalName) + ' — ' + capitalizeFirst(a.crimeType), 100);
+        const desc = a.description
+          ? truncate(a.description, 120)
+          : truncate(capitalizeFirst(a.criminalName) + ' — ' + capitalizeFirst(a.crimeType), 100);
         const title = truncate(capitalizeFirst(a.title), 80);
         const imgUrl = a.imageUrl || '';
 
@@ -535,9 +537,39 @@
 
 
   /* ================================================================
+     Country Dropdown
+     ================================================================ */
+  async function initCountryFilter() {
+    const select = $('#country-select');
+    if (!select) return;
+
+    try {
+      const countries = await DataService.getCountries();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = capitalizeFirst(c);
+        select.appendChild(opt);
+      });
+    } catch (e) { /* silent */ }
+
+    select.value = CountryFilter.get();
+
+    select.addEventListener('change', () => {
+      CountryFilter.set(select.value);
+    });
+
+    CountryFilter.onChange(() => {
+      loadProfile();
+    });
+  }
+
+
+  /* ================================================================
      Initialize
      ================================================================ */
   function init() {
+    initCountryFilter();
     loadProfile();
   }
 

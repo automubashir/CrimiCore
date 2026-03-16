@@ -15,7 +15,8 @@
     alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
     link: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
     calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-    location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`
+    location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    news: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/></svg>`
   };
 
   function capitalizeFirst(str) {
@@ -106,10 +107,11 @@
             <span class="badge badge-burglary">${capitalizeFirst(c.crimeType ? c.crimeType.substring(0, 30) : 'Unknown')}${c.crimeType && c.crimeType.length > 30 ? '...' : ''}</span>
           </div>
           <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
-            <div class="info-item"><span class="info-label">Date of Birth:</span><span class="info-value">${formatDate(c.dateOfBirth)}</span></div>
             <div class="info-item"><span class="info-label">Location:</span><span class="info-value">${capitalizeFirst(c.location) || 'Unknown'}</span></div>
             <div class="info-item"><span class="info-label">Source:</span><span class="info-value" style="text-transform:capitalize">${c.source || 'Unknown'}</span></div>
             <div class="info-item"><span class="info-label">Published:</span><span class="info-value">${formatDate(c.publishedDate)}</span></div>
+            ${c.country ? `<div class="info-item"><span class="info-label">Country:</span><span class="info-value">${capitalizeFirst(c.country)}</span></div>` : ''}
+            ${c.publishedBy ? `<div class="info-item"><span class="info-label">Published By:</span><span class="info-value">${capitalizeFirst(c.publishedBy)}</span></div>` : ''}
           </div>
         </div>
       </div>
@@ -140,8 +142,16 @@
         ${c.title ? `
         <!-- News Title -->
         <div class="profile-section">
-          <h3>${icons.alert} News Title</h3>
+          <h3>${icons.news} News Title</h3>
           <p style="color:var(--text-primary);font-size:var(--fs-md);line-height:var(--lh-relaxed)">${capitalizeFirst(c.title)}</p>
+        </div>
+        ` : ''}
+
+        ${c.description ? `
+        <!-- Description -->
+        <div class="profile-section profile-section-full">
+          <h3>${icons.alert} Description</h3>
+          <p style="color:var(--text-secondary);font-size:var(--fs-md);line-height:var(--lh-relaxed);white-space:pre-line">${c.description}</p>
         </div>
         ` : ''}
 
@@ -172,7 +182,6 @@
         return;
       }
 
-      // Use the first matching result
       const criminal = results[0];
       renderProfile(criminal);
       document.title = `${capitalizeFirst(criminal.criminalName)} - CrimiCore`;
@@ -196,9 +205,39 @@
 
 
   /* ================================================================
+     Country Dropdown
+     ================================================================ */
+  async function initCountryFilter() {
+    const select = $('#country-select');
+    if (!select) return;
+
+    try {
+      const countries = await DataService.getCountries();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = capitalizeFirst(c);
+        select.appendChild(opt);
+      });
+    } catch (e) { /* silent */ }
+
+    select.value = CountryFilter.get();
+
+    select.addEventListener('change', () => {
+      CountryFilter.set(select.value);
+    });
+
+    CountryFilter.onChange(() => {
+      loadProfile();
+    });
+  }
+
+
+  /* ================================================================
      Initialize
      ================================================================ */
   function init() {
+    initCountryFilter();
     loadProfile();
   }
 

@@ -1,6 +1,6 @@
 /* ================================================================
    CrimiCore - Activities Page Logic
-   Recent News Cards with Filters
+   Recent News Cards with Server-side Filters + Pagination
    ================================================================ */
 
 (function () {
@@ -9,7 +9,6 @@
   /* --- State --- */
   const state = {
     activities: [],
-    filtered: [],
     searchQuery: '',
     currentPage: 1,
     perPage: 8,
@@ -18,7 +17,8 @@
       source: [],
       crimeType: []
     },
-    filterOpen: false
+    filterOpen: false,
+    hasMore: true
   };
 
   /* --- DOM References --- */
@@ -38,7 +38,6 @@
   function renderSkeletonCards() {
     const grid = $('#news-grid');
     if (!grid) return;
-
     grid.innerHTML = Array.from({ length: state.perPage }, () => `
       <div class="news-card">
         <div class="skeleton" style="width:100%;height:180px;border-radius:var(--radius-md)"></div>
@@ -53,8 +52,7 @@
   }
 
   function renderSkeletonStats() {
-    const els = document.querySelectorAll('.stat-value');
-    els.forEach(el => {
+    document.querySelectorAll('.stat-value').forEach(el => {
       el.innerHTML = `<div class="skeleton skeleton-text" style="width:40px;height:24px;margin-bottom:4px"></div>`;
     });
   }
@@ -97,7 +95,6 @@
   function renderFilterDropdown() {
     const dropdown = $('#filter-dropdown');
     if (!dropdown) return;
-
     const opts = getFilterOptions();
 
     dropdown.innerHTML = `
@@ -123,24 +120,21 @@
       </div>
     `;
 
-    // Bind chip toggles
     dropdown.querySelectorAll('.filter-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        chip.classList.toggle('active');
-      });
+      chip.addEventListener('click', () => chip.classList.toggle('active'));
     });
 
-    // Clear
     dropdown.querySelector('#filter-clear').addEventListener('click', () => {
       dropdown.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     });
 
-    // Apply
     dropdown.querySelector('#filter-apply').addEventListener('click', () => {
       state.filters.source = [...dropdown.querySelectorAll('.filter-chip.active[data-filter="source"]')].map(c => c.dataset.value);
       state.filters.crimeType = [...dropdown.querySelectorAll('.filter-chip.active[data-filter="crimeType"]')].map(c => c.dataset.value);
       toggleFilterDropdown(false);
-      applyFilters();
+      // Re-fetch with server-side filters
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -162,10 +156,7 @@
       ...state.filters.crimeType.map(v => ({ type: 'crimeType', label: 'Crime', value: v }))
     ];
 
-    if (allFilters.length === 0) {
-      container.style.display = 'none';
-      return;
-    }
+    if (allFilters.length === 0) { container.style.display = 'none'; return; }
 
     container.style.display = 'flex';
     container.innerHTML = allFilters.map(f => `
@@ -177,10 +168,9 @@
 
     container.querySelectorAll('.active-chip-close').forEach(btn => {
       btn.addEventListener('click', () => {
-        const type = btn.dataset.type;
-        const value = btn.dataset.value;
-        state.filters[type] = state.filters[type].filter(v => v !== value);
-        applyFilters();
+        state.filters[btn.dataset.type] = state.filters[btn.dataset.type].filter(v => v !== btn.dataset.value);
+        state.currentPage = 1;
+        loadData();
         renderActiveFilters();
       });
     });
@@ -188,7 +178,8 @@
     container.querySelector('#clear-all-filters').addEventListener('click', () => {
       state.filters.source = [];
       state.filters.crimeType = [];
-      applyFilters();
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -201,11 +192,7 @@
     const grid = $('#news-grid');
     if (!grid) return;
 
-    const start = (state.currentPage - 1) * state.perPage;
-    const end = start + state.perPage;
-    const page = state.filtered.slice(start, end);
-
-    if (page.length === 0) {
+    if (state.activities.length === 0) {
       grid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1">
           ${icons.noResults}
@@ -216,9 +203,35 @@
       return;
     }
 
-    grid.innerHTML = page.map((a, i) => {
+    // Client-side search on already-fetched page data
+    let visible = state.activities;
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      visible = visible.filter(a =>
+        (a.title && a.title.toLowerCase().includes(q)) ||
+        (a.criminalName && a.criminalName.toLowerCase().includes(q)) ||
+        (a.crimeType && a.crimeType.toLowerCase().includes(q)) ||
+        (a.location && a.location.toLowerCase().includes(q)) ||
+        (a.source && a.source.toLowerCase().includes(q))
+      );
+    }
+
+    if (visible.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          ${icons.noResults}
+          <p class="empty-state-title">No news match your search</p>
+          <p class="empty-state-text">Try different keywords</p>
+        </div>`;
+      renderPagination();
+      return;
+    }
+
+    grid.innerHTML = visible.map((a, i) => {
       const date = formatDate(a.publishedDate);
-      const description = truncate(capitalizeFirst(a.criminalName) + ' — ' + capitalizeFirst(a.crimeType), 100);
+      const description = a.description
+        ? truncate(a.description, 120)
+        : truncate(capitalizeFirst(a.criminalName) + ' — ' + capitalizeFirst(a.crimeType), 100);
       const title = truncate(capitalizeFirst(a.title), 80);
       const imgUrl = a.imageUrl || '';
 
@@ -244,84 +257,25 @@
 
 
   /* ================================================================
-     Pagination
+     Pagination (server-side)
      ================================================================ */
   function renderPagination() {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
     const paginationEl = $('#pagination');
     const tableInfo = $('#table-info');
     if (!paginationEl) return;
 
-    const start = (state.currentPage - 1) * state.perPage + 1;
-    const end = Math.min(state.currentPage * state.perPage, state.filtered.length);
     if (tableInfo) {
-      tableInfo.textContent = state.filtered.length > 0
-        ? `Showing ${start} to ${end} of ${state.filtered.length} entries`
+      tableInfo.textContent = state.activities.length > 0
+        ? `Page ${state.currentPage} — ${state.activities.length} entries loaded`
         : 'No entries to show';
     }
 
-    if (totalPages <= 1) {
-      paginationEl.innerHTML = '';
-      return;
+    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage <= 1 ? 'disabled' : ''}>Previous</button>`;
+    html += `<button class="pagination-btn active">${state.currentPage}</button>`;
+    if (state.hasMore) {
+      html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})">Next ${icons.chevRight}</button>`;
     }
-
-    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
-
-    const maxVisible = 5;
-    let startPage = Math.max(1, state.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage < maxVisible - 1) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    if (startPage > 1) {
-      html += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
-      if (startPage > 2) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="pagination-btn ${i === state.currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
-      html += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-
-    html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>Next ${icons.chevRight}</button>`;
-
     paginationEl.innerHTML = html;
-  }
-
-
-  /* ================================================================
-     Filter & Search
-     ================================================================ */
-  function applyFilters() {
-    let result = [...state.activities];
-
-    if (state.searchQuery) {
-      const q = state.searchQuery.toLowerCase();
-      result = result.filter(a =>
-        (a.title && a.title.toLowerCase().includes(q)) ||
-        (a.criminalName && a.criminalName.toLowerCase().includes(q)) ||
-        (a.crimeType && a.crimeType.toLowerCase().includes(q)) ||
-        (a.location && a.location.toLowerCase().includes(q)) ||
-        (a.source && a.source.toLowerCase().includes(q))
-      );
-    }
-
-    if (state.filters.source.length > 0) {
-      result = result.filter(a => state.filters.source.includes(a.source));
-    }
-
-    if (state.filters.crimeType.length > 0) {
-      result = result.filter(a => state.filters.crimeType.includes(a.crimeType));
-    }
-
-    state.filtered = result;
-    state.currentPage = 1;
-    renderCards();
   }
 
 
@@ -348,7 +302,7 @@
 
 
   /* ================================================================
-     Data Loading
+     Data Loading (server-side pagination + filters)
      ================================================================ */
   async function loadData() {
     state.isLoading = true;
@@ -356,10 +310,27 @@
     renderSkeletonStats();
 
     try {
-      state.activities = await DataService.getActivities();
-      // Sort by published date descending (newest first)
+      // Build server-side filters
+      const apiFilters = {};
+      if (state.filters.source.length === 1) apiFilters.source = state.filters.source[0];
+      if (state.filters.crimeType.length === 1) apiFilters.crime_type = state.filters.crimeType[0];
+
+      state.activities = await DataService.getActivities(apiFilters, state.currentPage);
+
+      // Client-side filter for multi-select (API supports single value)
+      if (state.filters.source.length > 1) {
+        state.activities = state.activities.filter(a => state.filters.source.includes(a.source));
+      }
+      if (state.filters.crimeType.length > 1) {
+        state.activities = state.activities.filter(a => state.filters.crimeType.includes(a.crimeType));
+      }
+
+      // Sort by published date descending
       state.activities.sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate));
-      state.filtered = [...state.activities];
+
+      // If we got fewer results than expected, no more pages
+      state.hasMore = state.activities.length >= 10;
+
       state.isLoading = false;
       renderStats();
       renderCards();
@@ -376,6 +347,40 @@
           </div>`;
       }
     }
+  }
+
+
+  /* ================================================================
+     Country Dropdown
+     ================================================================ */
+  async function initCountryFilter() {
+    const select = $('#country-select');
+    if (!select) return;
+
+    try {
+      const countries = await DataService.getCountries();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = capitalizeFirst(c);
+        select.appendChild(opt);
+      });
+    } catch (e) {
+      // Silently fail — dropdown stays as "All Countries"
+    }
+
+    // Set current value
+    select.value = CountryFilter.get();
+
+    select.addEventListener('change', () => {
+      CountryFilter.set(select.value);
+    });
+
+    // Listen for changes from other pages (if shared)
+    CountryFilter.onChange(() => {
+      state.currentPage = 1;
+      loadData();
+    });
   }
 
 
@@ -410,12 +415,11 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           state.searchQuery = e.target.value.trim();
-          applyFilters();
+          renderCards();
         }, 300);
       });
     }
 
-    // Filter button
     const filterBtn = $('#filter-btn');
     if (filterBtn) {
       filterBtn.addEventListener('click', (e) => {
@@ -424,11 +428,10 @@
       });
     }
 
-    // Close dropdown on outside click
     document.addEventListener('click', (e) => {
       const dropdown = $('#filter-dropdown');
-      const filterBtn = $('#filter-btn');
-      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+      const btn = $('#filter-btn');
+      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && btn && !btn.contains(e.target)) {
         toggleFilterDropdown(false);
       }
     });
@@ -439,12 +442,10 @@
      Global Functions
      ================================================================ */
   window.goToPage = function (page) {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
-    if (page < 1 || page > totalPages) return;
+    if (page < 1) return;
     state.currentPage = page;
-    renderCards();
-    const grid = $('#news-grid');
-    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    loadData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.CrimiCore = { reload: loadData };
@@ -455,6 +456,7 @@
      ================================================================ */
   function init() {
     bindEvents();
+    initCountryFilter();
     loadData();
   }
 

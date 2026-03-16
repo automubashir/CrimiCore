@@ -1,7 +1,6 @@
 /* ================================================================
    CrimiCore - Criminal List Page Logic
-   Table: Name, Crime, Date of Birth, Gang, Location, View
-   Data from API
+   Server-side pagination + filtering via API
    ================================================================ */
 
 (function () {
@@ -10,7 +9,6 @@
   /* --- State --- */
   const state = {
     criminals: [],
-    filtered: [],
     searchQuery: '',
     currentPage: 1,
     perPage: 10,
@@ -23,7 +21,8 @@
       source: [],
       location: []
     },
-    filterOpen: false
+    filterOpen: false,
+    hasMore: true
   };
 
   /* --- DOM References --- */
@@ -89,7 +88,6 @@
   function renderFilterDropdown() {
     const dropdown = $('#filter-dropdown');
     if (!dropdown) return;
-
     const opts = getFilterOptions();
 
     dropdown.innerHTML = `
@@ -144,7 +142,8 @@
         state.filters[key] = [...dropdown.querySelectorAll(`.filter-chip.active[data-filter="${key}"]`)].map(c => c.dataset.value);
       });
       toggleFilterDropdown(false);
-      applyFilters();
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -167,10 +166,7 @@
       state.filters[key].forEach(v => allFilters.push({ type: key, label: labels[key], value: v }));
     });
 
-    if (allFilters.length === 0) {
-      container.style.display = 'none';
-      return;
-    }
+    if (allFilters.length === 0) { container.style.display = 'none'; return; }
 
     container.style.display = 'flex';
     container.innerHTML = allFilters.map(f => `
@@ -183,14 +179,16 @@
     container.querySelectorAll('.active-chip-close').forEach(btn => {
       btn.addEventListener('click', () => {
         state.filters[btn.dataset.type] = state.filters[btn.dataset.type].filter(v => v !== btn.dataset.value);
-        applyFilters();
+        state.currentPage = 1;
+        loadData();
         renderActiveFilters();
       });
     });
 
     container.querySelector('#clear-all-filters').addEventListener('click', () => {
       Object.keys(state.filters).forEach(k => state.filters[k] = []);
-      applyFilters();
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -203,11 +201,21 @@
     const tbody = $('#criminals-tbody');
     if (!tbody) return;
 
-    const start = (state.currentPage - 1) * state.perPage;
-    const end = start + state.perPage;
-    const page = state.filtered.slice(start, end);
+    // Client-side search within the current page data
+    let visible = [...state.criminals];
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      visible = visible.filter(c =>
+        (c.criminalName && c.criminalName.toLowerCase().includes(q)) ||
+        (c.crimeType && c.crimeType.toLowerCase().includes(q)) ||
+        (c.affiliation && c.affiliation.toLowerCase().includes(q)) ||
+        (c.location && c.location.toLowerCase().includes(q))
+      );
+    }
 
-    if (page.length === 0) {
+    visible = sortData(visible);
+
+    if (visible.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="6">
@@ -223,7 +231,7 @@
       return;
     }
 
-    tbody.innerHTML = page.map((c, i) => {
+    tbody.innerHTML = visible.map((c, i) => {
       const gang = c.affiliation || '';
       const gangLink = gang && gang.toLowerCase() !== 'empty'
         ? `<a href="gang-details.html?name=${encodeURIComponent(gang)}" class="text-link">${capitalizeFirst(gang)}</a>`
@@ -257,34 +265,21 @@
 
 
   /* ================================================================
-     Sorting
+     Sorting (client-side on current page data)
      ================================================================ */
   function sortData(data) {
     if (!state.sortColumn) return data;
-
     return [...data].sort((a, b) => {
       let valA, valB;
       switch (state.sortColumn) {
-        case 'name':
-          valA = (a.criminalName || '').toLowerCase();
-          valB = (b.criminalName || '').toLowerCase();
-          break;
-        case 'crime':
-          valA = (a.crimeType || '').toLowerCase();
-          valB = (b.crimeType || '').toLowerCase();
-          break;
+        case 'name': valA = (a.criminalName || '').toLowerCase(); valB = (b.criminalName || '').toLowerCase(); break;
+        case 'crime': valA = (a.crimeType || '').toLowerCase(); valB = (b.crimeType || '').toLowerCase(); break;
         case 'dob':
           valA = a.dateOfBirth ? new Date(a.dateOfBirth.replace(/\//g, '-')).getTime() : 0;
           valB = b.dateOfBirth ? new Date(b.dateOfBirth.replace(/\//g, '-')).getTime() : 0;
           return state.sortDirection === 'asc' ? valA - valB : valB - valA;
-        case 'gang':
-          valA = (a.affiliation || '').toLowerCase();
-          valB = (b.affiliation || '').toLowerCase();
-          break;
-        case 'location':
-          valA = (a.location || '').toLowerCase();
-          valB = (b.location || '').toLowerCase();
-          break;
+        case 'gang': valA = (a.affiliation || '').toLowerCase(); valB = (b.affiliation || '').toLowerCase(); break;
+        case 'location': valA = (a.location || '').toLowerCase(); valB = (b.location || '').toLowerCase(); break;
         default: return 0;
       }
       const cmp = valA.localeCompare(valB);
@@ -308,93 +303,36 @@
 
   function handleSort(column) {
     if (state.sortColumn === column) {
-      if (state.sortDirection === 'asc') {
-        state.sortDirection = 'desc';
-      } else {
-        state.sortColumn = null;
-        state.sortDirection = 'asc';
-      }
+      if (state.sortDirection === 'asc') state.sortDirection = 'desc';
+      else { state.sortColumn = null; state.sortDirection = 'asc'; }
     } else {
       state.sortColumn = column;
       state.sortDirection = 'asc';
     }
-    applyFilters();
+    renderTable();
   }
 
 
   /* ================================================================
-     Pagination
+     Pagination (server-side)
      ================================================================ */
   function renderPagination() {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
     const paginationEl = $('#pagination');
     const tableInfo = $('#table-info');
     if (!paginationEl) return;
 
-    const start = (state.currentPage - 1) * state.perPage + 1;
-    const end = Math.min(state.currentPage * state.perPage, state.filtered.length);
     if (tableInfo) {
-      tableInfo.textContent = state.filtered.length > 0
-        ? `Showing ${start} to ${end} of ${state.filtered.length} entries`
+      tableInfo.textContent = state.criminals.length > 0
+        ? `Page ${state.currentPage} — ${state.criminals.length} entries loaded`
         : 'No entries to show';
     }
 
-    if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
-
-    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
-    const maxVisible = 5;
-    let startPage = Math.max(1, state.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
-    if (startPage > 1) {
-      html += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
-      if (startPage > 2) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
+    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage <= 1 ? 'disabled' : ''}>Previous</button>`;
+    html += `<button class="pagination-btn active">${state.currentPage}</button>`;
+    if (state.hasMore) {
+      html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})">Next ${icons.chevRight}</button>`;
     }
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="pagination-btn ${i === state.currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
-      html += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-    html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>Next ${icons.chevRight}</button>`;
     paginationEl.innerHTML = html;
-  }
-
-
-  /* ================================================================
-     Filter & Search
-     ================================================================ */
-  function applyFilters() {
-    let result = [...state.criminals];
-
-    if (state.searchQuery) {
-      const q = state.searchQuery.toLowerCase();
-      result = result.filter(c =>
-        (c.criminalName && c.criminalName.toLowerCase().includes(q)) ||
-        (c.crimeType && c.crimeType.toLowerCase().includes(q)) ||
-        (c.affiliation && c.affiliation.toLowerCase().includes(q)) ||
-        (c.location && c.location.toLowerCase().includes(q))
-      );
-    }
-
-    if (state.filters.crimeType.length > 0) {
-      result = result.filter(c => state.filters.crimeType.includes(c.crimeType));
-    }
-    if (state.filters.affiliation.length > 0) {
-      result = result.filter(c => state.filters.affiliation.includes(c.affiliation));
-    }
-    if (state.filters.source.length > 0) {
-      result = result.filter(c => state.filters.source.includes(c.source));
-    }
-    if (state.filters.location.length > 0) {
-      result = result.filter(c => state.filters.location.includes(c.location));
-    }
-
-    result = sortData(result);
-    state.filtered = result;
-    state.currentPage = 1;
-    renderTable();
   }
 
 
@@ -421,15 +359,37 @@
 
 
   /* ================================================================
-     Data Loading
+     Data Loading (server-side pagination + filters)
      ================================================================ */
   async function loadData() {
     state.isLoading = true;
     renderSkeletonTable();
 
     try {
-      state.criminals = await DataService.getCriminals();
-      state.filtered = [...state.criminals];
+      // Build API filters
+      const apiFilters = {};
+      if (state.filters.crimeType.length === 1) apiFilters.crime_type = state.filters.crimeType[0];
+      if (state.filters.affiliation.length === 1) apiFilters.affiliation = state.filters.affiliation[0];
+      if (state.filters.source.length === 1) apiFilters.source = state.filters.source[0];
+      if (state.filters.location.length === 1) apiFilters.location = state.filters.location[0];
+
+      state.criminals = await DataService.getCriminals(apiFilters, state.currentPage);
+
+      // Client-side multi-select filtering
+      if (state.filters.crimeType.length > 1) {
+        state.criminals = state.criminals.filter(c => state.filters.crimeType.includes(c.crimeType));
+      }
+      if (state.filters.affiliation.length > 1) {
+        state.criminals = state.criminals.filter(c => state.filters.affiliation.includes(c.affiliation));
+      }
+      if (state.filters.source.length > 1) {
+        state.criminals = state.criminals.filter(c => state.filters.source.includes(c.source));
+      }
+      if (state.filters.location.length > 1) {
+        state.criminals = state.criminals.filter(c => state.filters.location.includes(c.location));
+      }
+
+      state.hasMore = state.criminals.length >= 10;
       state.isLoading = false;
       renderTable();
     } catch (error) {
@@ -450,6 +410,36 @@
 
 
   /* ================================================================
+     Country Dropdown
+     ================================================================ */
+  async function initCountryFilter() {
+    const select = $('#country-select');
+    if (!select) return;
+
+    try {
+      const countries = await DataService.getCountries();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = capitalizeFirst(c);
+        select.appendChild(opt);
+      });
+    } catch (e) { /* silent */ }
+
+    select.value = CountryFilter.get();
+
+    select.addEventListener('change', () => {
+      CountryFilter.set(select.value);
+    });
+
+    CountryFilter.onChange(() => {
+      state.currentPage = 1;
+      loadData();
+    });
+  }
+
+
+  /* ================================================================
      Event Binding
      ================================================================ */
   function bindEvents() {
@@ -460,7 +450,7 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           state.searchQuery = e.target.value.trim();
-          applyFilters();
+          renderTable();
         }, 250);
       });
     }
@@ -469,7 +459,6 @@
       th.addEventListener('click', () => handleSort(th.dataset.sort));
     });
 
-    // Filter button
     const filterBtn = $('#filter-btn');
     if (filterBtn) {
       filterBtn.addEventListener('click', (e) => {
@@ -478,11 +467,10 @@
       });
     }
 
-    // Close dropdown on outside click
     document.addEventListener('click', (e) => {
       const dropdown = $('#filter-dropdown');
-      const filterBtn = $('#filter-btn');
-      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+      const btn = $('#filter-btn');
+      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && btn && !btn.contains(e.target)) {
         toggleFilterDropdown(false);
       }
     });
@@ -493,12 +481,10 @@
      Global Functions
      ================================================================ */
   window.goToPage = function (page) {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
-    if (page < 1 || page > totalPages) return;
+    if (page < 1) return;
     state.currentPage = page;
-    renderTable();
-    const tableEl = $('.table-container');
-    if (tableEl) tableEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    loadData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.CrimiCriminals = { reload: loadData };
@@ -509,6 +495,7 @@
      ================================================================ */
   function init() {
     bindEvents();
+    initCountryFilter();
     loadData();
   }
 

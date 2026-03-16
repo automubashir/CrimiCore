@@ -1,7 +1,6 @@
 /* ================================================================
    CrimiCore - Gang List Page Logic
-   Simple table: Gang Name, Members, Location, View
-   Data from API (unique affiliations)
+   Server-side pagination + filtering via API
    ================================================================ */
 
 (function () {
@@ -10,7 +9,6 @@
   /* --- State --- */
   const state = {
     gangs: [],
-    filtered: [],
     searchQuery: '',
     currentPage: 1,
     perPage: 10,
@@ -21,7 +19,8 @@
       location: [],
       source: []
     },
-    filterOpen: false
+    filterOpen: false,
+    hasMore: true
   };
 
   /* --- DOM References --- */
@@ -66,7 +65,6 @@
   function renderFilterDropdown() {
     const dropdown = $('#filter-dropdown');
     if (!dropdown) return;
-
     const opts = getFilterOptions();
 
     dropdown.innerHTML = `
@@ -105,7 +103,8 @@
         state.filters[key] = [...dropdown.querySelectorAll(`.filter-chip.active[data-filter="${key}"]`)].map(c => c.dataset.value);
       });
       toggleFilterDropdown(false);
-      applyFilters();
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -128,10 +127,7 @@
       state.filters[key].forEach(v => allFilters.push({ type: key, label: labels[key], value: v }));
     });
 
-    if (allFilters.length === 0) {
-      container.style.display = 'none';
-      return;
-    }
+    if (allFilters.length === 0) { container.style.display = 'none'; return; }
 
     container.style.display = 'flex';
     container.innerHTML = allFilters.map(f => `
@@ -144,14 +140,16 @@
     container.querySelectorAll('.active-chip-close').forEach(btn => {
       btn.addEventListener('click', () => {
         state.filters[btn.dataset.type] = state.filters[btn.dataset.type].filter(v => v !== btn.dataset.value);
-        applyFilters();
+        state.currentPage = 1;
+        loadData();
         renderActiveFilters();
       });
     });
 
     container.querySelector('#clear-all-filters').addEventListener('click', () => {
       Object.keys(state.filters).forEach(k => state.filters[k] = []);
-      applyFilters();
+      state.currentPage = 1;
+      loadData();
       renderActiveFilters();
     });
   }
@@ -164,11 +162,18 @@
     const tbody = $('#gangs-tbody');
     if (!tbody) return;
 
-    const start = (state.currentPage - 1) * state.perPage;
-    const end = start + state.perPage;
-    const page = state.filtered.slice(start, end);
+    let visible = [...state.gangs];
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      visible = visible.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        g.location.toLowerCase().includes(q)
+      );
+    }
 
-    if (page.length === 0) {
+    visible = sortData(visible);
+
+    if (visible.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="4">
@@ -184,7 +189,7 @@
       return;
     }
 
-    tbody.innerHTML = page.map((g, i) => `
+    tbody.innerHTML = visible.map((g, i) => `
       <tr class="animate-fade-in" style="animation-delay:${i * 30}ms">
         <td><a href="gang-details.html?name=${encodeURIComponent(g.name)}" class="text-link font-medium">${highlightMatch(capitalizeFirst(g.name), state.searchQuery)}</a></td>
         <td><span class="font-semibold">${g.memberCount}</span></td>
@@ -223,20 +228,12 @@
      ================================================================ */
   function sortData(data) {
     if (!state.sortColumn) return data;
-
     return [...data].sort((a, b) => {
       let valA, valB;
       switch (state.sortColumn) {
-        case 'name':
-          valA = a.name.toLowerCase();
-          valB = b.name.toLowerCase();
-          break;
-        case 'members':
-          return state.sortDirection === 'asc' ? a.memberCount - b.memberCount : b.memberCount - a.memberCount;
-        case 'location':
-          valA = a.location.toLowerCase();
-          valB = b.location.toLowerCase();
-          break;
+        case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+        case 'members': return state.sortDirection === 'asc' ? a.memberCount - b.memberCount : b.memberCount - a.memberCount;
+        case 'location': valA = a.location.toLowerCase(); valB = b.location.toLowerCase(); break;
         default: return 0;
       }
       const cmp = valA.localeCompare(valB);
@@ -260,85 +257,36 @@
 
   function handleSort(column) {
     if (state.sortColumn === column) {
-      if (state.sortDirection === 'asc') {
-        state.sortDirection = 'desc';
-      } else {
-        state.sortColumn = null;
-        state.sortDirection = 'asc';
-      }
+      if (state.sortDirection === 'asc') state.sortDirection = 'desc';
+      else { state.sortColumn = null; state.sortDirection = 'asc'; }
     } else {
       state.sortColumn = column;
       state.sortDirection = 'asc';
     }
-    applyFilters();
+    renderTable();
   }
 
 
   /* ================================================================
-     Pagination
+     Pagination (server-side)
      ================================================================ */
   function renderPagination() {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
     const paginationEl = $('#pagination');
     const tableInfo = $('#table-info');
     if (!paginationEl) return;
 
-    const start = (state.currentPage - 1) * state.perPage + 1;
-    const end = Math.min(state.currentPage * state.perPage, state.filtered.length);
     if (tableInfo) {
-      tableInfo.textContent = state.filtered.length > 0
-        ? `Showing ${start} to ${end} of ${state.filtered.length} entries`
+      tableInfo.textContent = state.gangs.length > 0
+        ? `Page ${state.currentPage} — ${state.gangs.length} gangs loaded`
         : 'No entries to show';
     }
 
-    if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
-
-    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
-    const maxVisible = 5;
-    let startPage = Math.max(1, state.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
-    if (startPage > 1) {
-      html += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
-      if (startPage > 2) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
+    let html = `<button class="pagination-btn" onclick="goToPage(${state.currentPage - 1})" ${state.currentPage <= 1 ? 'disabled' : ''}>Previous</button>`;
+    html += `<button class="pagination-btn active">${state.currentPage}</button>`;
+    if (state.hasMore) {
+      html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})">Next ${icons.chevRight}</button>`;
     }
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="pagination-btn ${i === state.currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) html += `<span class="pagination-btn" style="cursor:default">...</span>`;
-      html += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-    html += `<button class="pagination-btn" onclick="goToPage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>Next ${icons.chevRight}</button>`;
     paginationEl.innerHTML = html;
-  }
-
-
-  /* ================================================================
-     Filter & Search
-     ================================================================ */
-  function applyFilters() {
-    let result = [...state.gangs];
-
-    if (state.searchQuery) {
-      const q = state.searchQuery.toLowerCase();
-      result = result.filter(g =>
-        g.name.toLowerCase().includes(q) ||
-        g.location.toLowerCase().includes(q)
-      );
-    }
-
-    if (state.filters.location.length > 0) {
-      result = result.filter(g => state.filters.location.includes(g.location));
-    }
-    if (state.filters.source.length > 0) {
-      result = result.filter(g => g.sources && g.sources.some(s => state.filters.source.includes(s)));
-    }
-
-    result = sortData(result);
-    state.filtered = result;
-    state.currentPage = 1;
-    renderTable();
   }
 
 
@@ -365,17 +313,31 @@
 
 
   /* ================================================================
-     Data Loading
+     Data Loading (server-side pagination + filters)
      ================================================================ */
   async function loadData() {
     state.isLoading = true;
     renderSkeletonTable();
 
     try {
-      state.gangs = await DataService.getGangs();
+      // Build API filters
+      const apiFilters = {};
+      if (state.filters.location.length === 1) apiFilters.location = state.filters.location[0];
+      if (state.filters.source.length === 1) apiFilters.source = state.filters.source[0];
+
+      state.gangs = await DataService.getGangs(apiFilters, state.currentPage);
+
+      // Client-side multi-select
+      if (state.filters.location.length > 1) {
+        state.gangs = state.gangs.filter(g => state.filters.location.includes(g.location));
+      }
+      if (state.filters.source.length > 1) {
+        state.gangs = state.gangs.filter(g => g.sources && g.sources.some(s => state.filters.source.includes(s)));
+      }
+
       // Sort by member count descending by default
       state.gangs.sort((a, b) => b.memberCount - a.memberCount);
-      state.filtered = [...state.gangs];
+      state.hasMore = state.gangs.length >= 5;
       state.isLoading = false;
       renderTable();
     } catch (error) {
@@ -396,6 +358,36 @@
 
 
   /* ================================================================
+     Country Dropdown
+     ================================================================ */
+  async function initCountryFilter() {
+    const select = $('#country-select');
+    if (!select) return;
+
+    try {
+      const countries = await DataService.getCountries();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = capitalizeFirst(c);
+        select.appendChild(opt);
+      });
+    } catch (e) { /* silent */ }
+
+    select.value = CountryFilter.get();
+
+    select.addEventListener('change', () => {
+      CountryFilter.set(select.value);
+    });
+
+    CountryFilter.onChange(() => {
+      state.currentPage = 1;
+      loadData();
+    });
+  }
+
+
+  /* ================================================================
      Event Binding
      ================================================================ */
   function bindEvents() {
@@ -406,7 +398,7 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           state.searchQuery = e.target.value.trim();
-          applyFilters();
+          renderTable();
         }, 250);
       });
     }
@@ -415,7 +407,6 @@
       th.addEventListener('click', () => handleSort(th.dataset.sort));
     });
 
-    // Filter button
     const filterBtn = $('#filter-btn');
     if (filterBtn) {
       filterBtn.addEventListener('click', (e) => {
@@ -424,11 +415,10 @@
       });
     }
 
-    // Close dropdown on outside click
     document.addEventListener('click', (e) => {
       const dropdown = $('#filter-dropdown');
-      const filterBtn = $('#filter-btn');
-      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+      const btn = $('#filter-btn');
+      if (state.filterOpen && dropdown && !dropdown.contains(e.target) && btn && !btn.contains(e.target)) {
         toggleFilterDropdown(false);
       }
     });
@@ -439,12 +429,10 @@
      Global Functions
      ================================================================ */
   window.goToPage = function (page) {
-    const totalPages = Math.ceil(state.filtered.length / state.perPage);
-    if (page < 1 || page > totalPages) return;
+    if (page < 1) return;
     state.currentPage = page;
-    renderTable();
-    const tableEl = $('.table-container');
-    if (tableEl) tableEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    loadData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.CrimiGangs = { reload: loadData };
@@ -455,6 +443,7 @@
      ================================================================ */
   function init() {
     bindEvents();
+    initCountryFilter();
     loadData();
   }
 
