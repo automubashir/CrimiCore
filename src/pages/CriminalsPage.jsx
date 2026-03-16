@@ -29,7 +29,7 @@ export default function CriminalsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
-  const [filters, setFilters] = useState({ crimeType: [], affiliation: [], source: [], location: [] });
+  const [filters, setFilters] = useState({ crimeType: [], source: [], location: [] });
 
   const sentinelRef = useRef(null);
   const debouncedSearch = useDebounce(searchQuery, 250);
@@ -51,14 +51,12 @@ export default function CriminalsPage() {
       try {
         const apiFilters = {};
         if (filters.crimeType.length === 1) apiFilters.crime_type = filters.crimeType[0];
-        if (filters.affiliation.length === 1) apiFilters.affiliation = filters.affiliation[0];
         if (filters.source.length === 1) apiFilters.source = filters.source[0];
         if (filters.location.length === 1) apiFilters.location = filters.location[0];
 
         let data = await getCriminals(apiFilters, currentPage, country);
 
         if (filters.crimeType.length > 1) data = data.filter(c => filters.crimeType.includes(c.crimeType));
-        if (filters.affiliation.length > 1) data = data.filter(c => filters.affiliation.includes(c.affiliation));
         if (filters.source.length > 1) data = data.filter(c => filters.source.includes(c.source));
         if (filters.location.length > 1) data = data.filter(c => filters.location.includes(c.location));
 
@@ -105,7 +103,7 @@ export default function CriminalsPage() {
       data = data.filter(c =>
         (c.criminalName && c.criminalName.toLowerCase().includes(q)) ||
         (c.crimeType && c.crimeType.toLowerCase().includes(q)) ||
-        (c.affiliation && c.affiliation.toLowerCase().includes(q)) ||
+        (c.source && c.source.toLowerCase().includes(q)) ||
         (c.location && c.location.toLowerCase().includes(q))
       );
     }
@@ -115,7 +113,6 @@ export default function CriminalsPage() {
         switch (sortColumn) {
           case 'name': valA = (a.criminalName || '').toLowerCase(); valB = (b.criminalName || '').toLowerCase(); break;
           case 'crime': valA = (a.crimeType || '').toLowerCase(); valB = (b.crimeType || '').toLowerCase(); break;
-          case 'gang': valA = (a.affiliation || '').toLowerCase(); valB = (b.affiliation || '').toLowerCase(); break;
           case 'location': valA = (a.location || '').toLowerCase(); valB = (b.location || '').toLowerCase(); break;
           default: return 0;
         }
@@ -128,7 +125,6 @@ export default function CriminalsPage() {
 
   const filterConfig = useMemo(() => ({
     crimeType: { label: 'Crime Type', options: [...new Set(criminals.map(c => c.crimeType).filter(Boolean))].sort(), maxShow: 12 },
-    affiliation: { label: 'Gang / Affiliation', options: [...new Set(criminals.map(c => c.affiliation).filter(a => a && a.toLowerCase() !== 'empty'))].sort(), maxShow: 12 },
     source: { label: 'Source', options: [...new Set(criminals.map(c => c.source).filter(Boolean))].sort(), maxShow: 10 },
     location: { label: 'Location', options: [...new Set(criminals.map(c => c.location).filter(l => l && l !== 'none, none' && l !== ''))].sort(), maxShow: 10 }
   }), [criminals]);
@@ -162,9 +158,9 @@ export default function CriminalsPage() {
 
         <ActiveFilters
           filters={filters}
-          labels={{ crimeType: 'Crime', affiliation: 'Gang', source: 'Source', location: 'Location' }}
+          labels={{ crimeType: 'Crime', source: 'Source', location: 'Location' }}
           onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
-          onClearAll={() => { setFilters({ crimeType: [], affiliation: [], source: [], location: [] }); }}
+          onClearAll={() => { setFilters({ crimeType: [], source: [], location: [] }); }}
         />
 
         <div className="table-container">
@@ -177,10 +173,7 @@ export default function CriminalsPage() {
                 <th data-sort="crime" className="sortable" onClick={() => handleSort('crime')}>
                   Crime <span className={`sort-icon${sortColumn === 'crime' ? ' sort-active' : ''}`}>{getSortIcon('crime')}</span>
                 </th>
-                <th>DOB</th>
-                <th data-sort="gang" className="sortable" onClick={() => handleSort('gang')}>
-                  Gang <span className={`sort-icon${sortColumn === 'gang' ? ' sort-active' : ''}`}>{getSortIcon('gang')}</span>
-                </th>
+                <th>Published</th>
                 <th data-sort="location" className="sortable" onClick={() => handleSort('location')}>
                   Location <span className={`sort-icon${sortColumn === 'location' ? ' sort-active' : ''}`}>{getSortIcon('location')}</span>
                 </th>
@@ -189,34 +182,26 @@ export default function CriminalsPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <SkeletonTableRows rows={10} cols={6} widths={['120px', '100px', '30px', '90px', '100px', '90px']} />
+                <SkeletonTableRows rows={10} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
               ) : visible.length === 0 ? (
                 <tr>
-                  <td colSpan="6">
+                  <td colSpan="5">
                     <EmptyState title="No criminals found" text="Try adjusting your search or filters" />
                   </td>
                 </tr>
               ) : (
-                visible.map((c, i) => {
-                  const gang = c.affiliation || '';
-                  const gangLink = gang && gang.toLowerCase() !== 'empty'
-                    ? <Link to={`/gangs/${encodeURIComponent(gang)}`} className="text-link">{capitalizeFirst(gang)}</Link>
-                    : <span className="text-muted">None</span>;
-
-                  return (
+                visible.map((c, i) => (
                     <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
                       <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
                       <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
-                      <td><span className="text-muted">{formatDate(c.dateOfBirth)}</span></td>
-                      <td>{gangLink}</td>
+                      <td><span className="text-muted">{formatDate(c.publishedDate)}</span></td>
                       <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.location), debouncedSearch) }} /></td>
                       <td><Link to={`/criminals/${encodeURIComponent(c.criminalName)}`} className="btn-view">View</Link></td>
                     </tr>
-                  );
-                })
+                ))
               )}
               {isLoadingMore && (
-                <SkeletonTableRows rows={3} cols={6} widths={['120px', '100px', '30px', '90px', '100px', '90px']} />
+                <SkeletonTableRows rows={3} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
               )}
             </tbody>
           </table>
