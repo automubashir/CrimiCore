@@ -1343,6 +1343,7 @@
   height: 140px;
   overflow: hidden;
   background: var(--bg-elevated);
+  border-bottom: 1px solid #8080801f;
 }
 
 .map-panel-card-img img {

@@ -17,9 +17,10 @@ function getQueryString(filters = {}) {
   return params.length > 0 ? '?' + params.join('&') : '';
 }
 
-async function fetchFromAPI(endpoint) {
+async function fetchFromAPI(endpoint, direct=false) {
   try {
-    const response = await fetch(API_BASE_URL + endpoint);
+    const full_url = direct ? endpoint : API_BASE_URL + endpoint;
+    const response = await fetch(full_url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -28,12 +29,12 @@ async function fetchFromAPI(endpoint) {
   }
 }
 
-async function fetchWithCache(endpoint) {
+async function fetchWithCache(endpoint, direct=false) {
   const cached = cache[endpoint];
   if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
     return cached.data;
   }
-  const data = await fetchFromAPI(endpoint);
+  const data = await fetchFromAPI(endpoint, direct);
   cache[endpoint] = { data, timestamp: Date.now() };
   return data;
 }
@@ -81,7 +82,7 @@ export async function getGangs() {
 }
 
 export async function geocodeLocation(location) {
-  const data = await fetchWithCache(`/geocode?location=${encodeURIComponent(location)}`);
+  const data = await fetchWithCache(`http://192.168.20.121:5000/geocode?location=${encodeURIComponent(location)}`, true);
   return data;
 }
 
