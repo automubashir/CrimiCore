@@ -7,6 +7,7 @@ import NewsCard from '../components/ui/NewsCard';
 import { SkeletonProfile } from '../components/ui/Skeleton';
 import { useCountryFilter } from '../context/CountryFilterContext';
 import { getCriminalsByAffiliation } from '../services/api';
+import MembersMap from '../components/ui/MembersMap';
 import { capitalizeFirst, truncate, formatDate, highlightMatch } from '../utils/formatters';
 import { useDebounce } from '../hooks/useDebounce';
 
@@ -271,6 +272,21 @@ export default function GangDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Locations Map Section */}
+            {locations.length > 0 && (
+              <div className="gang-section animate-slide-up" style={{ animationDelay: '50ms' }}>
+                <div className="gang-section-header">
+                  <h2 className="gang-section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                    </svg>
+                    Locations <span className="gang-section-count">{locations.length}</span>
+                  </h2>
+                </div>
+                <MembersMap members={members} />
+              </div>
+            )}
 
             {/* Articles Section */}
             <div className="gang-section animate-slide-up" style={{ animationDelay: '100ms' }}>

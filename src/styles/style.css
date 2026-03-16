@@ -1197,6 +1197,200 @@
 
 
 /* ================================================================
+   Members Map
+   ================================================================ */
+.map-wrapper {
+  position: relative;
+}
+
+.map-container {
+  width: 100%;
+  height: 450px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.map-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Panel backdrop */
+.map-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: var(--z-modal-backdrop);
+}
+
+/* Side panel */
+.map-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  animation: map-panel-in 0.25s ease;
+}
+
+@keyframes map-panel-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.map-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.map-panel-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.map-panel-count {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: block;
+}
+
+.map-panel-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--fs-xl);
+  cursor: pointer;
+  transition: all var(--ease-fast);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.map-panel-close:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.map-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Member card in panel */
+.map-panel-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.map-panel-card-img {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+}
+
+.map-panel-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-panel-card-body {
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+.map-panel-card-name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-link);
+  text-decoration: none;
+  display: block;
+  margin-bottom: var(--sp-1);
+}
+
+.map-panel-card-name:hover {
+  text-decoration: underline;
+}
+
+.map-panel-card-crime {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-1);
+}
+
+.map-panel-card-source {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-bottom: var(--sp-3);
+}
+
+.map-panel-card-article {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-color);
+  margin-bottom: var(--sp-2);
+}
+
+.map-panel-card-article-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  line-height: var(--lh-normal);
+  margin-bottom: var(--sp-1);
+}
+
+.map-panel-card-article-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  line-height: var(--lh-relaxed);
+  margin-bottom: var(--sp-1);
+}
+
+.map-panel-card-date {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.map-panel-card-link {
+  display: inline-block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-top: var(--sp-2);
+}
+
+.map-panel-card-link:hover {
+  text-decoration: underline;
+}
+
+
+/* ================================================================
    Responsive
    ================================================================ */
 @media (max-width: 1280px) {
@@ -1278,5 +1472,21 @@
   .table-footer {
     flex-direction: column;
     gap: var(--sp-3);
+  }
+
+  .map-container { height: 320px; }
+
+  .map-panel {
+    width: 100%;
+    height: 60vh;
+    top: auto;
+    bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: slideUp 0.3s var(--ease-smooth);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
   }
 }

@@ -115,6 +115,11 @@ export async function getGangs(filters = {}, page = null, country = 'All') {
   }));
 }
 
+export async function geocodeLocation(location) {
+  const data = await fetchWithCache(`/geocode?location=${encodeURIComponent(location)}`);
+  return data;
+}
+
 export async function getActivities(filters = {}, page = null, country = 'All') {
   const merged = { ...getCountryFilter(country), ...filters };
   if (page) merged.page = page;
