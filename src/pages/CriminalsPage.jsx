@@ -194,7 +194,7 @@ export default function CriminalsPage() {
                     <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
                       <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
                       <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
-                      <td><span className="text-muted">{formatDate(c.publishedDate)}</span></td>
+                      <td><span className="text-muted">{formatDate(c.published_date || c.publishedDate)}</span></td>
                       <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.location), debouncedSearch) }} /></td>
                       <td><Link to={`/criminals/${encodeURIComponent(c.criminalName)}`} className="btn-view">View</Link></td>
                     </tr>

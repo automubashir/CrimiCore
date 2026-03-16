@@ -69,8 +69,9 @@ export async function getCriminalsByAffiliation(affiliation, page = null) {
   return normalizeResponse(data);
 }
 
-export async function getGangs() {
-  const data = await fetchWithCache('/affiliations');
+export async function getGangs(country = 'All') {
+  const locationParam = country && country !== 'All' ? `?location=${encodeURIComponent(country)}` : '';
+  const data = await fetchWithCache(`/affiliations${locationParam}`);
   const items = data?.data || [];
   return items
     .filter(g => g.affiliation && g.affiliation.toLowerCase() !== 'empty')

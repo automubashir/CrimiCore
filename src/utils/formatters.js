@@ -5,25 +5,25 @@ export function capitalizeFirst(str) {
 
 export function truncate(str, max) {
   if (!str) return '';
-  return str.length > max ? str.substring(0, max) + '...' : str;
+  return str.length > max ? str?.substring(0, max) + '...' : str;
 }
 
 export function formatDate(dateStr) {
   if (!dateStr) return 'Unknown';
-  const d = new Date(dateStr.replace(/\//g, '-'));
+  const d = new Date(dateStr?.replace(/\//g, '-'));
   if (isNaN(d)) return dateStr;
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
 }
 
 export function formatDateLong(dateStr) {
   if (!dateStr) return 'Unknown';
-  const d = new Date(dateStr.replace(/\//g, '-'));
+  const d = new Date(dateStr?.replace(/\//g, '-'));
   if (isNaN(d)) return dateStr;
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function highlightMatch(text, query) {

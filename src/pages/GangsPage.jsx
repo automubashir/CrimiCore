@@ -2,10 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
+import FilterDropdown from '../components/ui/FilterDropdown';
+import ActiveFilters from '../components/ui/ActiveFilters';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonTableRows } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
+import { useCountryFilter } from '../context/CountryFilterContext';
 import { useDebounce } from '../hooks/useDebounce';
 import { getGangs } from '../services/api';
 import { capitalizeFirst, highlightMatch } from '../utils/formatters';
@@ -19,6 +22,7 @@ const sortIcons = {
 const PER_PAGE = 10;
 
 export default function GangsPage() {
+  const { country } = useCountryFilter();
   const showToast = useToast();
   const [allGangs, setAllGangs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,17 +30,18 @@ export default function GangsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
+  const [filters, setFilters] = useState({ location: [] });
 
   const debouncedSearch = useDebounce(searchQuery, 250);
 
+  // Re-fetch when country changes
   useEffect(() => {
     let cancelled = false;
     async function loadData() {
       setIsLoading(true);
       try {
-        const data = await getGangs();
+        const data = await getGangs(country);
         if (!cancelled) {
-          // Default sort: highest member count first
           data.sort((a, b) => b.memberCount - a.memberCount);
           setAllGangs(data);
           setIsLoading(false);
@@ -50,11 +55,20 @@ export default function GangsPage() {
     }
     loadData();
     return () => { cancelled = true; };
-  }, [showToast]);
+  }, [country, showToast]);
+
+  // Reset page on country/filter change
+  useEffect(() => { setCurrentPage(1); }, [country, filters]);
 
   // Filter + sort
   const filtered = useMemo(() => {
     let data = [...allGangs];
+
+    // Frontend location filter
+    if (filters.location.length > 0) {
+      data = data.filter(g => filters.location.includes(g.location));
+    }
+
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       data = data.filter(g =>
@@ -73,7 +87,16 @@ export default function GangsPage() {
       });
     }
     return data;
-  }, [allGangs, debouncedSearch, sortColumn, sortDirection]);
+  }, [allGangs, filters, debouncedSearch, sortColumn, sortDirection]);
+
+  // Filter config derived from data
+  const filterConfig = useMemo(() => ({
+    location: {
+      label: 'Location',
+      options: [...new Set(allGangs.map(g => g.location).filter(l => l && l !== 'Unknown'))].sort(),
+      maxShow: 15
+    }
+  }), [allGangs]);
 
   // Pagination
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
@@ -116,7 +139,15 @@ export default function GangsPage() {
           <div className="toolbar-left">
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search gangs..." />
           </div>
+          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
         </div>
+
+        <ActiveFilters
+          filters={filters}
+          labels={{ location: 'Location' }}
+          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
+          onClearAll={() => { setFilters({ location: [] }); }}
+        />
 
         <div className="table-container">
           <table className="data-table">
@@ -140,7 +171,7 @@ export default function GangsPage() {
               ) : pageSlice.length === 0 ? (
                 <tr>
                   <td colSpan="4">
-                    <EmptyState title="No gangs found" text="Try adjusting your search" />
+                    <EmptyState title="No gangs found" text="Try adjusting your search or filters" />
                   </td>
                 </tr>
               ) : (
