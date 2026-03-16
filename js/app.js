@@ -353,23 +353,10 @@
   /* ================================================================
      Country Dropdown
      ================================================================ */
-  async function initCountryFilter() {
+  function initCountryFilter() {
     const select = $('#country-select');
     if (!select) return;
 
-    try {
-      const countries = await DataService.getCountries();
-      countries.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = capitalizeFirst(c);
-        select.appendChild(opt);
-      });
-    } catch (e) {
-      // Silently fail — dropdown stays as "All Countries"
-    }
-
-    // Set current value
     select.value = CountryFilter.get();
 
     select.addEventListener('change', () => {

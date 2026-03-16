@@ -193,16 +193,6 @@ const DataService = {
       }));
   },
 
-  /**
-   * Get list of unique countries from the API (for country dropdown)
-   */
-  async getCountries() {
-    const data = await this._fetchWithCache('/criminals/filter');
-    const criminals = normalizeResponse(data);
-    const countries = [...new Set(criminals.map(c => c.country || c.location).filter(Boolean))].sort();
-    return countries;
-  },
-
   /* ================================================================
      Internal Helpers
      ================================================================ */
