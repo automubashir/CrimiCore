@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import EmptyState from '../components/ui/EmptyState';
 import NewsCard from '../components/ui/NewsCard';
-import { SkeletonProfile } from '../components/ui/Skeleton';
-import { useCountryFilter } from '../context/CountryFilterContext';
+import { SkeletonProfile, SkeletonTableRows } from '../components/ui/Skeleton';
 import { getCriminalsByAffiliation } from '../services/api';
 import MembersMap from '../components/ui/MembersMap';
 import { capitalizeFirst, truncate, formatDate, highlightMatch } from '../utils/formatters';
@@ -57,51 +56,73 @@ function SectionPagination({ totalItems, currentPage, perPage, onPageChange }) {
 
 export default function GangDetailPage() {
   const { name } = useParams();
-  const { country } = useCountryFilter();
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState(null);
 
   // Members section state
   const [membersSearch, setMembersSearch] = useState('');
-  const [membersPage, setMembersPage] = useState(1);
   const [membersSortCol, setMembersSortCol] = useState(null);
   const [membersSortDir, setMembersSortDir] = useState('asc');
-  const membersPerPage = 8;
 
   // Articles section state
   const [articlesSearch, setArticlesSearch] = useState('');
   const [articlesPage, setArticlesPage] = useState(1);
   const articlesPerPage = 6;
 
+  const sentinelRef = useRef(null);
   const debouncedMembersSearch = useDebounce(membersSearch, 250);
   const debouncedArticlesSearch = useDebounce(articlesSearch, 250);
 
+  // Load members with server-side pagination
   useEffect(() => {
     let cancelled = false;
-    async function loadProfile() {
+    async function loadData() {
       if (!name) { setError('No gang name specified'); setIsLoading(false); return; }
-      setIsLoading(true);
-      setError(null);
+      if (currentPage === 1) { setIsLoading(true); setError(null); }
+      else setIsLoadingMore(true);
+
       try {
         const decodedName = decodeURIComponent(name);
-        const data = await getCriminalsByAffiliation(decodedName, country);
+        const data = await getCriminalsByAffiliation(decodedName, currentPage);
         if (!cancelled) {
-          if (!data || data.length === 0) {
+          if (currentPage === 1 && (!data || data.length === 0)) {
             setError(`No records found for gang: ${decodedName}`);
           } else {
-            setMembers(data);
+            setMembers(prev => currentPage === 1 ? data : [...prev, ...data]);
+            setHasMore(data.length >= 10);
             document.title = `${capitalizeFirst(decodedName)} - CrimiCore`;
           }
           setIsLoading(false);
+          setIsLoadingMore(false);
         }
       } catch (err) {
-        if (!cancelled) { setError(err.message); setIsLoading(false); }
+        if (!cancelled) { setError(err.message); setIsLoading(false); setIsLoadingMore(false); }
       }
     }
-    loadProfile();
+    loadData();
     return () => { cancelled = true; };
-  }, [name, country]);
+  }, [name, currentPage]);
+
+  // Infinite scroll observer for members
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || isLoading || isLoadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setCurrentPage(prev => prev + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, isLoadingMore]);
 
   const gangName = decodeURIComponent(name || '');
   const locations = useMemo(() => [...new Set(members.map(m => m.location).filter(l => l && l !== 'none, none' && l !== ''))], [members]);
@@ -111,7 +132,7 @@ export default function GangDetailPage() {
   const media = useMemo(() => members.filter(m => m.imageUrl && m.imageUrl.trim()), [members]);
   const territory = locations[0] || 'Unknown';
 
-  // Filtered members
+  // Filtered members (client-side search + sort on accumulated data)
   const filteredMembers = useMemo(() => {
     let result = [...members];
     if (debouncedMembersSearch) {
@@ -138,11 +159,6 @@ export default function GangDetailPage() {
     return result;
   }, [members, debouncedMembersSearch, membersSortCol, membersSortDir]);
 
-  const membersSlice = useMemo(() => {
-    const start = (membersPage - 1) * membersPerPage;
-    return filteredMembers.slice(start, start + membersPerPage);
-  }, [filteredMembers, membersPage]);
-
   // Filtered articles
   const filteredArticles = useMemo(() => {
     if (!debouncedArticlesSearch) return articles;
@@ -168,7 +184,6 @@ export default function GangDetailPage() {
       setMembersSortDir('asc');
       return col;
     });
-    setMembersPage(1);
   }, [membersSortDir]);
 
   function getMemberSortIcon(col) {
@@ -176,8 +191,7 @@ export default function GangDetailPage() {
     return sortIcons.neutral;
   }
 
-  // Reset search pagination on search change
-  useEffect(() => { setMembersPage(1); }, [debouncedMembersSearch]);
+  // Reset articles pagination on search change
   useEffect(() => { setArticlesPage(1); }, [debouncedArticlesSearch]);
 
   return (
@@ -247,11 +261,11 @@ export default function GangDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {membersSlice.length === 0 ? (
+                    {filteredMembers.length === 0 && !isLoadingMore ? (
                       <tr><td colSpan="5"><div className="empty-state" style={{ minHeight: 100 }}><p className="text-muted">No members match your search</p></div></td></tr>
                     ) : (
-                      membersSlice.map((m, i) => (
-                        <tr key={`${m.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 20}ms` }}>
+                      filteredMembers.map((m, i) => (
+                        <tr key={`${m.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}>
                           <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(m.criminalName), debouncedMembersSearch) }} /></td>
                           <td><span className="text-secondary">{m.crimeType ? truncate(capitalizeFirst(m.crimeType), 50) : 'N/A'}</span></td>
                           <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(m.location), debouncedMembersSearch) || 'Unknown' }} /></td>
@@ -260,15 +274,20 @@ export default function GangDetailPage() {
                         </tr>
                       ))
                     )}
+                    {isLoadingMore && <SkeletonTableRows rows={3} cols={5} widths={['120px', '100px', '100px', '80px', '70px']} />}
                   </tbody>
                 </table>
+
+                {/* Infinite scroll sentinel */}
+                {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+
                 <div className="table-footer">
                   <span className="table-info">
-                    {filteredMembers.length > 0
-                      ? `Showing ${(membersPage - 1) * membersPerPage + 1} to ${Math.min(membersPage * membersPerPage, filteredMembers.length)} of ${filteredMembers.length}`
-                      : 'No entries'}
+                    {members.length > 0 ? `${members.length} members loaded` : 'No entries'}
                   </span>
-                  <SectionPagination totalItems={filteredMembers.length} currentPage={membersPage} perPage={membersPerPage} onPageChange={setMembersPage} />
+                  {!hasMore && members.length > 0 && (
+                    <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All members loaded</span>
+                  )}
                 </div>
               </div>
             </div>

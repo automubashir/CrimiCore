@@ -54,17 +54,17 @@ export async function getCriminals(filters = {}, page = null, country = 'All') {
   return normalizeResponse(data);
 }
 
-export async function getCriminalByName(name, country = 'All') {
-  const filters = { criminal_name: name, ...getCountryFilter(country) };
-  const query = getQueryString(filters);
+export async function getCriminalByName(name) {
+  const query = getQueryString({ criminal_name: name });
   const data = await fetchFromAPI(`/criminals/filter${query}`);
   return normalizeResponse(data);
 }
 
-export async function getCriminalsByAffiliation(affiliation, country = 'All') {
-  const filters = { affiliation, ...getCountryFilter(country) };
+export async function getCriminalsByAffiliation(affiliation, page = null) {
+  const filters = { affiliation };
+  if (page) filters.page = page;
   const query = getQueryString(filters);
-  const data = await fetchFromAPI(`/criminals/filter${query}`);
+  const data = await fetchWithCache(`/criminals/filter${query}`);
   return normalizeResponse(data);
 }
 

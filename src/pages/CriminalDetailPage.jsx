@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonProfile } from '../components/ui/Skeleton';
-import { useCountryFilter } from '../context/CountryFilterContext';
 import { getCriminalByName } from '../services/api';
 import { capitalizeFirst, formatDateLong, getInitials } from '../utils/formatters';
 
@@ -17,7 +16,6 @@ const icons = {
 
 export default function CriminalDetailPage() {
   const { name } = useParams();
-  const { country } = useCountryFilter();
   const [criminal, setCriminal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,7 +28,7 @@ export default function CriminalDetailPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const results = await getCriminalByName(decodeURIComponent(name), country);
+        const results = await getCriminalByName(decodeURIComponent(name));
         if (!cancelled) {
           if (!results || results.length === 0) {
             setError(`No record found for: ${decodeURIComponent(name)}`);
@@ -46,7 +44,7 @@ export default function CriminalDetailPage() {
     }
     loadProfile();
     return () => { cancelled = true; };
-  }, [name, country]);
+  }, [name]);
 
   const affiliation = criminal?.affiliation && criminal.affiliation.toLowerCase() !== 'empty' ? criminal.affiliation : '';
   const hasImage = criminal?.imageUrl && criminal.imageUrl.trim() && !imgError;
