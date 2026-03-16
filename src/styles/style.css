@@ -1222,7 +1222,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--bg-card);
+  background: var(--bg-table-header);
 }
 
 /* ================================================================

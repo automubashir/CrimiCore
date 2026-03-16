@@ -63,7 +63,7 @@ export default function FilterDropdown({ filterConfig, activeFilters, onApply })
         Filters
       </button>
       {isOpen && (
-        <div className="filter-dropdown" ref={dropdownRef} style={{ display: 'block' }}>
+        <div className="filter-dropdown" ref={dropdownRef} style={{ display: 'flex', flexDirection: 'column', gap: "16px" }}>
           {Object.entries(filterConfig).map(([key, config]) => (
             <div key={key}>
               <h4>{config.label}</h4>
