@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
-import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonTableRows } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
@@ -26,19 +25,29 @@ export default function CriminalsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [filters, setFilters] = useState({ crimeType: [], affiliation: [], source: [], location: [] });
 
+  const sentinelRef = useRef(null);
   const debouncedSearch = useDebounce(searchQuery, 250);
 
-  useEffect(() => { setCurrentPage(1); }, [country]);
+  // Reset when country or filters change
+  useEffect(() => {
+    setCriminals([]);
+    setCurrentPage(1);
+    setHasMore(true);
+  }, [country, filters]);
 
+  // Load data
   useEffect(() => {
     let cancelled = false;
     async function loadData() {
-      setIsLoading(true);
+      if (currentPage === 1) setIsLoading(true);
+      else setIsLoadingMore(true);
+
       try {
         const apiFilters = {};
         if (filters.crimeType.length === 1) apiFilters.crime_type = filters.crimeType[0];
@@ -54,13 +63,15 @@ export default function CriminalsPage() {
         if (filters.location.length > 1) data = data.filter(c => filters.location.includes(c.location));
 
         if (!cancelled) {
-          setCriminals(data);
+          setCriminals(prev => currentPage === 1 ? data : [...prev, ...data]);
           setHasMore(data.length >= 10);
           setIsLoading(false);
+          setIsLoadingMore(false);
         }
       } catch (error) {
         if (!cancelled) {
           setIsLoading(false);
+          setIsLoadingMore(false);
           showToast(error.message, 'error');
         }
       }
@@ -68,6 +79,23 @@ export default function CriminalsPage() {
     loadData();
     return () => { cancelled = true; };
   }, [currentPage, country, filters, showToast]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || isLoading || isLoadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setCurrentPage(prev => prev + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, isLoadingMore]);
 
   // Sorting + searching
   const visible = useMemo(() => {
@@ -121,12 +149,6 @@ export default function CriminalsPage() {
     return sortIcons.neutral;
   }
 
-  function handlePageChange(page) {
-    if (page < 1) return;
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   return (
     <>
       <Topbar title="Criminal Records" />
@@ -135,14 +157,14 @@ export default function CriminalsPage() {
           <div className="toolbar-left">
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search criminals..." />
           </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={(f) => { setFilters(f); setCurrentPage(1); }} />
+          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={(f) => { setFilters(f); }} />
         </div>
 
         <ActiveFilters
           filters={filters}
           labels={{ crimeType: 'Crime', affiliation: 'Gang', source: 'Source', location: 'Location' }}
-          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); setCurrentPage(1); }}
-          onClearAll={() => { setFilters({ crimeType: [], affiliation: [], source: [], location: [] }); setCurrentPage(1); }}
+          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
+          onClearAll={() => { setFilters({ crimeType: [], affiliation: [], source: [], location: [] }); }}
         />
 
         <div className="table-container">
@@ -182,7 +204,7 @@ export default function CriminalsPage() {
                     : <span className="text-muted">None</span>;
 
                   return (
-                    <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
+                    <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
                       <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
                       <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
                       <td><span className="text-muted">{formatDate(c.dateOfBirth)}</span></td>
@@ -193,13 +215,22 @@ export default function CriminalsPage() {
                   );
                 })
               )}
+              {isLoadingMore && (
+                <SkeletonTableRows rows={3} cols={6} widths={['120px', '100px', '30px', '90px', '100px', '90px']} />
+              )}
             </tbody>
           </table>
+
+          {/* Infinite scroll sentinel */}
+          {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+
           <div className="table-footer">
             <span className="table-info">
-              {criminals.length > 0 ? `Page ${currentPage} — ${criminals.length} entries loaded` : 'No entries to show'}
+              {criminals.length > 0 ? `${criminals.length} records loaded` : 'No entries to show'}
             </span>
-            <Pagination currentPage={currentPage} hasMore={hasMore} onPageChange={handlePageChange} />
+            {!hasMore && criminals.length > 0 && (
+              <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All records loaded</span>
+            )}
           </div>
         </div>
       </div>

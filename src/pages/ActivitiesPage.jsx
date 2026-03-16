@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
-import Pagination from '../components/ui/Pagination';
 import NewsCard from '../components/ui/NewsCard';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonCards } from '../components/ui/Skeleton';
@@ -19,19 +18,27 @@ export default function ActivitiesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({ source: [], crimeType: [] });
 
+  const sentinelRef = useRef(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  // Reset when country or filters change
   useEffect(() => {
+    setActivities([]);
     setCurrentPage(1);
-  }, [country]);
+    setHasMore(true);
+  }, [country, filters]);
 
+  // Load data
   useEffect(() => {
     let cancelled = false;
     async function loadData() {
-      setIsLoading(true);
+      if (currentPage === 1) setIsLoading(true);
+      else setIsLoadingMore(true);
+
       try {
         const apiFilters = {};
         if (filters.source.length === 1) apiFilters.source = filters.source[0];
@@ -49,13 +56,15 @@ export default function ActivitiesPage() {
         data.sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate));
 
         if (!cancelled) {
-          setActivities(data);
+          setActivities(prev => currentPage === 1 ? data : [...prev, ...data]);
           setHasMore(data.length >= 10);
           setIsLoading(false);
+          setIsLoadingMore(false);
         }
       } catch (error) {
         if (!cancelled) {
           setIsLoading(false);
+          setIsLoadingMore(false);
           showToast(error.message, 'error');
         }
       }
@@ -64,15 +73,22 @@ export default function ActivitiesPage() {
     return () => { cancelled = true; };
   }, [currentPage, country, filters, showToast]);
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = activities.length;
-    const sources = [...new Set(activities.map(a => a.source))].length;
-    const locations = [...new Set(activities.filter(a => a.location).map(a => a.location))].length;
-    const today = new Date().toDateString();
-    const recent = activities.filter(a => a.publishedDate && new Date(a.publishedDate).toDateString() === today).length;
-    return { total, sources, locations, recent };
-  }, [activities]);
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || isLoading || isLoadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setCurrentPage(prev => prev + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, isLoadingMore]);
 
   // Client-side search
   const visible = useMemo(() => {
@@ -101,87 +117,27 @@ export default function ActivitiesPage() {
     }
   }), [activities]);
 
-  function handleFilterApply(newFilters) {
-    setFilters(newFilters);
-    setCurrentPage(1);
-  }
-
-  function handleFilterRemove(type, value) {
-    setFilters(prev => ({
-      ...prev,
-      [type]: prev[type].filter(v => v !== value)
-    }));
-    setCurrentPage(1);
-  }
-
-  function handleClearAll() {
-    setFilters({ source: [], crimeType: [] });
-    setCurrentPage(1);
-  }
-
-  function handlePageChange(page) {
-    if (page < 1) return;
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   return (
     <>
       <Topbar title="Recent News" />
       <div className="page-content">
-        {/* Stats */}
-        <div className="stats-row">
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-total">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14,2 14,8 20,8" /></svg>
-            </div>
-            <div className="stat-info" id="stat-total">
-              {isLoading ? <div className="skeleton skeleton-text" style={{ width: 40, height: 24, marginBottom: 4 }} /> : <><h4>{stats.total}</h4><span>Total News</span></>}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-active">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-            </div>
-            <div className="stat-info" id="stat-sources">
-              {isLoading ? <div className="skeleton skeleton-text" style={{ width: 40, height: 24, marginBottom: 4 }} /> : <><h4>{stats.sources}</h4><span>Sources</span></>}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-wanted">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-            </div>
-            <div className="stat-info" id="stat-locations">
-              {isLoading ? <div className="skeleton skeleton-text" style={{ width: 40, height: 24, marginBottom: 4 }} /> : <><h4>{stats.locations}</h4><span>Locations</span></>}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon stat-icon-locked">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-            </div>
-            <div className="stat-info" id="stat-recent">
-              {isLoading ? <div className="skeleton skeleton-text" style={{ width: 40, height: 24, marginBottom: 4 }} /> : <><h4>{stats.recent}</h4><span>Today</span></>}
-            </div>
-          </div>
-        </div>
-
         {/* Toolbar */}
         <div className="toolbar">
           <div className="toolbar-left">
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search news..." />
           </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={handleFilterApply} />
+          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
         </div>
 
         <ActiveFilters
           filters={filters}
           labels={{ source: 'Source', crimeType: 'Crime' }}
-          onRemove={handleFilterRemove}
-          onClearAll={handleClearAll}
+          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
+          onClearAll={() => { setFilters({ source: [], crimeType: [] }); }}
         />
 
         {/* News Grid */}
-        <div className="news-grid" id="news-grid">
+        <div className="news-grid">
           {isLoading ? (
             <SkeletonCards count={8} />
           ) : visible.length === 0 ? (
@@ -191,16 +147,21 @@ export default function ActivitiesPage() {
               style={{ gridColumn: '1 / -1' }}
             />
           ) : (
-            visible.map((a, i) => <NewsCard key={`${a.title}-${i}`} article={a} index={i} />)
+            visible.map((a, i) => <NewsCard key={`${a.title}-${i}`} article={a} index={Math.min(i, 8)} />)
           )}
+          {isLoadingMore && <SkeletonCards count={4} />}
         </div>
 
-        {/* Pagination */}
+        {/* Infinite scroll sentinel */}
+        {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+
         <div className="page-footer">
           <span className="table-info">
-            {activities.length > 0 ? `Page ${currentPage} — ${activities.length} entries loaded` : 'No entries to show'}
+            {activities.length > 0 ? `${activities.length} articles loaded` : 'No entries to show'}
           </span>
-          <Pagination currentPage={currentPage} hasMore={hasMore} onPageChange={handlePageChange} />
+          {!hasMore && activities.length > 0 && (
+            <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All articles loaded</span>
+          )}
         </div>
       </div>
     </>
