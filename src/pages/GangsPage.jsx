@@ -57,15 +57,18 @@ export default function GangsPage() {
     let data = [...allGangs];
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
-      data = data.filter(g => g.name.toLowerCase().includes(q));
+      data = data.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        g.location.toLowerCase().includes(q)
+      );
     }
     if (sortColumn) {
       data.sort((a, b) => {
         if (sortColumn === 'members') {
           return sortDirection === 'asc' ? a.memberCount - b.memberCount : b.memberCount - a.memberCount;
         }
-        // name
-        const cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+        const key = sortColumn === 'location' ? 'location' : 'name';
+        const cmp = a[key].toLowerCase().localeCompare(b[key].toLowerCase());
         return sortDirection === 'asc' ? cmp : -cmp;
       });
     }
@@ -125,15 +128,18 @@ export default function GangsPage() {
                 <th className="sortable" onClick={() => handleSort('members')}>
                   Members <span className="sort-icon">{getSortIcon('members')}</span>
                 </th>
+                <th className="sortable" onClick={() => handleSort('location')}>
+                  Top Location <span className="sort-icon">{getSortIcon('location')}</span>
+                </th>
                 <th>View</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <SkeletonTableRows rows={10} cols={3} widths={['200px', '60px', '90px']} />
+                <SkeletonTableRows rows={10} cols={4} widths={['200px', '60px', '120px', '90px']} />
               ) : pageSlice.length === 0 ? (
                 <tr>
-                  <td colSpan="3">
+                  <td colSpan="4">
                     <EmptyState title="No gangs found" text="Try adjusting your search" />
                   </td>
                 </tr>
@@ -146,6 +152,7 @@ export default function GangsPage() {
                       </Link>
                     </td>
                     <td><span className="font-semibold">{g.memberCount}</span></td>
+                    <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.location), debouncedSearch) }} /></td>
                     <td><Link to={`/gangs/${encodeURIComponent(g.name)}`} className="btn-view">View</Link></td>
                   </tr>
                 ))

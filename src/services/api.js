@@ -75,7 +75,8 @@ export async function getGangs() {
     .filter(g => g.affiliation && g.affiliation.toLowerCase() !== 'empty')
     .map(g => ({
       name: g.affiliation,
-      memberCount: g.count,
+      memberCount: g.total_count,
+      location: g.top_location || 'Unknown',
     }));
 }
 
