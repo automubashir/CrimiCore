@@ -19,7 +19,7 @@ export function normalizeItem(item) {
     source: detail.source || news.source || '',
     linkToArticle: detail.linkToArticle || news.link || news.news_link || '',
     title: news.title || '',
-    imageUrl: news.thumbnail || '',
+    imageUrl: detail.imageUrl || news.thumbnail || '',
     publishedDate: news.published_date || '',
     description: news.description || '',
     country: news.country || '',
