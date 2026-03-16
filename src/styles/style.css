@@ -554,7 +554,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--sp-4);
-  min-width: 240px;
+  min-width: 600px;
   box-shadow: var(--shadow-xl);
   z-index: var(--z-dropdown);
   animation: slide-up 0.2s ease;

@@ -30,9 +30,10 @@ export function normalizeItem(item) {
 }
 
 /**
- * Normalize an array of API items
+ * Normalize an array of API items.
+ * Handles both raw arrays and wrapped responses like { total_records, data: [...] }
  */
 export function normalizeResponse(data) {
-  if (!Array.isArray(data)) return [];
-  return data.map(normalizeItem).filter(Boolean);
+  const items = Array.isArray(data) ? data : (data?.data || []);
+  return items.map(normalizeItem).filter(Boolean);
 }

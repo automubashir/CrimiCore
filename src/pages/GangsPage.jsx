@@ -2,13 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
-import FilterDropdown from '../components/ui/FilterDropdown';
-import ActiveFilters from '../components/ui/ActiveFilters';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonTableRows } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
-import { useCountryFilter } from '../context/CountryFilterContext';
 import { useDebounce } from '../hooks/useDebounce';
 import { getGangs } from '../services/api';
 import { capitalizeFirst, highlightMatch } from '../utils/formatters';
@@ -19,45 +16,29 @@ const sortIcons = {
   neutral: <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" opacity="0.3"><path d="M5 1L9 5H1L5 1Z" /><path d="M5 13L1 9H9L5 13Z" /></svg>
 };
 
+const PER_PAGE = 10;
+
 export default function GangsPage() {
-  const { country } = useCountryFilter();
   const showToast = useToast();
-  const [gangs, setGangs] = useState([]);
+  const [allGangs, setAllGangs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
-  const [filters, setFilters] = useState({ location: [], source: [] });
 
   const debouncedSearch = useDebounce(searchQuery, 250);
-
-  useEffect(() => { setCurrentPage(1); }, [country]);
 
   useEffect(() => {
     let cancelled = false;
     async function loadData() {
       setIsLoading(true);
       try {
-        const apiFilters = {};
-        if (filters.location.length === 1) apiFilters.location = filters.location[0];
-        if (filters.source.length === 1) apiFilters.source = filters.source[0];
-
-        let data = await getGangs(apiFilters, currentPage, country);
-
-        if (filters.location.length > 1) {
-          data = data.filter(g => filters.location.includes(g.location));
-        }
-        if (filters.source.length > 1) {
-          data = data.filter(g => g.sources && g.sources.some(s => filters.source.includes(s)));
-        }
-
-        data.sort((a, b) => b.memberCount - a.memberCount);
-
+        const data = await getGangs();
         if (!cancelled) {
-          setGangs(data);
-          setHasMore(data.length >= 5);
+          // Default sort: highest member count first
+          data.sort((a, b) => b.memberCount - a.memberCount);
+          setAllGangs(data);
           setIsLoading(false);
         }
       } catch (error) {
@@ -69,45 +50,37 @@ export default function GangsPage() {
     }
     loadData();
     return () => { cancelled = true; };
-  }, [currentPage, country, filters, showToast]);
+  }, [showToast]);
 
-  const visible = useMemo(() => {
-    let data = [...gangs];
+  // Filter + sort
+  const filtered = useMemo(() => {
+    let data = [...allGangs];
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
-      data = data.filter(g =>
-        g.name.toLowerCase().includes(q) ||
-        g.location.toLowerCase().includes(q)
-      );
+      data = data.filter(g => g.name.toLowerCase().includes(q));
     }
     if (sortColumn) {
       data.sort((a, b) => {
-        let valA, valB;
-        switch (sortColumn) {
-          case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
-          case 'members': return sortDirection === 'asc' ? a.memberCount - b.memberCount : b.memberCount - a.memberCount;
-          case 'location': valA = a.location.toLowerCase(); valB = b.location.toLowerCase(); break;
-          default: return 0;
+        if (sortColumn === 'members') {
+          return sortDirection === 'asc' ? a.memberCount - b.memberCount : b.memberCount - a.memberCount;
         }
-        const cmp = valA.localeCompare(valB);
+        // name
+        const cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
         return sortDirection === 'asc' ? cmp : -cmp;
       });
     }
     return data;
-  }, [gangs, debouncedSearch, sortColumn, sortDirection]);
+  }, [allGangs, debouncedSearch, sortColumn, sortDirection]);
 
-  const filterConfig = useMemo(() => ({
-    location: {
-      label: 'Location',
-      options: [...new Set(gangs.map(g => g.location).filter(l => l && l !== 'Unknown'))].sort(),
-      maxShow: 12
-    },
-    source: {
-      label: 'Source',
-      options: [...new Set(gangs.flatMap(g => g.sources || []).filter(Boolean))].sort(),
-      maxShow: 10
-    }
-  }), [gangs]);
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const pageSlice = useMemo(() => {
+    const start = (currentPage - 1) * PER_PAGE;
+    return filtered.slice(start, start + PER_PAGE);
+  }, [filtered, currentPage]);
+
+  // Reset to page 1 on search change
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch]);
 
   const handleSort = useCallback((column) => {
     setSortColumn(prev => {
@@ -118,6 +91,7 @@ export default function GangsPage() {
       setSortDirection('asc');
       return column;
     });
+    setCurrentPage(1);
   }, [sortDirection]);
 
   function getSortIcon(col) {
@@ -126,7 +100,7 @@ export default function GangsPage() {
   }
 
   function handlePageChange(page) {
-    if (page < 1) return;
+    if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -139,15 +113,7 @@ export default function GangsPage() {
           <div className="toolbar-left">
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search gangs..." />
           </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={(f) => { setFilters(f); setCurrentPage(1); }} />
         </div>
-
-        <ActiveFilters
-          filters={filters}
-          labels={{ location: 'Location', source: 'Source' }}
-          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); setCurrentPage(1); }}
-          onClearAll={() => { setFilters({ location: [], source: [] }); setCurrentPage(1); }}
-        />
 
         <div className="table-container">
           <table className="data-table">
@@ -159,23 +125,20 @@ export default function GangsPage() {
                 <th className="sortable" onClick={() => handleSort('members')}>
                   Members <span className="sort-icon">{getSortIcon('members')}</span>
                 </th>
-                <th className="sortable" onClick={() => handleSort('location')}>
-                  Location <span className="sort-icon">{getSortIcon('location')}</span>
-                </th>
                 <th>View</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <SkeletonTableRows rows={10} cols={4} widths={['140px', '40px', '120px', '90px']} />
-              ) : visible.length === 0 ? (
+                <SkeletonTableRows rows={10} cols={3} widths={['200px', '60px', '90px']} />
+              ) : pageSlice.length === 0 ? (
                 <tr>
-                  <td colSpan="4">
-                    <EmptyState title="No gangs found" text="Try adjusting your search or filters" />
+                  <td colSpan="3">
+                    <EmptyState title="No gangs found" text="Try adjusting your search" />
                   </td>
                 </tr>
               ) : (
-                visible.map((g, i) => (
+                pageSlice.map((g, i) => (
                   <tr key={`${g.name}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
                     <td>
                       <Link to={`/gangs/${encodeURIComponent(g.name)}`} className="text-link font-medium">
@@ -183,9 +146,6 @@ export default function GangsPage() {
                       </Link>
                     </td>
                     <td><span className="font-semibold">{g.memberCount}</span></td>
-                    <td>
-                      <span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.location), debouncedSearch) }} />
-                    </td>
                     <td><Link to={`/gangs/${encodeURIComponent(g.name)}`} className="btn-view">View</Link></td>
                   </tr>
                 ))
@@ -194,9 +154,11 @@ export default function GangsPage() {
           </table>
           <div className="table-footer">
             <span className="table-info">
-              {gangs.length > 0 ? `Page ${currentPage} — ${gangs.length} gangs loaded` : 'No entries to show'}
+              {filtered.length > 0
+                ? `Showing ${(currentPage - 1) * PER_PAGE + 1} to ${Math.min(currentPage * PER_PAGE, filtered.length)} of ${filtered.length} gangs`
+                : 'No entries to show'}
             </span>
-            <Pagination currentPage={currentPage} hasMore={hasMore} onPageChange={handlePageChange} />
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </div>
         </div>
       </div>

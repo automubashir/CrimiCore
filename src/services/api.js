@@ -68,51 +68,15 @@ export async function getCriminalsByAffiliation(affiliation, country = 'All') {
   return normalizeResponse(data);
 }
 
-export async function getGangs(filters = {}, page = null, country = 'All') {
-  const merged = { ...getCountryFilter(country), ...filters };
-  if (page) merged.page = page;
-  const query = getQueryString(merged);
-  const data = await fetchWithCache(`/criminals/filter${query}`);
-  const criminals = normalizeResponse(data);
-  const gangMap = {};
-
-  criminals.forEach((c) => {
-    const aff = (c.affiliation || '').trim();
-    if (!aff || aff.toLowerCase() === 'empty' || aff === '') return;
-
-    if (!gangMap[aff]) {
-      gangMap[aff] = {
-        name: aff,
-        members: [],
-        locations: [],
-        crimes: [],
-        sources: [],
-      };
-    }
-
-    gangMap[aff].members.push(c.criminalName);
-
-    if (c.location && c.location !== 'none, none' && c.location !== '') {
-      gangMap[aff].locations.push(c.location);
-    }
-
-    if (c.crimeType) {
-      gangMap[aff].crimes.push(c.crimeType);
-    }
-
-    if (c.source) {
-      gangMap[aff].sources.push(c.source);
-    }
-  });
-
-  return Object.values(gangMap).map((g) => ({
-    name: g.name,
-    memberCount: g.members.length,
-    location: g.locations[0] || 'Unknown',
-    members: g.members,
-    crimes: [...new Set(g.crimes)],
-    sources: [...new Set(g.sources)],
-  }));
+export async function getGangs() {
+  const data = await fetchWithCache('/affiliations');
+  const items = data?.data || [];
+  return items
+    .filter(g => g.affiliation && g.affiliation.toLowerCase() !== 'empty')
+    .map(g => ({
+      name: g.affiliation,
+      memberCount: g.count,
+    }));
 }
 
 export async function geocodeLocation(location) {
