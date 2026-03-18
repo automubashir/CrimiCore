@@ -70,7 +70,8 @@ export default function CriminalsPage() {
         if (!cancelled) {
           setIsLoading(false);
           setIsLoadingMore(false);
-          showToast(error.message, 'error');
+          setHasMore(false);
+          // showToast(error.message, 'error');
         }
       }
     }

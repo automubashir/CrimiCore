@@ -17,6 +17,7 @@ const icons = {
 export default function CriminalDetailPage() {
   const { name } = useParams();
   const [criminal, setCriminal] = useState(null);
+  const [news, setNews] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imgError, setImgError] = useState(false);
@@ -29,17 +30,19 @@ export default function CriminalDetailPage() {
       setError(null);
       try {
         const results = await getCriminalByName(decodeURIComponent(name));
+
         if (!cancelled) {
           if (!results || results.length === 0) {
             setError(`No record found for: ${decodeURIComponent(name)}`);
           } else {
-            setCriminal(results[0]);
-            document.title = `${capitalizeFirst(results[0].criminalName)} - CrimePanel`;
+            setCriminal(results?.all_criminal?.[0]);
+            setNews({...results?.all_news?.[0]?.news});
+            document.title = `${capitalizeFirst(results?.all_criminal?.[0]?.criminalName || '')} - CrimePanel`;
           }
           setIsLoading(false);
         }
       } catch (err) {
-        if (!cancelled) { setError(err.message); setIsLoading(false); }
+        if (!cancelled) { setIsLoading(false); }
       }
     }
     loadProfile();
@@ -126,20 +129,20 @@ export default function CriminalDetailPage() {
                 </div>
               )}
 
-              {criminal.title && (
+              {news.title && (
                 <div className="profile-section">
                   <h3>{icons.news} News Title</h3>
                   <p style={{ color: 'var(--text-primary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)' }}>
-                    {capitalizeFirst(criminal.title)}
+                    {capitalizeFirst(news.title)}
                   </p>
                 </div>
               )}
 
-              {criminal.description && (
+              {news.description && (
                 <div className="profile-section profile-section-full">
                   <h3>{icons.alert} Description</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)', whiteSpace: 'pre-line' }}>
-                    {criminal.description}
+                    {news.description}
                   </p>
                 </div>
               )}

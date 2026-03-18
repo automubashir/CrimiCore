@@ -47,8 +47,9 @@ export default function NewsCard({ article, index = 0 }) {
         <p className="news-card-desc">{description}</p>
         <div className="news-card-footer">
           <span className="news-card-date">{calendarIcon} {date}</span>
-          {article.linkToArticle && (
-            <a href={article.linkToArticle} target="_blank" rel="noopener noreferrer" className="news-card-link">Read More</a>
+          <span className="news-card-date">Refered Criminals: {article.criminal_count || 0}</span>
+          {article.newsLink && (
+            <a href={article.newsLink} target="_blank" rel="noopener noreferrer" className="news-card-link">Read More</a>
           )}
         </div>
       </div>
