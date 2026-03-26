@@ -1,4 +1,5 @@
 import { useCountryFilter } from '../../context/CountryFilterContext';
+import ThemeChanger from '../ui/ThemeChanger';
 
 export default function Topbar({ title }) {
   const { country, setCountry } = useCountryFilter();
@@ -25,6 +26,7 @@ export default function Topbar({ title }) {
             <option value="uk">UK</option>
           </select>
         </div>
+        <ThemeChanger />
       </div>
     </div>
   );
