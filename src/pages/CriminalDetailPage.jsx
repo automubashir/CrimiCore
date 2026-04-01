@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Topbar from '../components/layout/Topbar';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonProfile } from '../components/ui/Skeleton';
 import { getCriminalByName } from '../services/api';
@@ -54,8 +53,8 @@ export default function CriminalDetailPage() {
 
   return (
     <>
-      <Topbar title="Criminal Profile" />
-      <div className="page-content">
+      <div className="page-content criminal-details-page">
+        <div className='page-gradient'></div>
         <Link to="/criminals" className="profile-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
           Back to Criminals
@@ -70,19 +69,38 @@ export default function CriminalDetailPage() {
         ) : criminal && (
           <>
             <div className="profile-header animate-fade-in">
-              <div className="profile-photo-wrapper">
-                {hasImage ? (
-                  <img
-                    className="profile-photo"
-                    src={criminal.imageUrl}
-                    alt={criminal.criminalName}
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <div className="profile-photo avatar-placeholder" style={{ width: 160, height: 200 }}>
-                    {getInitials(criminal.criminalName)}
-                  </div>
-                )}
+              <div className='nc-wrapper h-fitcontent'>
+                <div className="profile-photo-wrapper nc-papa">
+                  {hasImage ? (
+                    <img
+                      className="profile-photo"
+                      src={criminal.imageUrl}
+                      alt={criminal.criminalName}
+                      onError={() => setImgError(true)}
+                    />
+                  ) : (
+                    <div className="profile-photo avatar-placeholder">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          width: 80,
+                          height: 80,
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="profile-summary">
                 <div className="profile-name-row">
@@ -102,48 +120,68 @@ export default function CriminalDetailPage() {
               </div>
             </div>
 
-            <div className="profile-sections animate-slide-up">
-              <div className="profile-section">
-                <h3>{icons.crime} Crime Details</h3>
-                <p style={{ color: 'var(--text-primary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)' }}>
-                  {capitalizeFirst(criminal.crimeType) || 'No crime details available'}
-                </p>
+            <div className="profile-sections animate-slide-up ">
+              <div className=" nc-wrapper w-100">
+                <div className='nc-papa w-100'>
+                  <div className='profile-section w-100'>
+                    <h3>{icons.crime} Crime Details</h3>
+                    <p style={{ color: 'var(--text-primary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)' }}>
+                      {capitalizeFirst(criminal.crimeType) || 'No crime details available'}
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <div className="profile-section">
-                <h3>{icons.gang} Gang Affiliation</h3>
-                <p style={{ fontSize: 'var(--fs-md)' }}>
-                  {affiliation
-                    ? <Link to={`/gangs/${encodeURIComponent(affiliation)}`} className="text-link">{capitalizeFirst(affiliation)}</Link>
-                    : <span className="text-muted">None</span>
-                  }
-                </p>
+              
+              <div className='nc-wrapper w-100'>
+                  <div className='nc-papa w-100'>
+                    <div className="profile-section w-100">
+                      <h3>{icons.gang} Gang Affiliation</h3>
+                      <p style={{ fontSize: 'var(--fs-md)' }}>
+                        {affiliation
+                          ? <Link to={`/gangs/${encodeURIComponent(affiliation)}`} className="text-link">{capitalizeFirst(affiliation)}</Link>
+                          : <span className="text-muted">None</span>
+                        }
+                      </p>
+                    </div>
+                  </div>
               </div>
 
               {criminal.linkToArticle && (
-                <div className="profile-section">
-                  <h3>{icons.link} Source Article</h3>
-                  <a href={criminal.linkToArticle} target="_blank" rel="noopener noreferrer" className="text-link" style={{ fontSize: 'var(--fs-md)', wordBreak: 'break-all' }}>
-                    {criminal.linkToArticle}
-                  </a>
+                <div className='nc-wrapper w-100'>
+                  <div className='nc-papa w-100'>
+                    <div className="profile-section w-100">
+                      <h3>{icons.link} Source Article</h3>
+                      <a href={criminal.linkToArticle} target="_blank" rel="noopener noreferrer" className="text-link" style={{ fontSize: 'var(--fs-md)', wordBreak: 'break-all' }}>
+                        {criminal.linkToArticle}
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {news.title && (
-                <div className="profile-section">
-                  <h3>{icons.news} News Title</h3>
-                  <p style={{ color: 'var(--text-primary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)' }}>
-                    {capitalizeFirst(news.title)}
-                  </p>
+                <div className='nc-wrapper w-100'> 
+                  <div className='nc-papa w-100'>
+                    <div className="profile-section w-100">
+                      <h3>{icons.news} News Title</h3>
+                      <p style={{ color: 'var(--text-primary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)' }}>
+                        {capitalizeFirst(news.title)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {news.description && (
-                <div className="profile-section profile-section-full">
-                  <h3>{icons.alert} Description</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)', whiteSpace: 'pre-line' }}>
-                    {news.description}
-                  </p>
+                <div className='nc-wrapper w-100 profile-section-full'>
+                  <div className='nc-papa w-100'> 
+                    <div className="profile-section  w-100">
+                      <h3>{icons.alert} Description</h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)', whiteSpace: 'pre-line' }}>
+                        {news.description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

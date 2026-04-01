@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import EmptyState from '../components/ui/EmptyState';
 import NewsCard from '../components/ui/NewsCard';
@@ -167,7 +166,7 @@ export default function GangDetailPage() {
 
       try {
         const decodedName = decodeURIComponent(name);
-        const data = await getCriminalsByAffiliation(decodedName, currentPage, country);
+        const data = await getCriminalsByAffiliation(decodedName, currentPage, country==='All' ? '' : country);
         const news =
           data?.all_news?.map((n) => {
             let c = n?.news;
@@ -353,8 +352,8 @@ export default function GangDetailPage() {
 
   return (
     <>
-      <Topbar title="Gang Profile" />
-      <div className="page-content">
+      <div className="page-content gang-detail-page">
+        <div className='page-gradient'></div>
         <Link to="/gangs" className="profile-back">
           <svg
             viewBox="0 0 24 24"
@@ -389,36 +388,30 @@ export default function GangDetailPage() {
               className="profile-header animate-fade-in"
               style={{ marginBottom: 'var(--sp-8)' }}
             >
-              <div className="profile-photo-wrapper">
-                <div
-                  className="profile-photo avatar-placeholder"
-                  style={{
-                    width: 160,
-                    height: 200,
-                    fontSize: '2.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{
-                      width: 80,
-                      height: 80,
-                      color: 'var(--text-muted)',
-                    }}
+              <div className='nc-wrapper h-fitcontent'>
+                <div className="profile-photo-wrapper nc-papa">
+                  <div
+                    className="profile-photo avatar-placeholder"
                   >
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        width: 80,
+                        height: 80,
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </div>
                 </div>
               </div>
               <div className="profile-summary">
@@ -437,35 +430,27 @@ export default function GangDetailPage() {
                   }}
                 >
                   <div className="gang-info-row">
-                    {starIcon}
                     <span className="gang-info-label">Territory:</span>
                     <span className="gang-info-value">
                       {capitalizeFirst(territory)}
                     </span>
                   </div>
                   <div className="gang-info-row">
-                    {starIcon}
                     <span className="gang-info-label">Members:</span>
                     <span
                       className="gang-info-value"
-                      style={{
-                        color: 'var(--status-active)',
-                        fontWeight: 'var(--fw-bold)',
-                      }}
                     >
                       {members.length}
                     </span>
                   </div>
                   <div className="gang-info-row">
-                    {starIcon}
                     <span className="gang-info-label">Sources:</span>
-                    <span className="gang-info-value">
+                    <span className="gang-info-value" style={{ color: '#62C3FF' }}>
                       {sources.map((s) => capitalizeFirst(s)).join(', ') ||
                         'Unknown'}
                     </span>
                   </div>
                   <div className="gang-info-row">
-                    {starIcon}
                     <span className="gang-info-label">Locations:</span>
                     <span className="gang-info-value">
                       {locations
@@ -475,7 +460,6 @@ export default function GangDetailPage() {
                     </span>
                   </div>
                   <div className="gang-info-row">
-                    {starIcon}
                     <span className="gang-info-label">Primary Activities:</span>
                     <span className="gang-info-value">
                       {crimes
@@ -489,306 +473,270 @@ export default function GangDetailPage() {
             </div>
 
             {/* Members Section */}
-            <div className="gang-section animate-slide-up">
-              <div className="gang-section-header">
-                <h2 className="gang-section-title">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ width: 20, height: 20 }}
+            <div className="gang-section animate-slide-up page-content p-0 bg-none border-none">
+              <div className='gangs-card-lg gcl-overlay'>
+                <div className='gcl'>
+                  <div className="gang-section-header">
+                    <h2 className="gang-section-title">
+                      Members{' '}
+                      <span className="gang-section-count">{members.length}</span>
+                    </h2>
+                    <SearchInput
+                      value={membersSearch}
+                      onChange={setMembersSearch}
+                      placeholder="Search members..."
+                      className="search-wrapper-sm"
+                    />
+                  </div>
+                  <div
+                    className="table-container members-scroll-container"
+                    ref={scrollContainerRef}
                   >
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                  Members{' '}
-                  <span className="gang-section-count">{members.length}</span>
-                </h2>
-                <SearchInput
-                  value={membersSearch}
-                  onChange={setMembersSearch}
-                  placeholder="Search members..."
-                  className="search-wrapper-sm"
-                />
-              </div>
-              <div
-                className="table-container members-scroll-container"
-                ref={scrollContainerRef}
-              >
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th
-                        className="sortable"
-                        onClick={() => handleMemberSort('name')}
-                      >
-                        Name{' '}
-                        <span className="sort-icon">
-                          {getMemberSortIcon('name')}
-                        </span>
-                      </th>
-                      <th
-                        className="sortable"
-                        onClick={() => handleMemberSort('crime')}
-                      >
-                        Crime{' '}
-                        <span className="sort-icon">
-                          {getMemberSortIcon('crime')}
-                        </span>
-                      </th>
-                      <th
-                        className="sortable"
-                        onClick={() => handleMemberSort('location')}
-                      >
-                        Location{' '}
-                        <span className="sort-icon">
-                          {getMemberSortIcon('location')}
-                        </span>
-                      </th>
-                      <th>Source</th>
-                      <th>View</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMembers.length === 0 && !isLoadingMore ? (
-                      <tr>
-                        <td colSpan="5">
-                          <div
-                            className="empty-state"
-                            style={{ minHeight: 100 }}
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th
+                            className="sortable"
+                            onClick={() => handleMemberSort('name')}
                           >
-                            <p className="text-muted">
-                              No members match your search
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredMembers.map((m, i) => (
-                        <tr
-                          key={`${m.criminalName}-${i}`}
-                          className="animate-fade-in"
-                          style={{
-                            animationDelay: `${Math.min(i, 10) * 20}ms`,
-                          }}
-                        >
-                          <td>
-                            <span
-                              className="font-medium"
-                              dangerouslySetInnerHTML={{
-                                __html: highlightMatch(
-                                  capitalizeFirst(m.criminalName),
-                                  debouncedMembersSearch,
-                                ),
-                              }}
-                            />
-                          </td>
-                          <td>
-                            <span className="text-secondary">
-                              {m.crimeType
-                                ? truncate(capitalizeFirst(m.crimeType), 50)
-                                : 'N/A'}
+                            Name{' '}
+                            <span className="sort-icon">
+                              {getMemberSortIcon('name')}
                             </span>
-                          </td>
-                          <td>
-                            <span
-                              className="text-secondary"
-                              dangerouslySetInnerHTML={{
-                                __html:
-                                  highlightMatch(
-                                    capitalizeFirst(m.location),
-                                    debouncedMembersSearch,
-                                  ) || 'Unknown',
-                              }}
-                            />
-                          </td>
-                          <td>
-                            <span
-                              className="text-muted"
-                              style={{ textTransform: 'capitalize' }}
-                            >
-                              {m.source || 'Unknown'}
+                          </th>
+                          <th
+                            className="sortable"
+                            onClick={() => handleMemberSort('crime')}
+                          >
+                            Crime{' '}
+                            <span className="sort-icon">
+                              {getMemberSortIcon('crime')}
                             </span>
-                          </td>
-                          <td>
-                            <Link
-                              to={`/criminals/${encodeURIComponent(m.criminalName)}`}
-                              className="btn-view"
-                            >
-                              View
-                            </Link>
-                          </td>
+                          </th>
+                          <th
+                            className="sortable"
+                            onClick={() => handleMemberSort('location')}
+                          >
+                            Location{' '}
+                            <span className="sort-icon">
+                              {getMemberSortIcon('location')}
+                            </span>
+                          </th>
+                          <th>Source</th>
+                          <th>View</th>
                         </tr>
-                      ))
-                    )}
-                    {isLoadingMore && (
-                      <SkeletonTableRows
-                        rows={3}
-                        cols={5}
-                        widths={['120px', '100px', '100px', '80px', '70px']}
-                      />
-                    )}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {filteredMembers.length === 0 && !isLoadingMore ? (
+                          <tr>
+                            <td colSpan="5">
+                              <div
+                                className="empty-state"
+                                style={{ minHeight: 100 }}
+                              >
+                                <p className="text-muted">
+                                  No members match your search
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredMembers.map((m, i) => (
+                            <tr
+                              key={`${m.criminalName}-${i}`}
+                              className="animate-fade-in"
+                              style={{
+                                animationDelay: `${Math.min(i, 10) * 20}ms`,
+                              }}
+                            >
+                              <td>
+                                <span
+                                  className="font-medium"
+                                  dangerouslySetInnerHTML={{
+                                    __html: highlightMatch(
+                                      capitalizeFirst(m.criminalName),
+                                      debouncedMembersSearch,
+                                    ),
+                                  }}
+                                />
+                              </td>
+                              <td>
+                                <span className="text-secondary">
+                                  {m.crimeType
+                                    ? truncate(capitalizeFirst(m.crimeType), 50)
+                                    : 'N/A'}
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className="text-secondary"
+                                  dangerouslySetInnerHTML={{
+                                    __html:
+                                      highlightMatch(
+                                        capitalizeFirst(m.location),
+                                        debouncedMembersSearch,
+                                      ) || 'Unknown',
+                                  }}
+                                />
+                              </td>
+                              <td>
+                                <span
+                                  className="text-muted"
+                                  style={{ textTransform: 'capitalize', color: '#62C3FF' }}
+                                >
+                                  {m.source || 'Unknown'}
+                                </span>
+                              </td>
+                              <td>
+                                <Link
+                                  to={`/criminals/${encodeURIComponent(m.criminalName)}`}
+                                  className="btn-view"
+                                >
+                                  View
+                                </Link>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                        {isLoadingMore && (
+                          <SkeletonTableRows
+                            rows={3}
+                            cols={5}
+                            widths={['120px', '100px', '100px', '80px', '70px']}
+                          />
+                        )}
+                      </tbody>
+                    </table>
 
-                {/* Infinite scroll sentinel */}
-                {!isLoading && hasMore && (
-                  <div ref={sentinelRef} style={{ height: 1 }} />
-                )}
-              </div>
-              <div className="table-footer">
-                <span className="table-info">
-                  {members.length > 0
-                    ? `${members.length} members loaded`
-                    : 'No entries'}
-                </span>
-                {!hasMore && members.length > 0 && (
-                  <span
-                    className="text-muted"
-                    style={{ fontSize: 'var(--fs-sm)' }}
-                  >
-                    All members loaded
-                  </span>
-                )}
+                    {/* Infinite scroll sentinel */}
+                    {!isLoading && hasMore && (
+                      <div ref={sentinelRef} style={{ height: 1 }} />
+                    )}
+                  </div>
+                  <div className="table-footer">
+                    <span className="table-info">
+                      {members.length > 0
+                        ? `${members.length} members loaded`
+                        : 'No entries'}
+                    </span>
+                    {!hasMore && members.length > 0 && (
+                      <span
+                        className="text-muted"
+                        style={{ fontSize: 'var(--fs-sm)' }}
+                      >
+                        All members loaded
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Locations Map Section */}
             {locations.length > 0 && (
               <div
-                className="gang-section animate-slide-up"
+                className="gang-section animate-slide-up page-content p-0 bg-none border-none"
                 style={{ animationDelay: '50ms' }}
               >
-                <div className="gang-section-header">
-                  <h2 className="gang-section-title">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ width: 20, height: 20 }}
-                    >
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    Locations{' '}
-                    <span className="gang-section-count">
-                      {locations.length}
-                    </span>
-                  </h2>
+                <div className='gangs-card-lg'>
+                  <div className='gcl'>
+                    <div className="gang-section-header">
+                      <h2 className="gang-section-title">
+                        Locations{' '}
+                        <span className="gang-section-count">
+                          {locations.length}
+                        </span>
+                      </h2>
+                    </div>
+                    <MembersMap members={members} />
+                  </div>
                 </div>
-                <MembersMap members={members} />
               </div>
             )}
 
             {/* Articles Section */}
             <div
-              className="gang-section animate-slide-up"
-              style={{ animationDelay: '100ms' }}
+              className="gang-section animate-slide-up page-content p-0 bg-none border-none"
+              style={{ animationDelay: '100ms', position: 'relative', zIndex: '0' }}
             >
-              <div className="gang-section-header">
-                <h2 className="gang-section-title">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ width: 20, height: 20 }}
-                  >
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                    <polyline points="14,2 14,8 20,8" />
-                  </svg>
-                  Articles{' '}
-                  <span className="gang-section-count">{articles.length}</span>
-                </h2>
-                <SearchInput
-                  value={articlesSearch}
-                  onChange={setArticlesSearch}
-                  placeholder="Search articles..."
-                  className="search-wrapper-sm"
-                />
-              </div>
-              <div className="news-grid news-grid-3">
-                {articlesSlice.length === 0 ? (
-                  <div
-                    className="empty-state"
-                    style={{ gridColumn: '1 / -1', minHeight: 100 }}
-                  >
-                    <p className="text-muted">
-                      {articles.length === 0
-                        ? 'No articles available'
-                        : 'No articles match your search'}
-                    </p>
+              <div className='gangs-card-lg gcl-overlay' >
+                <div className='gcl'>
+                  <div className="gang-section-header">
+                    <h2 className="gang-section-title">
+                      Articles{' '}
+                      <span className="gang-section-count">{articles.length}</span>
+                    </h2>
+                    <SearchInput
+                      value={articlesSearch}
+                      onChange={setArticlesSearch}
+                      placeholder="Search articles..."
+                      className="search-wrapper-sm"
+                    />
                   </div>
-                ) : (
-                  articlesSlice.map((a, i) => (
-                    <>
-                      <NewsCard key={`${a.title}-${i}`} article={a} index={i} />
-                    </>
-                  ))
-                )}
-              </div>
-              <div
-                className="table-footer"
-                style={{ marginTop: 'var(--sp-4)' }}
-              >
-                <span className="table-info">
-                  {filteredArticles.length > 0
-                    ? `Showing ${(articlesPage - 1) * articlesPerPage + 1} to ${Math.min(articlesPage * articlesPerPage, filteredArticles.length)} of ${filteredArticles.length}`
-                    : 'No entries'}
-                </span>
-                <SectionPagination
-                  totalItems={filteredArticles.length}
-                  currentPage={articlesPage}
-                  perPage={articlesPerPage}
-                  onPageChange={setArticlesPage}
-                />
+                  <div className="news-grid news-grid-3">
+                    {articlesSlice.length === 0 ? (
+                      <div
+                        className="empty-state"
+                        style={{ gridColumn: '1 / -1', minHeight: 100 }}
+                      >
+                        <p className="text-muted">
+                          {articles.length === 0
+                            ? 'No articles available'
+                            : 'No articles match your search'}
+                        </p>
+                      </div>
+                    ) : (
+                      articlesSlice.map((a, i) => (
+                        <NewsCard key={`${a.title}-${i}`} article={a} index={i} />
+                      ))
+                    )}
+                  </div>
+                  <div
+                    className="table-footer"
+                    style={{ marginTop: 'var(--sp-4)' }}
+                  >
+                    <span className="table-info">
+                      {filteredArticles.length > 0
+                        ? `Showing ${(articlesPage - 1) * articlesPerPage + 1} to ${Math.min(articlesPage * articlesPerPage, filteredArticles.length)} of ${filteredArticles.length}`
+                        : 'No entries'}
+                    </span>
+                    <SectionPagination
+                      totalItems={filteredArticles.length}
+                      currentPage={articlesPage}
+                      perPage={articlesPerPage}
+                      onPageChange={setArticlesPage}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Media Section */}
             <div
-              className="gang-section animate-slide-up"
-              style={{ animationDelay: '200ms' }}
+              className="gang-section animate-slide-up page-content p-0 bg-none border-none"
+              style={{ animationDelay: '200ms', position: 'relative', zIndex: '0' }}
             >
-              <div className="gang-section-header">
-                <h2 className="gang-section-title">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ width: 20, height: 20 }}
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  Media{' '}
-                  <span className="gang-section-count">{media.length}</span>
-                </h2>
-              </div>
-              <div className="media-gallery">
-                {media.length > 0 ? (
-                  media.map((m, i) => (
-                    <MediaItem key={`${m.criminalName}-${i}`} member={m} />
-                  ))
-                ) : (
-                  <p className="text-muted" style={{ padding: 'var(--sp-4)' }}>
-                    No media available
-                  </p>
-                )}
+              <div className='gangs-card-lg gcl-overlay'>
+                <div className='gcl'>
+                  <div className="gang-section-header">
+                    <h2 className="gang-section-title">
+                      Media{' '}
+                      <span className="gang-section-count">{media.length}</span>
+                    </h2>
+                  </div>
+                  <div className="media-gallery">
+                        {media.length > 0 ? (
+                          media.map((m, i) => (
+                            <MediaItem key={`${m.criminalName}-${i}`} member={m} />
+                          ))
+                        ) : (
+                          <p className="text-muted" style={{ padding: 'var(--sp-4)' }}>
+                            No media available
+                          </p>
+                        )}
+                      
+                  </div>
+                </div>
               </div>
             </div>
           </>
@@ -802,20 +750,26 @@ function MediaItem({ member }) {
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
   return (
-    <div className="media-item">
-      <img
-        src={member.imageUrl}
-        alt={capitalizeFirst(member.criminalName)}
-        loading="lazy"
-        onError={() => setHidden(true)}
-      />
-      <div className="media-overlay">
-        <span className="media-name">
-          {capitalizeFirst(member.criminalName)}
-        </span>
-        {member.source && (
-          <span className="media-source">{capitalizeFirst(member.source)}</span>
-        )}
+    <div className='nc-wrapper w-100'>
+      <div className='nc-papa w-100'>
+        <div className="media-item">
+          <div className='gci-holder'>
+            <img
+              src={member.imageUrl}
+              alt={capitalizeFirst(member.criminalName)}
+              loading="lazy"
+              onError={() => setHidden(true)}
+            />
+          </div>
+          <div className="media-overlay">
+            <span className="media-name">
+              {capitalizeFirst(member.criminalName)}
+            </span>
+            {member.source && (
+              <span className="media-source">{capitalizeFirst(member.source)}</span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

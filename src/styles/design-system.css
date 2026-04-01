@@ -11,13 +11,13 @@
 /* --- Dark Classic (Default) --- */
 [data-theme='dark-classic'] {
   /* Colors - Primary */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
+  --color-primary: #0E273E;
+  --color-primary-hover: #145897;
   --color-primary-light: rgba(59, 130, 246, 0.15);
   --color-primary-foreground: #ffffff;
 
   /* Colors - Backgrounds */
-  --bg-body: #070b14;
+  --bg-body: #050810;
   --bg-sidebar: #0a0f1a;
   --bg-surface: #0f1724;
   --bg-surface-hover: #151f32;
@@ -114,7 +114,7 @@
   --color-primary-foreground: #ffffff;
 
   /* Colors - Backgrounds */
-  --bg-body: #020617;
+  --bg-body: #02040f;
   --bg-sidebar: #0f172a;
   --bg-surface: #1e293b;
   --bg-surface-hover: #334155;
@@ -211,7 +211,7 @@
   --color-primary-foreground: #ffffff;
 
   /* Colors - Backgrounds */
-  --bg-body: #f8fafc;
+  --bg-body: #f4f7fb;
   --bg-sidebar: #ffffff;
   --bg-surface: #ffffff;
   --bg-surface-hover: #f1f5f9;
@@ -308,7 +308,7 @@
   --color-primary-foreground: #ffffff;
 
   /* Colors - Backgrounds */
-  --bg-body: #ffffff;
+  --bg-body: #f7f9fc;
   --bg-sidebar: #f8fafc;
   --bg-surface: #ffffff;
   --bg-surface-hover: #f8fafc;
@@ -459,7 +459,7 @@
 
   /* Layout */
   --sidebar-width: 240px;
-  --header-height: 60px;
+  --header-height: 0px;
 
   /* Focus Ring */
   --focus-ring: 0 0 0 3px var(--color-primary-light);
@@ -625,7 +625,22 @@ ul, ol { list-style: none; }
   cursor: not-allowed;
 }
 
-
+.p-0 { padding: 0 !important; }
+.bg-none{
+  background: unset !important;
+}
+.border-none{
+  border: 0 !important;
+}
+.h-fitcontent{
+  height: fit-content !important;
+}
+.w-100{
+  width: 100% !important;
+}
+.h-100{
+  height: 100% !important;
+}
 /* ================================================================
    Component: Badges
    ================================================================ */
@@ -635,14 +650,14 @@ ul, ol { list-style: none; }
   padding: 3px 10px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   text-transform: capitalize;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
 /* Crime Type Badges */
-.badge-burglary          { background: var(--crime-burglary); color: #fff; }
+.badge-burglary          { background: #EF44444F; color: #FFFFFF; border: 1px solid #EF4444; }
 .badge-drug-trafficking  { background: var(--crime-drug-trafficking); color: #fff; }
 .badge-fraud             { background: var(--crime-fraud); color: #1a1a00; }
 .badge-assault           { background: var(--crime-assault); color: #fff; }
@@ -731,7 +746,7 @@ ul, ol { list-style: none; }
    Component: Table
    ================================================================ */
 .table-container {
-  background: var(--bg-surface);
+  /* background: var(--bg-surface); */
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -743,7 +758,7 @@ ul, ol { list-style: none; }
 }
 
 .data-table thead {
-  background: var(--bg-table-header);
+  background: #141B2B;
 }
 
 .data-table th {
@@ -771,11 +786,11 @@ ul, ol { list-style: none; }
   transition: background var(--ease-fast);
 }
 .data-table tbody tr:hover {
-  background: var(--bg-table-row-hover);
+  background: #6d6d6d0d;
 }
-.data-table tbody tr:nth-child(even) {
+/* .data-table tbody tr:nth-child(even) {
   background: var(--bg-table-row-alt);
-}
+} */
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -909,7 +924,7 @@ ul, ol { list-style: none; }
   transition: all var(--ease-fast);
 }
 .pagination-btn:hover:not(:disabled) {
-  background: var(--bg-elevated);
+  background: #141B2B;
   color: var(--text-primary);
 }
 .pagination-btn.active {
@@ -996,7 +1011,7 @@ ul, ol { list-style: none; }
 
 .info-label {
   font-size: var(--fs-base);
-  color: var(--text-muted);
+  color: #FFFFFFBF;
   font-weight: var(--fw-medium);
   min-width: 100px;
   flex-shrink: 0;
@@ -1004,7 +1019,7 @@ ul, ol { list-style: none; }
 
 .info-value {
   font-size: var(--fs-base);
-  color: var(--text-primary);
+  color:#FFFFFF;
   font-weight: var(--fw-medium);
 }
 
@@ -1201,6 +1216,7 @@ ul, ol { list-style: none; }
 /* ================================================================
    Component: Dropdown
    ================================================================ */
+   
 .dropdown {
   position: relative;
   display: inline-block;

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
@@ -133,70 +132,72 @@ export default function GangsPage() {
 
   return (
     <>
-      <Topbar title="Criminal Gangs" />
-      <div className="page-content">
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search gangs..." />
-          </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
-        </div>
-
-        <ActiveFilters
-          filters={filters}
-          labels={{ location: 'Location' }}
-          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
-          onClearAll={() => { setFilters({ location: [] }); }}
-        />
-
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th className="sortable" onClick={() => handleSort('name')}>
-                  Gang Name <span className="sort-icon">{getSortIcon('name')}</span>
-                </th>
-                <th className="sortable" onClick={() => handleSort('members')}>
-                  Members <span className="sort-icon">{getSortIcon('members')}</span>
-                </th>
-                <th className="sortable" onClick={() => handleSort('location')}>
-                  Top Location <span className="sort-icon">{getSortIcon('location')}</span>
-                </th>
-                <th>View</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <SkeletonTableRows rows={10} cols={4} widths={['200px', '60px', '120px', '90px']} />
-              ) : pageSlice.length === 0 ? (
-                <tr>
-                  <td colSpan="4">
-                    <EmptyState title="No gangs found" text="Try adjusting your search or filters" />
-                  </td>
-                </tr>
-              ) : (
-                pageSlice.map((g, i) => (
-                  <tr key={`${g.name}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-                    <td>
-                      <Link to={`/gangs/${encodeURIComponent(g.name)}`} className="text-link font-medium">
-                        <span dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.name), debouncedSearch) }} />
-                      </Link>
-                    </td>
-                    <td><span className="font-semibold">{g.memberCount}</span></td>
-                    <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.location), debouncedSearch) }} /></td>
-                    <td><Link to={`/gangs/${encodeURIComponent(g.name)}`} className="btn-view">View</Link></td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          <div className="table-footer">
-            <span className="table-info">
-              {filtered.length > 0
-                ? `Showing ${(currentPage - 1) * PER_PAGE + 1} to ${Math.min(currentPage * PER_PAGE, filtered.length)} of ${filtered.length} gangs`
-                : 'No entries to show'}
-            </span>
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      <div className="page-content gangs-page">
+        <div className='page-gradient'></div>
+        <div className='gangs-card-lg'>
+          <div className='gcl'>
+              <div className="toolbar">
+                <div className="toolbar-left">
+                  <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search gangs..." />
+                </div>
+                <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
+              </div>
+              <ActiveFilters
+                filters={filters}
+                labels={{ location: 'Location' }}
+                onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
+                onClearAll={() => { setFilters({ location: [] }); }}
+              />
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th className="sortable" onClick={() => handleSort('name')}>
+                        Gang Name <span className="sort-icon">{getSortIcon('name')}</span>
+                      </th>
+                      <th className="sortable" onClick={() => handleSort('members')}>
+                        Members <span className="sort-icon">{getSortIcon('members')}</span>
+                      </th>
+                      <th className="sortable" onClick={() => handleSort('location')}>
+                        Top Location <span className="sort-icon">{getSortIcon('location')}</span>
+                      </th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <SkeletonTableRows rows={10} cols={4} widths={['200px', '60px', '120px', '90px']} />
+                    ) : pageSlice.length === 0 ? (
+                      <tr>
+                        <td colSpan="4">
+                          <EmptyState title="No gangs found" text="Try adjusting your search or filters" />
+                        </td>
+                      </tr>
+                    ) : (
+                      pageSlice.map((g, i) => (
+                        <tr key={`${g.name}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
+                          <td>
+                            <Link to={`/gangs/${encodeURIComponent(g.name)}`} className="text-link font-medium">
+                              <span dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.name), debouncedSearch) }} />
+                            </Link>
+                          </td>
+                          <td><span className="font-semibold">{g.memberCount}</span></td>
+                          <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.location), debouncedSearch) }} /></td>
+                          <td><Link to={`/gangs/${encodeURIComponent(g.name)}`} className="btn-view">View</Link></td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+                <div className="table-footer">
+                  <span className="table-info">
+                    {filtered.length > 0
+                      ? `Showing ${(currentPage - 1) * PER_PAGE + 1} to ${Math.min(currentPage * PER_PAGE, filtered.length)} of ${filtered.length} gangs`
+                      : 'No entries to show'}
+                  </span>
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+                </div>
+              </div>
           </div>
         </div>
       </div>

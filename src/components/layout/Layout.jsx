@@ -1,10 +1,10 @@
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Header from './Header';
 
-export default function Layout() {
+export default function Layout({ onLogout }) {
   return (
     <div className="layout">
-      <Sidebar />
+      <Header onLogout={onLogout} />
       <div className="main">
         <Outlet />
       </div>

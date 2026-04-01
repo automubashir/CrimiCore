@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
@@ -148,77 +147,79 @@ export default function CriminalsPage() {
 
   return (
     <>
-      <Topbar title="Criminal Records" />
-      <div className="page-content">
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search criminals..." />
-          </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={(f) => { setFilters(f); }} />
-        </div>
-
-        <ActiveFilters
-          filters={filters}
-          labels={{ crimeType: 'Crime', source: 'Source', location: 'Location' }}
-          onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
-          onClearAll={() => { setFilters({ crimeType: [], source: [], location: [] }); }}
-        />
-
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th data-sort="name" className="sortable" onClick={() => handleSort('name')}>
-                  Name <span className={`sort-icon${sortColumn === 'name' ? ' sort-active' : ''}`}>{getSortIcon('name')}</span>
-                </th>
-                <th data-sort="crime" className="sortable" onClick={() => handleSort('crime')}>
-                  Crime <span className={`sort-icon${sortColumn === 'crime' ? ' sort-active' : ''}`}>{getSortIcon('crime')}</span>
-                </th>
-                <th>Published</th>
-                <th data-sort="location" className="sortable" onClick={() => handleSort('location')}>
-                  Location <span className={`sort-icon${sortColumn === 'location' ? ' sort-active' : ''}`}>{getSortIcon('location')}</span>
-                </th>
-                <th>View</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <SkeletonTableRows rows={10} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
-              ) : visible.length === 0 ? (
-                <tr>
-                  <td colSpan="5">
-                    <EmptyState title="No criminals found" text="Try adjusting your search or filters" />
-                  </td>
-                </tr>
-              ) : (
-                visible.map((c, i) => (
-                    <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
-                      <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
-                      <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
-                      <td><span className="text-muted">{formatDate(c.published_date || c.publishedDate)}</span></td>
-                      <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.location), debouncedSearch) }} /></td>
-                      <td><Link to={`/criminals/${encodeURIComponent(c.criminalName)}`} className="btn-view">View</Link></td>
+      <div className="page-content gangs-page criminal-page">
+          <div className="page-gradient"></div>
+          <div className='gangs-card-lg'>
+            <div className='gcl'>
+              <div className="toolbar">
+                <div className="toolbar-left">
+                  <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search criminals..." />
+                </div>
+                <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={(f) => { setFilters(f); }} />
+              </div>
+              <ActiveFilters
+                filters={filters}
+                labels={{ crimeType: 'Crime', source: 'Source', location: 'Location' }}
+                onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
+                onClearAll={() => { setFilters({ crimeType: [], source: [], location: [] }); }}
+              />
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" className="sortable" onClick={() => handleSort('name')}>
+                        Name <span className={`sort-icon${sortColumn === 'name' ? ' sort-active' : ''}`}>{getSortIcon('name')}</span>
+                      </th>
+                      <th data-sort="crime" className="sortable" onClick={() => handleSort('crime')}>
+                        Crime <span className={`sort-icon${sortColumn === 'crime' ? ' sort-active' : ''}`}>{getSortIcon('crime')}</span>
+                      </th>
+                      <th>Published</th>
+                      <th data-sort="location" className="sortable" onClick={() => handleSort('location')}>
+                        Location <span className={`sort-icon${sortColumn === 'location' ? ' sort-active' : ''}`}>{getSortIcon('location')}</span>
+                      </th>
+                      <th>View</th>
                     </tr>
-                ))
-              )}
-              {isLoadingMore && (
-                <SkeletonTableRows rows={3} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
-              )}
-            </tbody>
-          </table>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <SkeletonTableRows rows={10} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
+                    ) : visible.length === 0 ? (
+                      <tr>
+                        <td colSpan="5">
+                          <EmptyState title="No criminals found" text="Try adjusting your search or filters" />
+                        </td>
+                      </tr>
+                    ) : (
+                      visible.map((c, i) => (
+                          <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+                            <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
+                            <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
+                            <td><span className="text-muted">{formatDate(c.published_date || c.publishedDate)}</span></td>
+                            <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.location), debouncedSearch) }} /></td>
+                            <td><Link to={`/criminals/${encodeURIComponent(c.criminalName)}`} className="btn-view">View</Link></td>
+                          </tr>
+                      ))
+                    )}
+                    {isLoadingMore && (
+                      <SkeletonTableRows rows={3} cols={5} widths={['120px', '100px', '80px', '100px', '90px']} />
+                    )}
+                  </tbody>
+                </table>
 
-          {/* Infinite scroll sentinel */}
-          {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+                {/* Infinite scroll sentinel */}
+                {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
 
-          <div className="table-footer">
-            <span className="table-info">
-              {criminals.length > 0 ? `${criminals.length} records loaded` : 'No entries to show'}
-            </span>
-            {!hasMore && criminals.length > 0 && (
-              <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All records loaded</span>
-            )}
+                <div className="table-footer">
+                  <span className="table-info">
+                    {criminals.length > 0 ? `${criminals.length} records loaded` : 'No entries to show'}
+                  </span>
+                  {!hasMore && criminals.length > 0 && (
+                    <span className="text-muted" style={{ fontSize: 'var(--fs-sm)' }}>All records loaded</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
       </div>
     </>
   );

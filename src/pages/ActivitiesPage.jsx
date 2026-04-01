@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import Topbar from '../components/layout/Topbar';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
@@ -120,14 +119,22 @@ export default function ActivitiesPage() {
 
   return (
     <>
-      <Topbar title="Recent News" />
-      <div className="page-content">
+      <div className="page-content activities-page">
+        <div className='page-gradient'></div>
         {/* Toolbar */}
         <div className="toolbar">
           <div className="toolbar-left">
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search news..." />
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search" />
           </div>
-          <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
+          <div className="toolbar-actions">
+            {country !== 'All' && (
+              <span className="sector-badge">
+                <span className="sector-badge-dot" />
+                {country.toUpperCase()} SECTOR
+              </span>
+            )}
+            <FilterDropdown filterConfig={filterConfig} activeFilters={filters} onApply={setFilters} />
+          </div>
         </div>
 
         <ActiveFilters
@@ -136,6 +143,13 @@ export default function ActivitiesPage() {
           onRemove={(type, value) => { setFilters(prev => ({ ...prev, [type]: prev[type].filter(v => v !== value) })); }}
           onClearAll={() => { setFilters({ source: [], crimeType: [] }); }}
         />
+
+        {/* Results count */}
+        {!isLoading && visible.length > 0 && (
+          <p className="results-count">
+            Showing <strong>{visible.length}</strong> Results
+          </p>
+        )}
 
         {/* News Grid */}
         <div className="news-grid">

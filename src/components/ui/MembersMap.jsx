@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { geocodeLocation } from '../../services/api';
-import { capitalizeFirst, truncate, formatDate } from '../../utils/formatters';
+import { capitalizeFirst, truncate } from '../../utils/formatters';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
@@ -206,43 +206,77 @@ export default function MembersMap({ members }) {
             </div>
             <div className="map-panel-body">
               {selectedMembers.map((m, i) => (
-                <div key={`${m.criminalName}-${i}`} className="map-panel-card">
-                  <div className="map-panel-card-img">
-                    {m.imageUrl ? (
-                      <img src={m.imageUrl} alt={m.criminalName} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                    ) : null}
-                    <div className="map-panel-card-img-fallback" style={m.imageUrl ? { display: 'none' } : {}}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="map-panel-card-body">
-                    <Link to={`/criminals/${encodeURIComponent(m.criminalName)}`} className="map-panel-card-name">
-                      {capitalizeFirst(m.criminalName)}
-                    </Link>
-                    {m.crimeType && <p className="map-panel-card-crime">{capitalizeFirst(truncate(m.crimeType, 60))}</p>}
-                    {m.source && <p className="map-panel-card-source">{capitalizeFirst(m.source)}</p>}
-                    {m.title && (
-                      <div className="map-panel-card-article">
-                        <p className="map-panel-card-article-title">{truncate(capitalizeFirst(m.title), 80)}</p>
-                        {m.description && <p className="map-panel-card-article-desc">{truncate(m.description, 120)}</p>}
-                        {m.publishedDate && <span className="map-panel-card-date">{formatDate(m.publishedDate)}</span>}
-                      </div>
-                    )}
-                    {m.linkToArticle && (
-                      <a href={m.linkToArticle} target="_blank" rel="noopener noreferrer" className="map-panel-card-link">
-                        Read Article &rarr;
-                      </a>
-                    )}
-                  </div>
-                </div>
+                <MemberCard key={`${m.criminalName}-${i}`} member={m} index={i} />
               ))}
             </div>
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+const externalLinkIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 11, height: 11, flexShrink: 0 }}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+);
+
+function MemberCard({ member, index }) {
+  const [imgError, setImgError] = useState(false);
+  const navigate = useNavigate();
+  const imgUrl = member.imageUrl || '';
+  const showImage = imgUrl && !imgError;
+
+  const article = {
+    title: member.title || member.criminalName,
+    imageUrl: member.imageUrl,
+    publishedDate: member.publishedDate,
+    description: member.description,
+    newsLink: member.linkToArticle,
+    source: member.source,
+    criminal_count: 0,
+  };
+
+  function handleCardClick() {
+    navigate('/news/detail', { state: { article } });
+  }
+
+  return (
+    <div className="nc-wrapper w-100">
+      <div className="nc-papa w-100">
+        <div
+          className="similar-news-card animate-fade-in"
+          style={{ animationDelay: `${index * 30}ms` }}
+          onClick={handleCardClick}
+        >
+          <div className={`similar-news-img${!showImage ? ' news-card-img-fallback' : ''}`}>
+            {showImage ? (
+              <img src={imgUrl} alt="" onError={() => setImgError(true)} />
+            ) : (
+              <img src="/broken-img.jpg" alt="" />
+            )}
+            {member.linkToArticle ? (
+              <a
+                href={member.linkToArticle}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="similar-news-source-btn"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Source {externalLinkIcon}
+              </a>
+            ) : (
+              <span className="similar-news-source-btn">Source</span>
+            )}
+          </div>
+          <div className="similar-news-body">
+            <h4 className="similar-news-title">{capitalizeFirst(member.title || member.criminalName)}</h4>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
