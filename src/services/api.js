@@ -1,5 +1,3 @@
-import { normalizeResponse } from './normalize';
-
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://192.168.20.121:8000';
 
@@ -109,7 +107,7 @@ export async function getActivities(
   const merged = { ...getCountryFilter(country), ...filters };
   if (page) merged.page = page;
   const query = getQueryString(merged);
-  const data = await fetchWithCache(`/criminals/filter${query}`);
+  const data = await fetchWithCache(`/news/filter${query}`);
   const criminals = data?.all_news || [];
   return criminals
     .filter((c) => c.criminal_count > 0)
@@ -126,4 +124,34 @@ export async function getActivities(
         source: c.source || '',
       };
     });
+}
+
+function normalizeArticle(item) {
+  return {
+    title: item.title || '',
+    imageUrl: item.thumbnail || item.imageUrl || '',
+    publishedDate: item.published_date || item.publishedDate || '',
+    description: item.description || '',
+    newsLink: item.news_link || item.newsLink || '',
+    source: item.source || '',
+    country: item.country || '',
+    publishedBy: item.published_by || [],
+  };
+}
+
+export async function getNewsDetail(newsLink) {
+  try {
+    const url = `${API_BASE_URL}/news?news_link=${encodeURIComponent(newsLink)}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const article = data?.news ? normalizeArticle(data.news) : null;
+    const similarNews = Array.isArray(data?.similar_news)
+      ? data.similar_news.map(normalizeArticle).slice(0, 10)
+      : [];
+    return { article, similarNews };
+  } catch (error) {
+    console.error('News Detail API Error:', error);
+    return { article: null, similarNews: [] };
+  }
 }

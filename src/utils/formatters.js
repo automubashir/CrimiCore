@@ -1,6 +1,6 @@
 export function capitalizeFirst(str) {
-  if (!str) return '';
-  return str.replace(/\b\w/g, l => l.toUpperCase());
+  if (!str || typeof str !== 'string') return '';
+  return str?.replace(/\b\w/g, l => l?.toUpperCase() || '');
 }
 
 export function truncate(str, max) {
@@ -29,7 +29,7 @@ export function escapeRegex(str) {
 export function highlightMatch(text, query) {
   if (!query) return text;
   const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-  return text.replace(regex, '<mark style="background:rgba(59,130,246,0.3);color:#fff;border-radius:2px;padding:0 2px">$1</mark>');
+  return text?.replace(regex, '<mark style="background:rgba(59,130,246,0.3);color:#fff;border-radius:2px;padding:0 2px">$1</mark>');
 }
 
 export function getInitials(name) {

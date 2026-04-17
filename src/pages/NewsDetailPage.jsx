@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import SimilarNewsCard from '../components/ui/SimilarNewsCard';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonCards } from '../components/ui/Skeleton';
-import { getActivities } from '../services/api';
+import { getNewsDetail } from '../services/api';
 import { capitalizeFirst, formatDate } from '../utils/formatters';
 
 const externalLinkIcon = (
@@ -17,11 +17,38 @@ const externalLinkIcon = (
 export default function NewsDetailPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const article = state?.article || null;
+  const [searchParams] = useSearchParams();
+  const newsLink = searchParams.get('link');
 
+  // state.article is a pre-fill from navigation — avoids blank flash when clicking a card.
+  // On refresh, state is gone and we fall back to fetching via newsLink from the URL.
+  const [article, setArticle] = useState(state?.article || null);
   const [similarNews, setSimilarNews] = useState([]);
-  const [isLoadingSimilar, setIsLoadingSimilar] = useState(true);
+  const [isLoading, setIsLoading] = useState(!state?.article);
+  const [isLoadingSimilar, setIsLoadingSimilar] = useState(!!newsLink);
   const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    if (!newsLink) return;
+    let cancelled = false;
+
+    async function load() {
+      if (!state?.article) setIsLoading(true);
+      setIsLoadingSimilar(true);
+
+      const { article: fetched, similarNews: similar } = await getNewsDetail(newsLink);
+
+      if (!cancelled) {
+        if (fetched) setArticle(fetched);
+        setSimilarNews(similar);
+        setIsLoading(false);
+        setIsLoadingSimilar(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [newsLink]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (article) {
@@ -29,27 +56,14 @@ export default function NewsDetailPage() {
     }
   }, [article]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadSimilar() {
-      setIsLoadingSimilar(true);
-      try {
-        const data = await getActivities({}, 1, 'All');
-        if (!cancelled) {
-          const filtered = (data || [])
-            .filter((a) => a.title !== article?.title)
-            .slice(0, 10);
-          setSimilarNews(filtered);
-        }
-      } catch {
-        // silent
-      } finally {
-        if (!cancelled) setIsLoadingSimilar(false);
-      }
-    }
-    loadSimilar();
-    return () => { cancelled = true; };
-  }, [article?.title]);
+  if (isLoading) {
+    return (
+      <div className="page-content">
+        <div className="page-gradient" />
+        <SkeletonCards count={1} />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -57,7 +71,7 @@ export default function NewsDetailPage() {
         <div className="page-gradient" />
         <EmptyState
           title="Article Not Found"
-          text="No article data was passed. Please go back and click a news card."
+          text="No article data found. Please go back and click a news card."
           type="error"
           style={{ minHeight: 400 }}
         >
@@ -164,7 +178,7 @@ export default function NewsDetailPage() {
                       <EmptyState title="No similar news" text="" style={{ minHeight: 120 }} />
                     ) : (
                       similarNews.map((a, i) => (
-                        <SimilarNewsCard key={`similar-${a.title}-${i}`} article={a} index={i} />
+                        <SimilarNewsCard key={`similar-${a.newsLink || i}`} article={a} index={i} />
                       ))
                     )}
                   </div>

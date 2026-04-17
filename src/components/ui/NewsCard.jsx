@@ -23,7 +23,8 @@ export default function NewsCard({ article, index = 0 }) {
   const source = article.source || 'Unknown';
 
   function handleCardClick() {
-    navigate('/news/detail', { state: { article } });
+    if (!article.newsLink) return;
+    navigate(`/news/detail?link=${encodeURIComponent(article.newsLink)}`, { state: { article } });
   }
 
   return (

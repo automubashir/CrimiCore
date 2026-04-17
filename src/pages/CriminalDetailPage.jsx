@@ -146,14 +146,19 @@ export default function CriminalDetailPage() {
                   </div>
               </div>
 
-              {criminal.linkToArticle && (
+              {criminal.links && criminal.links?.length>0 && (
                 <div className='nc-wrapper w-100'>
                   <div className='nc-papa w-100'>
                     <div className="profile-section w-100">
                       <h3>{icons.link} Source Article</h3>
-                      <a href={criminal.linkToArticle} target="_blank" rel="noopener noreferrer" className="text-link" style={{ fontSize: 'var(--fs-md)', wordBreak: 'break-all' }}>
-                        {criminal.linkToArticle}
+                      {
+                        criminal.links?.map(link=>(
+                      <a href={link} target="_blank" rel="noopener noreferrer" className="text-link" style={{ fontSize: 'var(--fs-md)', wordBreak: 'break-all' }}>
+                        {link}<br/>
                       </a>
+
+                        ))
+                      }
                     </div>
                   </div>
                 </div>

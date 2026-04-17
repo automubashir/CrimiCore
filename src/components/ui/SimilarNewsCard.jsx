@@ -19,7 +19,8 @@ export default function SimilarNewsCard({ article, index = 0 }) {
   const showImage = imgUrl && !imgError;
 
   function handleCardClick() {
-    navigate('/news/detail', { state: { article } });
+    if (!article.newsLink) return;
+    navigate(`/news/detail?link=${encodeURIComponent(article.newsLink)}`, { state: { article } });
   }
 
   return (

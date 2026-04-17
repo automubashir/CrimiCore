@@ -755,6 +755,7 @@ ul, ol { list-style: none; }
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .data-table thead {
@@ -780,6 +781,16 @@ ul, ol { list-style: none; }
   font-size: var(--fs-base);
   vertical-align: middle;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+  width: 90px;
+  text-align: center;
 }
 
 .data-table tbody tr {

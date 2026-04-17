@@ -241,7 +241,8 @@ function MemberCard({ member, index }) {
   };
 
   function handleCardClick() {
-    navigate('/news/detail', { state: { article } });
+    if (!article.newsLink) return;
+    navigate(`/news/detail?link=${encodeURIComponent(article.newsLink)}`, { state: { article } });
   }
 
   return (
