@@ -10,6 +10,7 @@ import { useCountryFilter } from '../context/CountryFilterContext';
 import { useDebounce } from '../hooks/useDebounce';
 import { getCriminals } from '../services/api';
 import { capitalizeFirst, truncate, highlightMatch, formatDate } from '../utils/formatters';
+import CriminalAvatar from '../components/ui/CriminalAvatar';
 
 const sortIcons = {
   asc: <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2L9 7H1L5 2Z" /></svg>,
@@ -192,7 +193,12 @@ export default function CriminalsPage() {
                     ) : (
                       visible.map((c, i) => (
                           <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
-                            <td><span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} /></td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <CriminalAvatar imageUrl={c.imageUrl} name={capitalizeFirst(c.criminalName)} />
+                                <span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} />
+                              </div>
+                            </td>
                             <td><span className="text-secondary">{truncate(capitalizeFirst(c.crimeType), 40)}</span></td>
                             <td><span className="text-muted">{formatDate(c.published_date || c.publishedDate)}</span></td>
                             <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.location), debouncedSearch) }} /></td>

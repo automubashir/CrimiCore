@@ -12,6 +12,7 @@ import {
   formatDate,
   highlightMatch,
 } from '../utils/formatters';
+import CriminalAvatar from '../components/ui/CriminalAvatar';
 import { useDebounce } from '../hooks/useDebounce';
 import { useCountryFilter } from '../context/CountryFilterContext';
 
@@ -550,15 +551,18 @@ export default function GangDetailPage() {
                               }}
                             >
                               <td>
-                                <span
-                                  className="font-medium"
-                                  dangerouslySetInnerHTML={{
-                                    __html: highlightMatch(
-                                      capitalizeFirst(m.criminalName),
-                                      debouncedMembersSearch,
-                                    ),
-                                  }}
-                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <CriminalAvatar imageUrl={m.imageUrl} name={capitalizeFirst(m.criminalName)} />
+                                  <span
+                                    className="font-medium"
+                                    dangerouslySetInnerHTML={{
+                                      __html: highlightMatch(
+                                        capitalizeFirst(m.criminalName),
+                                        debouncedMembersSearch,
+                                      ),
+                                    }}
+                                  />
+                                </div>
                               </td>
                               <td>
                                 <span className="text-secondary">
