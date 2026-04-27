@@ -19,18 +19,23 @@ import LoginPage from './pages/LoginPage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => localStorage.getItem('cc_auth') === 'true'
+    () => !!localStorage.getItem('cc_token')
   );
 
-  function handleLogin() {
-    localStorage.setItem('cc_auth', 'true');
+  function handleLogin(token) {
+    localStorage.setItem('cc_token', token);
     setIsAuthenticated(true);
   }
 
   function handleLogout() {
-    localStorage.removeItem('cc_auth');
+    localStorage.removeItem('cc_token');
     setIsAuthenticated(false);
   }
+
+  useEffect(() => {
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
+  }, []);
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;

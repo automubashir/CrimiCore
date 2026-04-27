@@ -1,21 +1,24 @@
 import { useState } from 'react';
-
-const VALID_USERNAME = 'admin';
-const VALID_PASSWORD = 'Hello@1122';
+import { login } from '../services/api';
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      setError('');
-      onLogin();
-    } else {
+    setError('');
+    setLoading(true);
+    try {
+      const token = await login(username, password);
+      onLogin(token);
+    } catch (err) {
       setError('Invalid username or password.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -202,26 +205,28 @@ export default function LoginPage({ onLogin }) {
               {/* Submit */}
               <button
                 type="submit"
+                disabled={loading}
                 style={{
                   display: 'block',
                   width: '100%',
                   marginTop: '32px',
                   padding: '14px',
-                  background: '#1aafbf',
+                  background: loading ? '#13838f' : '#1aafbf',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '15px',
                   fontWeight: '700',
                   color: '#ffffff',
-                  cursor: 'pointer',
+                  cursor: loading ? 'not-allowed' : 'pointer',
                   letterSpacing: '0.02em',
                   fontFamily: 'inherit',
                   transition: 'background 0.2s',
+                  opacity: loading ? 0.8 : 1,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#17a0ae'}
-                onMouseLeave={e => e.currentTarget.style.background = '#1aafbf'}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#17a0ae'; }}
+                onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#1aafbf'; }}
               >
-                Log in
+                {loading ? 'Signing in...' : 'Log in'}
               </button>
             </form>
           </div>

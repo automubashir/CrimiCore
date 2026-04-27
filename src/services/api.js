@@ -1,9 +1,37 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://192.168.20.121:8000';
+  import.meta.env.VITE_API_BASE_URL || 'http://192.168.20.121:8000/api';
 
 // Cache with 5-minute TTL
 const cache = {};
 const CACHE_EXPIRY = 5 * 60 * 1000;
+
+function getToken() {
+  return localStorage.getItem('cc_token');
+}
+
+function getAuthHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function login(username, password) {
+  const form = new FormData();
+  form.append('username', username);
+  form.append('password', password);
+
+  const response = await fetch(`${API_BASE_URL}/login`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || 'Invalid username or password.');
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
 
 function getQueryString(filters = {}) {
   const params = [];
@@ -24,13 +52,19 @@ function getQueryString(filters = {}) {
 async function fetchFromAPI(endpoint, direct = false) {
   try {
     const full_url = direct ? endpoint : API_BASE_URL + endpoint;
-    const response = await fetch(full_url);
+    const response = await fetch(full_url, { headers: getAuthHeaders() });
+
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('auth:logout'));
+      throw new Error('Session expired. Please log in again.');
+    }
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {
     console.error('API Error:', error);
     throw new Error(
-      'Failed to fetch data. Please check your connection and try again.',
+      error.message || 'Failed to fetch data. Please check your connection and try again.',
     );
   }
 }
