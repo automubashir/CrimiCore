@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonProfile } from '../components/ui/Skeleton';
 import { getCriminalByName } from '../services/api';
-import { capitalizeFirst, formatDateLong, getInitials } from '../utils/formatters';
+import { capitalizeFirst, formatDateLong, getInitials, highlightMatch } from '../utils/formatters';
 
 const icons = {
   crime: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
@@ -177,14 +177,23 @@ export default function CriminalDetailPage() {
                 </div>
               )}
 
-              {news.description && (
+              {(news.description || criminal.description) && (
                 <div className='nc-wrapper w-100 profile-section-full'>
-                  <div className='nc-papa w-100'> 
+                  <div className='nc-papa w-100'>
                     <div className="profile-section  w-100">
                       <h3>{icons.alert} Description</h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--fs-md)', lineHeight: 'var(--lh-relaxed)', whiteSpace: 'pre-line' }}>
-                        {news.description}
-                      </p>
+                      <p
+                        style={{
+                          color: 'var(--text-primary)',
+                          fontSize: 'var(--fs-lg, 1.05rem)',
+                          lineHeight: '1.85',
+                          whiteSpace: 'pre-line',
+                          letterSpacing: '0.01em',
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: highlightMatch(news.description || criminal.description, capitalizeFirst(criminal.criminalName))
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

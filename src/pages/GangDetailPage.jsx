@@ -552,7 +552,7 @@ export default function GangDetailPage() {
                             >
                               <td>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <CriminalAvatar imageUrl={m.imageUrl} name={capitalizeFirst(m.criminalName)} />
+                                  <CriminalAvatar imageUrl={m.imageUrl} name={capitalizeFirst(m.criminalName)} size={42} />
                                   <span
                                     className="font-medium"
                                     dangerouslySetInnerHTML={{

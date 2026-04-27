@@ -195,7 +195,7 @@ export default function CriminalsPage() {
                           <tr key={`${c.criminalName}-${i}`} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
                             <td>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <CriminalAvatar imageUrl={c.imageUrl} name={capitalizeFirst(c.criminalName)} />
+                                <CriminalAvatar imageUrl={c.imageUrl} name={capitalizeFirst(c.criminalName)} size={42} />
                                 <span className="font-medium" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(c.criminalName), debouncedSearch) }} />
                               </div>
                             </td>

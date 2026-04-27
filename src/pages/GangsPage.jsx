@@ -11,6 +11,7 @@ import { useCountryFilter } from '../context/CountryFilterContext';
 import { useDebounce } from '../hooks/useDebounce';
 import { getGangs } from '../services/api';
 import { capitalizeFirst, highlightMatch } from '../utils/formatters';
+import CriminalAvatar from '../components/ui/CriminalAvatar';
 
 const sortIcons = {
   asc: <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2L9 7H1L5 2Z" /></svg>,
@@ -177,9 +178,12 @@ export default function GangsPage() {
                       pageSlice.map((g, i) => (
                         <tr key={`${g.name}-${i}`} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
                           <td>
-                            <Link to={`/gangs/${encodeURIComponent(g.name)}`} className="text-link font-medium">
-                              <span dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.name), debouncedSearch) }} />
-                            </Link>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <CriminalAvatar imageUrl={g.imageUrl} name={capitalizeFirst(g.name)} size={42} />
+                              <Link to={`/gangs/${encodeURIComponent(g.name)}`} className="text-link font-medium">
+                                <span dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.name), debouncedSearch) }} />
+                              </Link>
+                            </div>
                           </td>
                           <td><span className="font-semibold">{g.memberCount}</span></td>
                           <td><span className="text-secondary" dangerouslySetInnerHTML={{ __html: highlightMatch(capitalizeFirst(g.location), debouncedSearch) }} /></td>
