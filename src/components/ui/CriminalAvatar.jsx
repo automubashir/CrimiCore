@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import ImageLightbox from './ImageLightbox';
 
 export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
   const [error, setError] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const containerStyle = {
     width: size,
@@ -19,15 +21,25 @@ export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
 
   if (imageUrl && !error) {
     return (
-      <div style={containerStyle}>
-        <img
-          src={imageUrl}
-          alt={name}
-          onError={() => setError(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          loading="lazy"
-        />
-      </div>
+      <>
+        <div
+          style={containerStyle}
+          className="img-clickable"
+          onClick={() => setLightboxOpen(true)}
+          title={`View photo of ${name}`}
+        >
+          <img
+            src={imageUrl}
+            alt={name}
+            onError={() => setError(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            loading="lazy"
+          />
+        </div>
+        {lightboxOpen && (
+          <ImageLightbox src={imageUrl} alt={name} onClose={() => setLightboxOpen(false)} />
+        )}
+      </>
     );
   }
 

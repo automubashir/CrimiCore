@@ -13,6 +13,7 @@ import {
   highlightMatch,
 } from '../utils/formatters';
 import CriminalAvatar from '../components/ui/CriminalAvatar';
+import ImageLightbox from '../components/ui/ImageLightbox';
 import { useDebounce } from '../hooks/useDebounce';
 import { useCountryFilter } from '../context/CountryFilterContext';
 
@@ -593,7 +594,7 @@ export default function GangDetailPage() {
                               </td>
                               <td>
                                 <Link
-                                  to={`/criminals/${encodeURIComponent(m.criminalName)}`}
+                                  to={`/criminals/${encodeURIComponent(m.criminalName)}?affiliation=${encodeURIComponent(gangName)}`}
                                   className="btn-view"
                                 >
                                   View
@@ -752,29 +753,39 @@ export default function GangDetailPage() {
 
 function MediaItem({ member }) {
   const [hidden, setHidden] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   if (hidden) return null;
   return (
-    <div className='nc-wrapper w-100'>
-      <div className='nc-papa w-100'>
-        <div className="media-item">
-          <div className='gci-holder'>
-            <img
-              src={member.imageUrl}
-              alt={capitalizeFirst(member.criminalName)}
-              loading="lazy"
-              onError={() => setHidden(true)}
-            />
-          </div>
-          <div className="media-overlay">
-            <span className="media-name">
-              {capitalizeFirst(member.criminalName)}
-            </span>
-            {member.source && (
-              <span className="media-source">{capitalizeFirst(member.source)}</span>
-            )}
+    <>
+      <div className='nc-wrapper w-100'>
+        <div className='nc-papa w-100'>
+          <div className="media-item img-clickable" onClick={() => setLightboxOpen(true)} title={`View photo of ${capitalizeFirst(member.criminalName)}`}>
+            <div className='gci-holder'>
+              <img
+                src={member.imageUrl}
+                alt={capitalizeFirst(member.criminalName)}
+                loading="lazy"
+                onError={() => setHidden(true)}
+              />
+            </div>
+            <div className="media-overlay">
+              <span className="media-name">
+                {capitalizeFirst(member.criminalName)}
+              </span>
+              {member.source && (
+                <span className="media-source">{capitalizeFirst(member.source)}</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      {lightboxOpen && (
+        <ImageLightbox
+          src={member.imageUrl}
+          alt={capitalizeFirst(member.criminalName)}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+    </>
   );
 }

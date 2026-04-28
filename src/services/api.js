@@ -95,8 +95,10 @@ export async function getCriminals(filters = {}, page = null, country = 'All') {
   return data?.all_criminal || [];
 }
 
-export async function getCriminalByName(name) {
-  const query = getQueryString({ criminal_name: name });
+export async function getCriminalByName(name, affiliation = '') {
+  const params = { criminal_name: name };
+  if (affiliation) params.affiliation = affiliation;
+  const query = getQueryString(params);
   const data = await fetchFromAPI(`/criminals/filter${query}`);
   return data;
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonProfile } from '../components/ui/Skeleton';
 import { getCriminalByName } from '../services/api';
 import { capitalizeFirst, formatDateLong, getInitials, highlightMatch } from '../utils/formatters';
+import ImageLightbox from '../components/ui/ImageLightbox';
 
 const icons = {
   crime: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
@@ -15,11 +16,14 @@ const icons = {
 
 export default function CriminalDetailPage() {
   const { name } = useParams();
+  const [searchParams] = useSearchParams();
+  const affiliationParam = searchParams.get('affiliation') || '';
   const [criminal, setCriminal] = useState(null);
   const [news, setNews] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imgError, setImgError] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +32,7 @@ export default function CriminalDetailPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const results = await getCriminalByName(decodeURIComponent(name));
+        const results = await getCriminalByName(decodeURIComponent(name), affiliationParam);
 
         if (!cancelled) {
           if (!results || results.length === 0) {
@@ -46,7 +50,7 @@ export default function CriminalDetailPage() {
     }
     loadProfile();
     return () => { cancelled = true; };
-  }, [name]);
+  }, [name, affiliationParam]);
 
   const affiliation = criminal?.affiliation && criminal.affiliation.toLowerCase() !== 'empty' ? criminal.affiliation : '';
   const hasImage = criminal?.imageUrl && criminal.imageUrl.trim() && !imgError;
@@ -72,12 +76,23 @@ export default function CriminalDetailPage() {
               <div className='nc-wrapper h-fitcontent'>
                 <div className="profile-photo-wrapper nc-papa">
                   {hasImage ? (
-                    <img
-                      className="profile-photo"
-                      src={criminal.imageUrl}
-                      alt={criminal.criminalName}
-                      onError={() => setImgError(true)}
-                    />
+                    <>
+                      <img
+                        className="profile-photo img-clickable"
+                        src={criminal.imageUrl}
+                        alt={criminal.criminalName}
+                        onError={() => setImgError(true)}
+                        onClick={() => setLightboxOpen(true)}
+                        title={`View photo of ${capitalizeFirst(criminal.criminalName)}`}
+                      />
+                      {lightboxOpen && (
+                        <ImageLightbox
+                          src={criminal.imageUrl}
+                          alt={capitalizeFirst(criminal.criminalName)}
+                          onClose={() => setLightboxOpen(false)}
+                        />
+                      )}
+                    </>
                   ) : (
                     <div className="profile-photo avatar-placeholder">
                       <svg
