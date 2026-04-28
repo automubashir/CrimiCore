@@ -55,7 +55,7 @@ export default function ActivitiesPage() {
 
         if (!cancelled) {
           setActivities(prev => currentPage === 1 ? data : [...prev, ...data]);
-          setHasMore(data.length >= 10);
+          setHasMore(data.length > 0);
           setIsLoading(false);
           setIsLoadingMore(false);
         }
