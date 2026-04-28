@@ -262,7 +262,7 @@
 
 /* Mobile slide-down nav */
 .nav-menu--mobile {
-  position: fixed;
+  position: absolute;
   top: 86px;
   left: 0;
   right: 0;
@@ -1621,6 +1621,57 @@ a.similar-news-source-btn:hover {
 }
 
 
+/* Load More */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-6) 0 var(--sp-2);
+}
+
+.load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-8);
+  font-family: var(--font-family);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--color-primary-foreground);
+  background: #131721;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--ease-fast);
+  white-space: nowrap;
+  user-select: none;
+  min-width: 140px;
+  letter-spacing: 0.01em;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.load-more-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+.load-more-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
 /* Pagination footer for Activities */
 .page-footer {
   display: flex;
@@ -1785,6 +1836,9 @@ a.similar-news-source-btn:hover {
     max-width: 100%;
     min-width: 0;
     width: 100%;
+  }
+  .page-gradient{
+    width: 50%;
   }
 }
 
@@ -2233,8 +2287,10 @@ a.similar-news-source-btn:hover {
   }
 
   .toolbar {
-    flex-direction: column;
     align-items: stretch;
+  }
+  .filter-dropdown{
+    min-width: 400px;
   }
 
   .toolbar-left {
@@ -2281,7 +2337,34 @@ a.similar-news-source-btn:hover {
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     animation: slideUp 0.3s var(--ease-smooth);
   }
-
+  .gang-info-row{
+    padding: 10px;
+    border: 1px solid #8080804f;
+    border-radius: 11px;
+    align-items: flex-start;
+        flex-direction: column;
+  }
+  .gang-info-label{
+        text-align: start;
+  }
+  .gang-info-value{
+    text-align: start;
+  }
+  .profile-summary{
+    width: 100%;
+  }
+  .info-grid{
+    grid-template-columns: 1fr !important;
+  }
+  .profile-name-row{
+    justify-content: start;
+  }
+  .info-label{
+    text-align: start;
+  }
+  .info-value{
+    text-align: start;
+  }
   @keyframes slideUp {
     from {
       transform: translateY(100%);

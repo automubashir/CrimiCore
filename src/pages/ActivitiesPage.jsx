@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import SearchInput from '../components/ui/SearchInput';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import ActiveFilters from '../components/ui/ActiveFilters';
@@ -21,7 +21,6 @@ export default function ActivitiesPage() {
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({ source: [], crimeType: [] });
 
-  const sentinelRef = useRef(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Reset when country or filters change
@@ -72,23 +71,6 @@ export default function ActivitiesPage() {
     loadData();
     return () => { cancelled = true; };
   }, [currentPage, country, filters, showToast]);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    if (!sentinelRef.current || !hasMore || isLoading || isLoadingMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setCurrentPage(prev => prev + 1);
-        }
-      },
-      { rootMargin: '200px' }
-    );
-
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, isLoading, isLoadingMore]);
 
   // Client-side search
   const visible = useMemo(() => {
@@ -167,8 +149,18 @@ export default function ActivitiesPage() {
           {isLoadingMore && <SkeletonCards count={4} />}
         </div>
 
-        {/* Infinite scroll sentinel */}
-        {!isLoading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+        {/* Load more */}
+        {!isLoading && hasMore && (
+          <div className="load-more-container">
+            <button
+              className="load-more-btn"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? 'Loading...' : 'Load More'}
+            </button>
+          </div>
+        )}
 
         <div className="page-footer">
           <span className="table-info">
