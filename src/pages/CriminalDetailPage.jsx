@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonProfile } from '../components/ui/Skeleton';
 import { getCriminalByName } from '../services/api';
-import { capitalizeFirst, formatDateLong, getInitials, highlightMatch } from '../utils/formatters';
+import { capitalizeFirst, formatDateLong, getInitials, highlightMatch, proxyImage } from '../utils/formatters';
 import ImageLightbox from '../components/ui/ImageLightbox';
 
 const icons = {
@@ -53,7 +53,8 @@ export default function CriminalDetailPage() {
   }, [name, affiliationParam]);
 
   const affiliation = criminal?.affiliation && criminal.affiliation.toLowerCase() !== 'empty' ? criminal.affiliation : '';
-  const hasImage = criminal?.imageUrl && criminal.imageUrl.trim() && !imgError;
+  const proxiedImage = proxyImage(criminal?.imageUrl);
+  const hasImage = proxiedImage && !imgError;
 
   return (
     <>
@@ -79,7 +80,7 @@ export default function CriminalDetailPage() {
                     <>
                       <img
                         className="profile-photo img-clickable"
-                        src={criminal.imageUrl}
+                        src={proxiedImage}
                         alt={criminal.criminalName}
                         onError={() => setImgError(true)}
                         onClick={() => setLightboxOpen(true)}
@@ -87,7 +88,7 @@ export default function CriminalDetailPage() {
                       />
                       {lightboxOpen && (
                         <ImageLightbox
-                          src={criminal.imageUrl}
+                          src={proxiedImage}
                           alt={capitalizeFirst(criminal.criminalName)}
                           onClose={() => setLightboxOpen(false)}
                         />

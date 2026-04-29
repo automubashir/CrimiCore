@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { geocodeLocation } from '../../services/api';
-import { capitalizeFirst, truncate } from '../../utils/formatters';
+import { capitalizeFirst } from '../../utils/formatters';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
@@ -49,17 +49,17 @@ function loadGoogleMaps() {
   return mapsPromise;
 }
 
-export default function MembersMap({ members }) {
+export default function MembersMap({ members, news = [] }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const [selectedMembers, setSelectedMembers] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [mapError, setMapError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const closePanel = useCallback(() => {
-    setSelectedMembers(null);
+    setPanelOpen(false);
     setSelectedLocation('');
   }, []);
 
@@ -123,21 +123,27 @@ export default function MembersMap({ members }) {
 
           const position = { lat, lng };
           const membersAtLocation = locationMap[location];
+          const locLower = location.toLowerCase();
+          const newsForLocation = news.filter(n => {
+            const country = (n.country || '').toLowerCase();
+            return country && locLower.includes(country);
+          });
+          const newsCount = newsForLocation.length;
 
-          const iconSize = 36 + Math.min(membersAtLocation.length * 2, 12);
+          const iconSize = 36 + Math.min(newsCount * 2, 12);
           const marker = new maps.Marker({
             position,
             map,
-            title: `${capitalizeFirst(location)} (${membersAtLocation.length})`,
+            title: `${capitalizeFirst(location)} (${newsCount} news)`,
             icon: {
-              url: createMarkerIcon(membersAtLocation.length),
+              url: createMarkerIcon(newsCount),
               scaledSize: new maps.Size(iconSize, iconSize),
               anchor: new maps.Point(iconSize / 2, iconSize / 2),
             },
           });
 
           marker.addListener('click', () => {
-            setSelectedMembers(membersAtLocation);
+            setPanelOpen(true);
             setSelectedLocation(location);
           });
 
@@ -193,25 +199,36 @@ export default function MembersMap({ members }) {
       </div>
 
       {/* Side Panel */}
-      {selectedMembers && (
-        <>
-          <div className="map-panel-backdrop" onClick={closePanel} />
-          <div className="map-panel">
-            <div className="map-panel-header">
-              <div>
-                <h3 className="map-panel-title">{capitalizeFirst(selectedLocation)}</h3>
-                <span className="map-panel-count">{selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''}</span>
+      {panelOpen && (() => {
+        const locLower = selectedLocation.toLowerCase();
+        const panelNews = news.filter(n => {
+          const country = (n.country || '').toLowerCase();
+          return country && locLower.includes(country);
+        });
+        return (
+          <>
+            <div className="map-panel-backdrop" onClick={closePanel} />
+            <div className="map-panel">
+              <div className="map-panel-header">
+                <div>
+                  <h3 className="map-panel-title">{capitalizeFirst(selectedLocation)}</h3>
+                  <span className="map-panel-count">{panelNews.length} article{panelNews.length !== 1 ? 's' : ''}</span>
+                </div>
+                <button className="map-panel-close" onClick={closePanel}>&times;</button>
               </div>
-              <button className="map-panel-close" onClick={closePanel}>&times;</button>
+              <div className="map-panel-body">
+                {panelNews.length === 0 ? (
+                  <p className="text-muted" style={{ padding: 16 }}>No news available</p>
+                ) : (
+                  panelNews.map((article, i) => (
+                    <NewsCard key={`${article.newsLink}-${i}`} article={article} index={i} />
+                  ))
+                )}
+              </div>
             </div>
-            <div className="map-panel-body">
-              {selectedMembers.map((m, i) => (
-                <MemberCard key={`${m.criminalName}-${i}`} member={m} index={i} />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -224,21 +241,11 @@ const externalLinkIcon = (
   </svg>
 );
 
-function MemberCard({ member, index }) {
+function NewsCard({ article, index }) {
   const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
-  const imgUrl = member.imageUrl || '';
+  const imgUrl = article.imageUrl || '';
   const showImage = imgUrl && !imgError;
-
-  const article = {
-    title: member.title || member.criminalName,
-    imageUrl: member.imageUrl,
-    publishedDate: member.publishedDate,
-    description: member.description,
-    newsLink: member.linkToArticle,
-    source: member.source,
-    criminal_count: 0,
-  };
 
   function handleCardClick() {
     if (!article.newsLink) return;
@@ -250,7 +257,7 @@ function MemberCard({ member, index }) {
       <div className="nc-papa w-100">
         <div
           className="similar-news-card animate-fade-in"
-          style={{ animationDelay: `${index * 30}ms` }}
+          style={{ animationDelay: `${index * 30}ms`, cursor: article.newsLink ? 'pointer' : 'default' }}
           onClick={handleCardClick}
         >
           <div className={`similar-news-img${!showImage ? ' news-card-img-fallback' : ''}`}>
@@ -259,9 +266,9 @@ function MemberCard({ member, index }) {
             ) : (
               <img src="/broken-img.jpg" alt="" />
             )}
-            {member.linkToArticle ? (
+            {article.newsLink ? (
               <a
-                href={member.linkToArticle}
+                href={article.newsLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="similar-news-source-btn"
@@ -269,12 +276,12 @@ function MemberCard({ member, index }) {
               >
                 Source {externalLinkIcon}
               </a>
-            ) : (
-              <span className="similar-news-source-btn">Source</span>
-            )}
+            ) : article.source ? (
+              <span className="similar-news-source-btn">{capitalizeFirst(article.source)}</span>
+            ) : null}
           </div>
           <div className="similar-news-body">
-            <h4 className="similar-news-title">{capitalizeFirst(member.title || member.criminalName)}</h4>
+            <h4 className="similar-news-title">{article.title}</h4>
           </div>
         </div>
       </div>

@@ -129,7 +129,7 @@ export async function getGangs(country = 'All') {
 
 export async function geocodeLocation(location) {
   const data = await fetchWithCache(
-    `http://192.168.20.121:5000/geocode?location=${encodeURIComponent(location)}`,
+    `${API_BASE_URL}/geocode?location=${encodeURIComponent(location)}`,
     true,
   );
   return data;
@@ -178,7 +178,11 @@ function normalizeArticle(item) {
 export async function getNewsDetail(newsLink) {
   try {
     const url = `${API_BASE_URL}/news?news_link=${encodeURIComponent(newsLink)}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('auth:logout'));
+      throw new Error('Session expired. Please log in again.');
+    }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     const article = data?.news ? normalizeArticle(data.news) : null;

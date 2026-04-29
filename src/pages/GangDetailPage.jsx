@@ -11,6 +11,7 @@ import {
   truncate,
   formatDate,
   highlightMatch,
+  proxyImage,
 } from '../utils/formatters';
 import CriminalAvatar from '../components/ui/CriminalAvatar';
 import ImageLightbox from '../components/ui/ImageLightbox';
@@ -180,6 +181,7 @@ export default function GangDetailPage() {
               newsLink: c.news_link || '',
               source: c.source || '',
               criminal_count: n?.criminal_count || 0,
+              country: c.country || '',
             };
           }) || [];
         if (!cancelled) {
@@ -653,7 +655,7 @@ export default function GangDetailPage() {
                         </span>
                       </h2>
                     </div>
-                    <MembersMap members={members} />
+                    <MembersMap members={members} news={news} />
                   </div>
                 </div>
               </div>
@@ -754,6 +756,7 @@ export default function GangDetailPage() {
 function MediaItem({ member }) {
   const [hidden, setHidden] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const proxied = proxyImage(member.imageUrl);
   if (hidden) return null;
   return (
     <>
@@ -762,7 +765,7 @@ function MediaItem({ member }) {
           <div className="media-item img-clickable" onClick={() => setLightboxOpen(true)} title={`View photo of ${capitalizeFirst(member.criminalName)}`}>
             <div className='gci-holder'>
               <img
-                src={member.imageUrl}
+                src={proxied}
                 alt={capitalizeFirst(member.criminalName)}
                 loading="lazy"
                 onError={() => setHidden(true)}
@@ -781,7 +784,7 @@ function MediaItem({ member }) {
       </div>
       {lightboxOpen && (
         <ImageLightbox
-          src={member.imageUrl}
+          src={proxied}
           alt={capitalizeFirst(member.criminalName)}
           onClose={() => setLightboxOpen(false)}
         />

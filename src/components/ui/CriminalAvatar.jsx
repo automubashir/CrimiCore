@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import ImageLightbox from './ImageLightbox';
+import { proxyImage } from '../../utils/formatters';
 
 export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
   const [error, setError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const proxied = proxyImage(imageUrl);
 
   const containerStyle = {
     width: size,
@@ -19,7 +21,7 @@ export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
     justifyContent: 'center',
   };
 
-  if (imageUrl && !error) {
+  if (proxied && !error) {
     return (
       <>
         <div
@@ -29,7 +31,7 @@ export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
           title={`View photo of ${name}`}
         >
           <img
-            src={imageUrl}
+            src={proxied}
             alt={name}
             onError={() => setError(true)}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -37,7 +39,7 @@ export default function CriminalAvatar({ imageUrl, name, size = 28 }) {
           />
         </div>
         {lightboxOpen && (
-          <ImageLightbox src={imageUrl} alt={name} onClose={() => setLightboxOpen(false)} />
+          <ImageLightbox src={proxied} alt={name} onClose={() => setLightboxOpen(false)} />
         )}
       </>
     );

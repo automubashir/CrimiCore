@@ -36,3 +36,8 @@ export function getInitials(name) {
   if (!name) return '?';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
+
+export function proxyImage(url) {
+  if (!url || !url.trim()) return '';
+  return `https://twiimag.osintcenter.org/get_twitter_image_1?url=${encodeURIComponent(url)}`;
+}
