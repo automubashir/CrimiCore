@@ -39,5 +39,5 @@ export function getInitials(name) {
 
 export function proxyImage(url) {
   if (!url || !url.trim()) return '';
-  return `https://twiimag.osintcenter.org/get_twitter_image_1?url=${encodeURIComponent(url)}`;
+  return `https://getanainstasuny.osintcenter.org/instagram/index1.php?imagelink=${url}`;
 }
