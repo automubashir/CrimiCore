@@ -39,5 +39,6 @@ export function getInitials(name) {
 
 export function proxyImage(url) {
   if (!url || !url.trim()) return '';
+  if(url.includes('crimepanel.live')) return url;
   return `https://getanainstasuny.osintcenter.org/instagram/index1.php?imagelink=${url}`;
 }
