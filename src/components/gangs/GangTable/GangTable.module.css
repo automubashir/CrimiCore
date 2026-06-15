@@ -1,0 +1,278 @@
+.table {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Shared grid template ── */
+/* thead + row must always use the same grid-template-columns */
+.thead,
+.row {
+  display: grid;
+  grid-template-columns: 48px 160px 1fr 128px 100px 1fr 32px;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+/* ── Column headers ── */
+
+.thead {
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+}
+
+.th {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* ── Table body ── */
+
+.tbody {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Data rows ── */
+
+.row {
+  border-bottom: 1px solid var(--border-secondary);
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--bg-elevated);
+}
+
+/* ── Avatar ── */
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-elevated);
+  display: block;
+}
+
+/* ── Name cell ── */
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alias {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Active regions cell ── */
+
+.regionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.regions {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regionCount {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ── Members cell ── */
+
+.membersCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.membersIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.membersText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.membersCount {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.membersLabel {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: 1.2;
+}
+
+/* ── Threat cell ── */
+
+.threatCell {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Activities cell ── */
+
+.activitiesCell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+}
+
+.actTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  line-height: 18px;
+}
+
+.overflowTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  background: var(--bg-brand-light);
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-brand);
+  white-space: nowrap;
+  line-height: 18px;
+}
+
+/* ── Arrow button ── */
+
+.arrowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.arrowBtn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-brand);
+  color: var(--text-brand);
+}
+
+/* ── See More ── */
+
+.seeMoreBar {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.seeMoreBtn {
+  width: 100%;
+  padding: var(--space-2) 0;
+  background: transparent;
+  border: 1px solid var(--border-secondary);
+  color: var(--text-brand);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: var(--font-ibm-plex);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.seeMoreBtn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Empty state ── */
+
+.empty {
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 1200px) {
+  .thead,
+  .row {
+    grid-template-columns: 48px 140px 1fr 118px 90px 1fr 32px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .tbody {
+    overflow-y: visible;
+  }
+
+  .thead {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: 48px 1fr 100px 32px;
+    grid-template-rows: auto auto;
+  }
+
+  .regionCell,
+  .membersCell,
+  .activitiesCell {
+    display: none;
+  }
+}

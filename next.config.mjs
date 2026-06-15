@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  turbopack: {
+    rules: {
+      '*.mp4': {
+        type: 'asset',
+      },
+    },
+  },
 };
 
 export default nextConfig;

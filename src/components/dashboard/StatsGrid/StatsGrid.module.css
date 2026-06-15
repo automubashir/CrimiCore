@@ -1,0 +1,111 @@
+/* ── Section wrapper ── */
+
+.section {
+  background: var(--bg-primary);
+}
+
+/* ── 5-column grid ── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-4);
+}
+
+/* ── Stat card ── */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+}
+
+.cardAlert {
+  background: var(--error-bg);
+  border-color: var(--error-primary);
+}
+
+/* ── Circle placeholder ── */
+
+.circle {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-round);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circleAlert {
+  background: transparent;
+  border: 2px solid var(--error-primary);
+}
+
+/* ── Text block ── */
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-xs);
+  line-height: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.labelAlert {
+  color: var(--error-primary);
+}
+
+.value {
+  font-size: var(--heading-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 38px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 560px) {
+  .section {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+}

@@ -1,0 +1,169 @@
+/* ── Shell ── */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+/* ── Logo ── */
+
+.logo {
+  height: 48px;
+  width: auto;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* ── Nav pill container ── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+/* ── Nav link ── */
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.navLink:hover:not(.navLinkActive) {
+  color: var(--text-primary);
+}
+
+.navLinkActive {
+  color: var(--text-brand);
+  border-color: var(--border-brand);
+  background: var(--bg-brand-light);
+  font-weight: 500;
+}
+
+/* ── Right section ── */
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-shrink: 0;
+}
+
+/* ── Clock ── */
+
+.clock {
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── User menu ── */
+
+.userMenuWrapper {
+  position: relative;
+}
+
+.userBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: var(--font-ibm-plex);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.userBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-brand);
+}
+
+/* ── Dropdown ── */
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 160px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 200;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-family: var(--font-ibm-plex);
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dropdownItemDanger:hover {
+  background: var(--error-bg);
+  color: var(--error-primary);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 1024px) {
+  .nav {
+    gap: 0;
+  }
+
+  .navLink {
+    padding: 5px 12px;
+    font-size: var(--text-xs);
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 var(--space-5);
+    gap: var(--space-4);
+  }
+
+  .nav {
+    display: none;
+  }
+}

@@ -1,0 +1,38 @@
+:root {
+    /* theme variables */
+
+    /* background variables */
+    --bg-primary: #050C14;
+    --bg-card: #05101B;
+    --bg-elevated: #091A29;
+    --bg-brand-primary: #1BB1F0;
+    --bg-brand-light: #1BB1F026;
+    /* text color variables  */
+    --text-primary: #FFFFFF;
+    --text-secondary: #9AB1CC;
+    --text-tertiary: #7589A0;
+    --text-brand: #1BB1F0;
+    /* border colors  */
+    --border-primary: #12304D;
+    --border-secondary: #111F2D;
+    --border-brand: #1BB1F066;
+    /* accent colors  */
+    --alert-bg: #3B2210;
+    --alert-primary: #F3921B;
+    --error-bg: #39181E;
+    --error-primary: #F2464A;
+    --success-bg: #134233;
+    --success-primary: #70EA8D;
+    --indigo-bg: #231840;
+    --indigo-primary: #AF83EA;
+    /* info — blue, used for neutral category tags */
+    --info-bg: #0C1E34;
+    --info-primary: #3DA1D8;
+    /* warning — amber, used for low-severity indicators */
+    --warning-bg: #2E2300;
+    --warning-primary: #F0C028;
+    /* scrollbar */
+    --scrollbar-track: #050C14;
+    --scrollbar-thumb: #12304D;
+    --scrollbar-thumb-hover: #1BB1F0;
+}

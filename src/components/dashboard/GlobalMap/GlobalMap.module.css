@@ -1,0 +1,128 @@
+.inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Map area ── */
+
+.mapArea {
+  position: relative;
+  flex: 1;
+  min-height: 260px;
+  max-height: 294px;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+/* ── Hotspot Analysis ── */
+
+.analysis {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-secondary);
+  flex-shrink: 0;
+}
+
+.analysisTitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.analysisBody {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hotspotList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.hotspotRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rank {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.city {
+  font-size: var(--text-sm);
+  line-height: 20px;
+  color: var(--text-secondary);
+  width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  flex: 1;
+  height: 5px;
+  background: var(--border-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 0px;
+}
+
+.count {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  width: 76px;
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Donut chart ── */
+
+.donutWrapper {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  flex-shrink: 0;
+}
+
+.donutCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.donutTotal {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: var(--font-ibm-plex);
+}
+
+.donutLabel {
+  display: block;
+  font-size: 8px;
+  color: var(--text-tertiary);
+  font-family: var(--font-ibm-plex);
+  white-space: nowrap;
+}

@@ -1,0 +1,43 @@
+:root {
+
+    /* spacing variables */
+
+  --space-0:2px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-7:28px;
+  --space-8:32px;
+  --space-9:36px;
+  --space-10:40px;
+  --space-11:44px;
+  --space-12:48px;
+  --space-13:52px;
+  --space-14:56px;
+  --space-15:60px;
+
+  /* radius variables */
+  
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-round: 50%;
+
+  /* font size variables */
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --heading-xs: 24px;
+  --heading-sm: 30px;
+  --heading-md: 36px;
+  --heading-lg: 48px;
+  --heading-xl: 60px;
+  --heading-xxl: 72px;
+}

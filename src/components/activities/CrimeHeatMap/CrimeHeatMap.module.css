@@ -1,0 +1,116 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.header {
+  padding: var(--space-4) var(--space-5);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* ── Map area ── */
+
+.mapWrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-primary);
+  min-height: 260px;
+}
+
+/* ── Active Operating Area overlay ── */
+
+.overlay {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  background: rgba(5, 12, 20, 0.90);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  width: 380px;
+  max-width: calc(100% - 32px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.overlayTitle {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.overlaySub {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  margin-bottom: var(--space-3);
+}
+
+.areaList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.areaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.areaRank {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.areaCity {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  width: 128px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 4px;
+  background: var(--border-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 30px;
+}
+
+.barFill {
+  height: 100%;
+}
+
+.areaCount {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-align: right;
+  line-height: 20px;
+}
+
+.areaCount strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
