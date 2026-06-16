@@ -8,7 +8,7 @@ import styles from './RelatedNewsTab.module.css'
 
 const THREAT_OPTIONS = ['High', 'Medium', 'Low']
 
-export default function RelatedNewsTab({ activity }) {
+export default function RelatedNewsTab({ activity, height = "26rem" }) {
   const [search, setSearch]     = useState('')
   const [country, setCountry]   = useState(null)
   const [crimeType, setCrimeType] = useState(null)
@@ -16,8 +16,8 @@ export default function RelatedNewsTab({ activity }) {
   const [criminal, setCriminal] = useState(null)
 
   const base = useMemo(
-    () => ACTIVITIES.filter(a => a.id !== activity.id),
-    [activity.id]
+    () => activity?.id ? ACTIVITIES.filter(a => a.id !== activity.id) : ACTIVITIES,
+    [activity?.id]
   )
 
   const countries = useMemo(
@@ -95,7 +95,7 @@ export default function RelatedNewsTab({ activity }) {
       {filtered.length === 0 ? (
         <p className={styles.empty}>No results match the selected filters.</p>
       ) : (
-        <div className={styles.grid}>
+        <div className={styles.grid} style={{ maxHeight: height }}>
           {filtered.map(a => (
             <RelatedNewsCard
               key={a.id}

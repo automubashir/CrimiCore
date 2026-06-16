@@ -25,11 +25,15 @@ export default function LocationsMapTab({ activity }) {
   const [crimeType, setCrimeType] = useState(null)
   const [gang, setGang] = useState(null)
 
-  const locationLabel = `${activity.locationCity}, ${abbrevCountry(activity.locationCountry)}`
+  const locationLabel = activity
+    ? `${activity.locationCity}, ${abbrevCountry(activity.locationCountry)}`
+    : 'Global'
 
   const locationActivities = useMemo(() =>
-    ACTIVITIES.filter(a => a.id !== activity.id && a.locationCity === activity.locationCity),
-    [activity.id, activity.locationCity]
+    activity
+      ? ACTIVITIES.filter(a => a.id !== activity.id && a.locationCity === activity.locationCity)
+      : ACTIVITIES,
+    [activity?.id, activity?.locationCity]
   )
 
   const crimeTypes = useMemo(

@@ -9,6 +9,9 @@ import {
 import Badge from '@/components/ui/Badge/Badge'
 import GangTerritorialMap from '@/components/gangs/GangTerritorialMap/GangTerritorialMap'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
+import RelatedNewsTab from '@/components/activities/RelatedNewsTab/RelatedNewsTab'
+import LocationsMapTab from '@/components/activities/LocationsMapTab/LocationsMapTab'
+import GangMediaTab from '@/components/gangs/GangMediaTab/GangMediaTab'
 import styles from './gang-detail.module.css'
 
 const TABS = [
@@ -115,8 +118,11 @@ export default function GangDetailContent({ gang }) {
             </div>
           <div className={styles.tabsArea}>
             <div className={styles.tabContent} role="tabpanel">
-              {activeTab === 'overview'     ? <OverviewTab gang={gang} /> :
-               activeTab === 'members'      ? <MembersTab gang={gang} /> :
+              {activeTab === 'overview'      ? <OverviewTab gang={gang} /> :
+               activeTab === 'members'       ? <MembersTab gang={gang} /> :
+               activeTab === 'related-news'  ? <RelatedNewsTab /> :
+               activeTab === 'territories'   ? <LocationsMapTab /> :
+               activeTab === 'media'         ? <GangMediaTab gang={gang} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}
             </div>
           </div>

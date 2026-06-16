@@ -752,7 +752,7 @@
   font-size: var(--text-xs);
   color: var(--text-secondary);
   line-height: 1.65;
-  text-align: center;
+  text-align: start;
 }
 
 .threatHighlights {
@@ -761,6 +761,7 @@
   gap: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-secondary);
+   width: 100%;
 }
 
 .threatHighlight {
