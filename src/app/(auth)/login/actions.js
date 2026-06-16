@@ -3,9 +3,28 @@
 import { createSession } from '@/lib/session'
 
 export async function login(username, password) {
-  if (username === 'admin' && password === 'Hello@1122') {
-    await createSession()
+  try {
+    const res = await fetch(`${process.env.API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      cache: 'no-store',
+    })
+
+    if (!res.ok) {
+      return { error: 'Invalid credentials. Please try again.' }
+    }
+
+    const data = await res.json()
+    const token = data.access_token ?? data.token ?? data.jwt
+
+    if (!token) {
+      return { error: 'Authentication failed. Please try again.' }
+    }
+
+    await createSession(token)
     return { success: true }
+  } catch {
+    return { error: 'Unable to connect to the server. Please try again.' }
   }
-  return { error: 'Invalid credentials. Please try again.' }
 }

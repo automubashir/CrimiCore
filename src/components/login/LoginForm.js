@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { login } from "@/app/(auth)/login/actions";
 import styles from "./LoginForm.module.css";
@@ -76,7 +75,6 @@ const EyeOffIcon = () => (
 );
 
 export default function LoginForm() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,14 +94,14 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       const result = await login(email.trim(), password);
-      if (result?.success) {
-        router.push("/");
-      } else {
-        setError(result?.error || "Something went wrong. Please try again.");
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      } else if (result?.success) {
+        window.location.href = '/';
       }
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

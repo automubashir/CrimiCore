@@ -1,0 +1,49 @@
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.bone {
+  display: block;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--border-primary) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* pre-set aspect shortcuts */
+.bone.round  { border-radius: var(--radius-round); }
+.bone.pill   { border-radius: 100px; }
+.bone.circle { border-radius: var(--radius-round); flex-shrink: 0; }
+
+/* ── Section-card skeleton wrapper ── */
+.card {
+  width: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-primary);
+  gap: var(--space-3);
+}
+
+.cardBody {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  gap: var(--space-3);
+}

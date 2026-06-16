@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export function proxy(request) {
   const session = request.cookies.get('cp_session')
-  const isAuthenticated = session?.value === 'authenticated'
+  const isAuthenticated = !!session?.value
   const { pathname } = request.nextUrl
 
   if (!isAuthenticated && pathname !== '/login') {
