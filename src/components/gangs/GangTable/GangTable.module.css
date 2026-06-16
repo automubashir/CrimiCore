@@ -47,6 +47,8 @@
   border-bottom: 1px solid var(--border-secondary);
   transition: background 0.15s ease;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .row:last-child {
@@ -190,25 +192,22 @@
   line-height: 18px;
 }
 
-/* ── Arrow button ── */
+/* ── Arrow icon ── */
 
-.arrowBtn {
+.arrowIcon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: transparent;
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-xs);
-  cursor: pointer;
   color: var(--text-secondary);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
 }
 
-.arrowBtn:hover {
-  background: var(--bg-elevated);
+.row:hover .arrowIcon {
   border-color: var(--border-brand);
   color: var(--text-brand);
 }

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
 import styles from './GangTable.module.css'
 
@@ -39,9 +40,9 @@ export default function GangTable({ gangs, hasMore, onSeeMore }) {
 }
 
 /* ── Individual row ── */
-function GangRow({ name, alias, image, activeRegions, regionCount, members, threat, primaryActivities, extraCount }) {
+function GangRow({ id, name, alias, image, activeRegions, regionCount, members, threat, primaryActivities, extraCount }) {
   return (
-    <div className={styles.row}>
+    <Link href={`/gangs/${id}`} className={styles.row}>
       <img src={image} alt={name} className={styles.avatar} width={48} height={48} />
 
       <div className={styles.nameCell}>
@@ -75,16 +76,12 @@ function GangRow({ name, alias, image, activeRegions, regionCount, members, thre
         )}
       </div>
 
-      <button
-        className={styles.arrowBtn}
-        type="button"
-        aria-label={`View ${name} details`}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <span className={styles.arrowIcon} aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
-      </button>
-    </div>
+      </span>
+    </Link>
   )
 }
 
