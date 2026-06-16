@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import Badge from '@/components/ui/Badge/Badge'
 import GangTerritorialMap from '@/components/gangs/GangTerritorialMap/GangTerritorialMap'
+import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './gang-detail.module.css'
 
 const TABS = [
@@ -98,7 +99,6 @@ export default function GangDetailContent({ gang }) {
           </div>
 
           {/* Tabs */}
-          <div className={styles.tabsArea}>
             <div className={styles.tabsBar} role="tablist">
               {TABS.map(tab => (
                 <button
@@ -113,7 +113,7 @@ export default function GangDetailContent({ gang }) {
                 </button>
               ))}
             </div>
-
+          <div className={styles.tabsArea}>
             <div className={styles.tabContent} role="tabpanel">
               {activeTab === 'overview'     ? <OverviewTab gang={gang} /> :
                activeTab === 'members'      ? <MembersTab gang={gang} /> :
@@ -139,30 +139,61 @@ export default function GangDetailContent({ gang }) {
 function OverviewTab({ gang }) {
   return (
     <>
-      {/* Top: overview + map */}
+      {/* Top: left info + territorial map */}
       <div className={styles.overviewTopGrid}>
         <div className={styles.overviewLeft}>
-          <div>
-            <p className={styles.overviewTitle}>Overview</p>
+          <div className={styles.overviewSection}>
+            <p className={styles.overviewSectionTitle}>Overview</p>
             <p className={styles.overviewText}>{gang.overview}</p>
           </div>
+
           <div className={styles.crimesSection}>
-            <span className={styles.crimesSectionTitle}>Crimes Involved</span>
+            <span className={styles.overviewSectionTitle}>Crimes Involved</span>
             <div className={styles.crimesTags}>
               {gang.crimesInvolved.map(c => (
                 <span key={c} className={styles.crimeTag}>{c}</span>
               ))}
             </div>
           </div>
+
+          <div className={styles.summarySection}>
+            <p className={styles.overviewSectionTitle}>Summary</p>
+            <div className={styles.summaryItem}>
+              <div className={styles.summaryLabelRow}>
+                <span className={styles.summaryLabel}>Status</span>
+                <Badge threat="low" variant="sm">Active</Badge>
+              </div>
+              <p className={styles.summaryText}>
+                {gang.name} is still active, and operating in major South American regions,
+                including {gang.origin}, Central America and United States.
+              </p>
+            </div>
+            <div className={styles.summaryItem}>
+              <div className={styles.summaryLabelRow}>
+                <span className={styles.summaryLabel}>Violence Index</span>
+                <Badge threat={gang.threat} variant="sm">
+                  {gang.threat.charAt(0).toUpperCase() + gang.threat.slice(1)}
+                </Badge>
+              </div>
+              <p className={styles.summaryText}>{gang.threatDescription}</p>
+            </div>
+          </div>
         </div>
 
-        <GangTerritorialMap territories={gang.territories} />
+        {/* Right: Territorial Presence card */}
+        <div className={styles.territorialCard}>
+          <div className={styles.territorialCardHeader}>
+            <span className={styles.territorialCardTitle}>Territorial Presence</span>
+            <span className={styles.territorialCardSubtitle}>Detailed heatmap to showcase gang's presence</span>
+          </div>
+          <GangTerritorialMap territories={gang.territories} />
+        </div>
       </div>
 
       {/* Bottom: trend + recent activities */}
       <div className={styles.overviewBottomGrid}>
         <ActivityTrendSection trendData={gang.trendData} />
-        <RecentActivitiesSection gang={gang} />
+        <RecentActivitiesSection />
       </div>
     </>
   )
@@ -176,13 +207,13 @@ function ActivityTrendSection({ trendData }) {
     <div className={styles.trendCard}>
       <div className={styles.trendHeader}>
         <span className={styles.trendTitle}>Activity Trend</span>
-        <span className={styles.trendSubtitle}>Last 6 Months</span>
+        <span className={styles.trendBadge}>15</span>
       </div>
       <div className={styles.chartWrap}>
         {mounted ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
-              <CartesianGrid stroke="#12304D" strokeDasharray="3 3" vertical={false} />
+            <LineChart data={trendData} margin={{ top: 8, right: 16, bottom: 0, left: -24 }}>
+              <CartesianGrid stroke="#0F2D48" strokeDasharray="" vertical={true} />
               <XAxis dataKey="date" tick={{ fill: '#7589A0', fontSize: 10 }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fill: '#7589A0', fontSize: 10 }} tickLine={false} axisLine={false} />
               <Tooltip
@@ -190,40 +221,106 @@ function ActivityTrendSection({ trendData }) {
                 labelStyle={{ color: '#9AB1CC', fontSize: 11 }}
                 itemStyle={{ fontSize: 11 }}
               />
-              <Line type="monotone" dataKey="high"   stroke="#F2464A" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="medium" stroke="#F3921B" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="low"    stroke="#70EA8D" strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="high"
+                stroke="#F2464A" strokeWidth={2}
+                dot={{ r: 3, fill: '#F2464A', stroke: '#F2464A', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#F2464A', stroke: '#05101B', strokeWidth: 2 }}
+              />
+              <Line type="monotone" dataKey="medium"
+                stroke="#F3921B" strokeWidth={2}
+                dot={{ r: 3, fill: '#F3921B', stroke: '#F3921B', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#F3921B', stroke: '#05101B', strokeWidth: 2 }}
+              />
+              <Line type="monotone" dataKey="low"
+                stroke="#70EA8D" strokeWidth={2}
+                dot={{ r: 3, fill: '#70EA8D', stroke: '#70EA8D', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#70EA8D', stroke: '#05101B', strokeWidth: 2 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         ) : (
           <div style={{ height: '100%', background: 'var(--bg-elevated)' }} />
         )}
       </div>
+      <div className={styles.trendLegend}>
+        <span className={styles.trendLegendItem}><span className={`${styles.legendDot} ${styles.dotHigh}`} />High Threat</span>
+        <span className={styles.trendLegendItem}><span className={`${styles.legendDot} ${styles.dotMedium}`} />Medium Threat</span>
+        <span className={styles.trendLegendItem}><span className={`${styles.legendDot} ${styles.dotLow}`} />Low Threat</span>
+      </div>
     </div>
   )
 }
 
-function RecentActivitiesSection({ gang }) {
-  const activities = [
-    { id: 1, title: `${gang.name} members arrested in major drug bust`, date: 'May 18, 2025', threat: 'high' },
-    { id: 2, title: `Authorities seize assets linked to ${gang.name}`, date: 'May 14, 2025', threat: 'medium' },
-    { id: 3, title: `New extortion ring tied to ${gang.name} dismantled`, date: 'May 10, 2025', threat: 'high' },
-    { id: 4, title: `${gang.name} trafficking route intercepted`, date: 'May 05, 2025', threat: 'medium' },
-  ]
+const MOCK_RECENT = [
+  {
+    id: 1,
+    category: 'robbery',
+    image: 'https://picsum.photos/seed/act-rob1/80/80',
+    title: 'Armed Robbery at Downtown Commercial Bank',
+    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
+    date: 'May 19, 2025',
+    location: 'Downtown, Chicago, USA',
+  },
+  {
+    id: 2,
+    category: 'robbery',
+    image: 'https://picsum.photos/seed/act-rob2/80/80',
+    title: 'Armed Robbery at Downtown Commercial Bank',
+    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
+    date: 'May 19, 2025',
+    location: 'Downtown, Chicago, USA',
+  },
+  {
+    id: 3,
+    category: 'robbery',
+    image: 'https://picsum.photos/seed/act-rob3/80/80',
+    title: 'Armed Robbery at Downtown Commercial Bank',
+    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
+    date: 'May 19, 2025',
+    location: 'Downtown, Chicago, USA',
+  },
+]
 
+function RecentActivitiesSection() {
   return (
     <div className={styles.recentCard}>
-      <span className={styles.recentHeader}>Recent Activities</span>
+      <div className={styles.recentHeader}>
+        <div className={styles.recentHeaderLeft}>
+          <span className={styles.recentTitle}>Recent Activities</span>
+          <span className={styles.recentCountBadge}>15</span>
+        </div>
+        <a href="#" className={styles.viewAllLink}>View All</a>
+      </div>
       <div className={styles.recentList}>
-        {activities.map(act => (
+        {MOCK_RECENT.map(act => (
           <div key={act.id} className={styles.recentItem}>
-            <span className={styles.recentItemTitle}>{act.title}</span>
-            <div className={styles.recentItemMeta}>
-              <Badge threat={act.threat}>
-                {act.threat.charAt(0).toUpperCase() + act.threat.slice(1)}
+            <img
+              src={act.image}
+              alt={act.title}
+              className={styles.recentItemImage}
+              width={64}
+              height={64}
+            />
+            <div className={styles.recentItemBody}>
+              <Badge category={act.category} variant="sm">
+                {act.category.charAt(0).toUpperCase() + act.category.slice(1)}
               </Badge>
-              <span className={styles.recentItemDate}>{act.date}</span>
+              <span className={styles.recentItemTitle}>{act.title}</span>
+              <span className={styles.recentItemDesc}>{act.description}...</span>
+              <div className={styles.recentItemFooter}>
+                <span className={styles.recentItemMeta}>
+                  <CalendarIcon />
+                  {act.date}
+                </span>
+                <span className={styles.recentItemMeta}>
+                  <PinIcon />
+                  {act.location}
+                </span>
+              </div>
             </div>
+            <button className={styles.recentItemArrow} type="button" aria-label="View activity">
+              <ArrowRightIcon />
+            </button>
           </div>
         ))}
       </div>
@@ -231,27 +328,138 @@ function RecentActivitiesSection({ gang }) {
   )
 }
 
-function MembersTab({ gang }) {
+/* ─────── Members mock data ─────── */
+
+const LEADER_EXTRAS = [
+  { status: 'Convicted', joinedSince: 2005 },
+  { status: 'Active',    joinedSince: 2007 },
+  { status: 'In-Trial',  joinedSince: 2009 },
+  { status: 'Active',    joinedSince: 2011 },
+  { status: 'Convicted', joinedSince: 2003 },
+]
+
+const MOCK_MEMBERS = [
+  { id: 'mm-1', name: 'Alfonso Santillan-Sanchez',   image: 'https://picsum.photos/seed/mm1/80/80',  role: 'Enforcer', status: 'Active',    threat: 'high',   joinedSince: 2015, crimes: ['Smuggling', 'Kidnapping', 'Arson'],           extraCrimes: 3 },
+  { id: 'mm-2', name: 'Roudy Dorccilhomme',          image: 'https://picsum.photos/seed/mm2/80/80',  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2018, crimes: ['Tax Evasion', 'Bribery', 'Fraud'],            extraCrimes: 3 },
+  { id: 'mm-3', name: 'Carols Cardona',               image: 'https://picsum.photos/seed/mm3/80/80',  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2010, crimes: ['Money Laundering', 'Armed Assault'],           extraCrimes: 3 },
+  { id: 'mm-4', name: 'Carlos Alfredo Romero',        image: 'https://picsum.photos/seed/mm4/80/80',  role: 'Member',   status: 'Arrested',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Robbery'],                extraCrimes: 5 },
+  { id: 'mm-5', name: 'Fernando Melendez-Ramirez',    image: 'https://picsum.photos/seed/mm5/80/80',  role: 'Member',   status: 'In-Trial',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Human Trafficking'],      extraCrimes: 5 },
+  { id: 'mm-6', name: 'Diego Mejia-Canales',          image: 'https://picsum.photos/seed/mm6/80/80',  role: 'Member',   status: 'Convicted', threat: 'medium', joinedSince: 2001, crimes: ['Arms Dealing', 'Racketeering'],               extraCrimes: 5 },
+  { id: 'mm-7', name: 'Alex Ucles Cruz',              image: 'https://picsum.photos/seed/mm7/80/80',  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Illegal Arms Trade'],        extraCrimes: 2 },
+  { id: 'mm-8', name: 'Jonathan Jafet Lopez-Coronel', image: 'https://picsum.photos/seed/mm8/80/80',  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Assault'],                  extraCrimes: 2 },
+  { id: 'mm-9', name: 'Dariusz Blaszczyk',            image: 'https://picsum.photos/seed/mm9/80/80',  role: 'Member',   status: 'Active',    threat: 'medium', joinedSince: 2008, crimes: ['Extortion', 'Bribery', 'Counterfeiting'],    extraCrimes: 2 },
+]
+
+const ROLE_CLASS = {
+  'Leader':          'roleLeader',
+  'Co-Leader':       'roleLeader',
+  'Regional Leader': 'roleLeader',
+  'Former Leader':   'roleLeader',
+  'Enforcer':        'roleEnforcer',
+  'Member':          'roleMember',
+}
+
+const STATUS_CLASS = {
+  'Active':    'statusActive',
+  'Convicted': 'statusConvicted',
+  'In-Trial':  'statusInTrial',
+  'Arrested':  'statusArrested',
+}
+
+function MemberCard({ member }) {
   return (
-    <div className={styles.membersGrid}>
-      {gang.leaders.map(leader => (
-        <div key={leader.id} className={styles.memberRow}>
-          <img
-            src={leader.image}
-            alt={leader.name}
-            className={styles.memberAvatar}
-            width={40}
-            height={40}
-          />
-          <div className={styles.memberInfo}>
-            <span className={styles.memberName}>{leader.name}</span>
-            <span className={styles.memberRole}>{leader.role}</span>
+    <div className={styles.memberCard}>
+      <div className={styles.memberCardTop}>
+        <img
+          src={member.image}
+          alt={member.name}
+          className={styles.memberCardAvatar}
+          width={72}
+          height={72}
+        />
+        <div className={styles.memberCardInfo}>
+          <span className={styles.memberCardName}>{member.name}</span>
+          <div className={styles.memberCardBadges}>
+            <span className={`${styles.memberRoleBadge} ${styles[ROLE_CLASS[member.role] ?? 'roleLeader']}`}>
+              {member.role}
+            </span>
+            <span className={`${styles.memberStatusBadge} ${styles[STATUS_CLASS[member.status] ?? 'statusActive']}`}>
+              {member.status}
+            </span>
           </div>
-          <Badge threat={leader.threat}>
-            {leader.threat.charAt(0).toUpperCase() + leader.threat.slice(1)}
-          </Badge>
         </div>
-      ))}
+      </div>
+
+      <div className={styles.memberCardDivider} />
+
+      <div className={styles.memberCardBottom}>
+        <div className={styles.memberCardMeta}>
+          <span className={member.threat === 'high' ? styles.threatSolidHigh : styles.threatSolidMedium}>
+            {member.threat === 'high' ? 'HIGH THREAT' : 'MEDIUM THREAT'}
+          </span>
+          <span className={styles.memberCardJoined}>Joined Since: {member.joinedSince}</span>
+        </div>
+        <span className={styles.memberCardCrimesLabel}>Crimes Involved</span>
+        <div className={styles.memberCardCrimesList}>
+          {member.crimes.map(c => (
+            <span key={c} className={styles.memberCardCrimeTag}>{c}</span>
+          ))}
+          {member.extraCrimes > 0 && (
+            <span className={styles.memberCardExtraTag}>+{member.extraCrimes}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MembersTab({ gang }) {
+  const [search, setSearch] = useState('')
+
+  const leaders = gang.leaders.slice(0, 3).map((l, i) => ({
+    ...l,
+    status: LEADER_EXTRAS[i].status,
+    joinedSince: LEADER_EXTRAS[i].joinedSince,
+    crimes: (gang.crimesInvolved ?? []).slice(0, 3),
+    extraCrimes: Math.max(0, (gang.crimesInvolved ?? []).length - 3),
+  }))
+
+  const query = search.toLowerCase()
+  const filteredLeaders  = leaders.filter(m => m.name.toLowerCase().includes(query))
+  const filteredMembers  = MOCK_MEMBERS.filter(m => m.name.toLowerCase().includes(query))
+
+  return (
+    <div className={styles.membersWrap}>
+      {/* Search */}
+      <div className={styles.membersSearchBox}>
+        <SearchInput placeholder="Search Members" onSearch={setSearch} />
+      </div>
+
+      {/* Leaders */}
+      {filteredLeaders.length > 0 && (
+        <div className={styles.membersSection}>
+          <div className={styles.membersSectionHead}>
+            <span className={styles.membersSectionTitle}>Leaders</span>
+            <span className={styles.membersSectionBadge}>{filteredLeaders.length}</span>
+          </div>
+          <div className={styles.membersCardGrid}>
+            {filteredLeaders.map(m => <MemberCard key={m.id} member={m} />)}
+          </div>
+        </div>
+      )}
+
+      {/* All Members */}
+      {filteredMembers.length > 0 && (
+        <div className={styles.membersSection}>
+          <div className={styles.membersSectionHead}>
+            <span className={styles.membersSectionTitle}>All Members</span>
+            <span className={styles.membersSectionBadge}>{MOCK_MEMBERS.length}</span>
+          </div>
+          <div className={styles.membersCardGrid}>
+            {filteredMembers.map(m => <MemberCard key={m.id} member={m} />)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -444,6 +652,34 @@ function ClockIcon({ className }) {
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+
+function PinIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
     </svg>
   )
 }
