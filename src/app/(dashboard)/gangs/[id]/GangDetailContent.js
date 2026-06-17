@@ -120,7 +120,7 @@ export default function GangDetailContent({ gang }) {
             <div className={styles.tabContent} role="tabpanel">
               {activeTab === 'overview'      ? <OverviewTab gang={gang} /> :
                activeTab === 'members'       ? <MembersTab gang={gang} /> :
-               activeTab === 'related-news'  ? <RelatedNewsTab /> :
+               activeTab === 'related-news'  ? <RelatedNewsTab height="52rem" /> :
                activeTab === 'territories'   ? <LocationsMapTab /> :
                activeTab === 'media'         ? <GangMediaTab gang={gang} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}

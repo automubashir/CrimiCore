@@ -13,8 +13,7 @@ export default function RelatedNewsTab({ activity, height = "26rem" }) {
   const [country, setCountry]   = useState(null)
   const [crimeType, setCrimeType] = useState(null)
   const [threat, setThreat]     = useState(null)
-  const [criminal, setCriminal] = useState(null)
-
+  const [criminal, setCriminal] = useState(null) 
   const base = useMemo(
     () => activity?.id ? ACTIVITIES.filter(a => a.id !== activity.id) : ACTIVITIES,
     [activity?.id]
