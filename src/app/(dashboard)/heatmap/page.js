@@ -1,14 +1,9 @@
-import PageShell from '@/components/layout/PageShell/PageShell'
+import HeatmapView from '@/components/heatmap/HeatmapView/HeatmapView'
 
 export const metadata = {
   title: 'Heatmap | CrimePanel',
 }
 
 export default function HeatmapPage() {
-  return (
-    <PageShell
-      title="Heatmap"
-      subtitle="Visualize crime density and hotspot analysis across regions"
-    />
-  )
+  return <HeatmapView />
 }

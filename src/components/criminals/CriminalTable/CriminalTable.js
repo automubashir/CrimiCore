@@ -1,0 +1,72 @@
+import Link from 'next/link'
+import Badge from '@/components/ui/Badge/Badge'
+import styles from './CriminalTable.module.css'
+
+export default function CriminalTable({ criminals, hasMore, onSeeMore }) {
+  return (
+    <div className={styles.table}>
+      <div className={styles.thead}>
+        <span />
+        <span className={styles.th}>Gang / Alias</span>
+        <span className={styles.th}>Threat Level</span>
+        <span className={styles.th}>Active Regions</span>
+        <span className={styles.th}>Crimes</span>
+        <span />
+      </div>
+
+      <div className={styles.tbody}>
+        {criminals.length > 0 ? (
+          criminals.map(c => <CriminalRow key={c.id} {...c} />)
+        ) : (
+          <div className={styles.empty}>No criminals match your search.</div>
+        )}
+      </div>
+
+      {hasMore && (
+        <div className={styles.seeMoreBar}>
+          <button className={styles.seeMoreBtn} type="button" onClick={onSeeMore}>
+            See More
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Individual row ── */
+function CriminalRow({ id, name, alias, gang, image, threat, activeRegions, regionCount, crimes, extraCount }) {
+  return (
+    <Link href={`/criminals/${id}`} className={styles.row}>
+      <img src={image} alt={name} className={styles.avatar} width={48} height={48} />
+
+      <div className={styles.nameCell}>
+        <span className={styles.name}>{name}</span>
+        <span className={styles.alias}>{gang}{alias ? ` · ${alias}` : ''}</span>
+      </div>
+
+      <div className={styles.threatCell}>
+        <Badge threat={threat}>{threat.toUpperCase()}</Badge>
+      </div>
+
+      <div className={styles.regionCell}>
+        <span className={styles.regions}>{activeRegions}</span>
+        <span className={styles.regionCount}>{regionCount}</span>
+      </div>
+
+      <div className={styles.crimesCell}>
+        {crimes.map(c => (
+          <span key={c} className={styles.crimeTag}>{c}</span>
+        ))}
+        {extraCount > 0 && (
+          <span className={styles.overflowTag}>+{extraCount}</span>
+        )}
+      </div>
+
+      <span className={styles.arrowIcon} aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </span>
+    </Link>
+  )
+}

@@ -94,7 +94,6 @@ export default function GangsContent() {
           <GangActivityTrend />
           <TopActivities />
         </aside>
-
       </div>
     </main>
   )
