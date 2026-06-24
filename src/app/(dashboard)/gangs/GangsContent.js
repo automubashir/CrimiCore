@@ -6,26 +6,57 @@ import GangTable from '@/components/gangs/GangTable/GangTable'
 import GangOverview from '@/components/gangs/GangOverview/GangOverview'
 import GangActivityTrend from '@/components/gangs/GangActivityTrend/GangActivityTrend'
 import TopActivities from '@/components/gangs/TopActivities/TopActivities'
-import { GANGS, GANG_STATS } from '@/lib/data/gangs'
+import NotFound from '@/components/ui/NotFound/NotFound'
 import styles from './gangs.module.css'
 
 const PAGE_SIZE = 8
 
-export default function GangsContent() {
-  const [search, setSearch] = useState('')
+export default function GangsContent({
+  affiliations     = [],
+  stats            = { total: 0, high: 0, medium: 0, low: 0 },
+  pieStats,
+  crimeTypes       = [],
+  trendData        = [],
+  countryOptions   = [],
+  crimeTypeOptions = [],
+}) {
+  const [search,       setSearch]       = useState('')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [filters,      setFilters]      = useState({
+    country:     'All Countries',
+    crimeType:   'All Crime Types',
+    threatLevel: 'Any',
+    criminal:    'All Criminals',
+    region:      'Any',
+  })
 
   const filtered = useMemo(() => {
     setVisibleCount(PAGE_SIZE)
-    if (!search.trim()) return GANGS
-    const q = search.trim().toLowerCase()
-    return GANGS.filter(g =>
-      g.name.toLowerCase().includes(q) ||
-      g.activeRegions.toLowerCase().includes(q) ||
-      (g.alias && g.alias.toLowerCase().includes(q)) ||
-      g.primaryActivities.some(a => a.toLowerCase().includes(q))
-    )
-  }, [search])
+    let result = affiliations
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      result = result.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        g.activeRegions.toLowerCase().includes(q) ||
+        (g.alias && g.alias.toLowerCase().includes(q)) ||
+        (g.primaryActivities ?? []).some(a => a.toLowerCase().includes(q))
+      )
+    }
+
+    if (filters.threatLevel !== 'Any')
+      result = result.filter(g => g.threat === filters.threatLevel.toLowerCase())
+
+    if (filters.country !== 'All Countries')
+      result = result.filter(g => g.activeRegions.toLowerCase().includes(filters.country.toLowerCase()))
+
+    if (filters.crimeType !== 'All Crime Types')
+      result = result.filter(g =>
+        (g.primaryActivities ?? []).some(a => a.toLowerCase().includes(filters.crimeType.toLowerCase()))
+      )
+
+    return result
+  }, [affiliations, search, filters])
 
   const visible = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
@@ -48,7 +79,7 @@ export default function GangsContent() {
               </div>
               <div className={styles.headerRight}>
                 <div className={styles.totalBadge}>
-                  <span className={styles.totalNum}>{GANG_STATS.total}</span>
+                  <span className={styles.totalNum}>{stats.total.toLocaleString()}</span>
                   <span className={styles.totalLabel}>Total Gangs</span>
                 </div>
                 <div className={styles.updatedLine}>
@@ -67,32 +98,41 @@ export default function GangsContent() {
 
             {/* Filters */}
             <div className={styles.filterSection}>
-              <GangFilterBar onSearch={setSearch} />
+              <GangFilterBar
+                onSearch={setSearch}
+                onFilterChange={setFilters}
+                countryOptions={countryOptions}
+                crimeTypeOptions={crimeTypeOptions}
+              />
             </div>
 
             {/* Stats */}
             <div className={styles.statsRow}>
-              <StatCard iconColor="brand" value={GANG_STATS.total} label="Total Gangs" />
-              <StatCard iconColor="error"   value={GANG_STATS.high}   label="High Threat" />
-              <StatCard iconColor="alert"   value={GANG_STATS.medium} label="Medium Threat" />
-              <StatCard iconColor="success" value={GANG_STATS.low}    label="Low Threat" />
+              <StatCard iconColor="brand"   value={stats.total}  label="Total Gangs" />
+              <StatCard iconColor="error"   value={stats.high}   label="High Threat" />
+              <StatCard iconColor="alert"   value={stats.medium} label="Medium Threat" />
+              <StatCard iconColor="success" value={stats.low}    label="Low Threat" />
             </div>
 
             {/* Table */}
-            <GangTable
-              gangs={visible}
-              hasMore={hasMore}
-              onSeeMore={() => setVisibleCount(c => c + PAGE_SIZE)}
-            />
+            {affiliations.length === 0 ? (
+              <NotFound title="No gangs found" message="No gang data is available right now." />
+            ) : (
+              <GangTable
+                gangs={visible}
+                hasMore={hasMore}
+                onSeeMore={() => setVisibleCount(c => c + PAGE_SIZE)}
+              />
+            )}
 
           </div>
         </div>
 
         {/* ── Right: sidebar ── */}
         <aside className={styles.sidebar}>
-          <GangOverview />
-          <GangActivityTrend />
-          <TopActivities />
+          <GangOverview pieStats={pieStats} />
+          <GangActivityTrend trendData={trendData} />
+          <TopActivities crimeTypes={crimeTypes} />
         </aside>
       </div>
     </main>
@@ -107,7 +147,7 @@ function StatCard({ iconColor, value, label }) {
         <GroupIcon />
       </div>
       <div className={styles.statText}>
-        <span className={styles.statValue}>{value.toLocaleString()}</span>
+        <span className={styles.statValue}>{(value ?? 0).toLocaleString()}</span>
         <span className={styles.statLabel}>{label}</span>
       </div>
     </div>

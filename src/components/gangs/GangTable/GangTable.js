@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './GangTable.module.css'
 
 /* ── Column headers ── */
@@ -43,7 +44,7 @@ export default function GangTable({ gangs, hasMore, onSeeMore }) {
 function GangRow({ id, name, alias, image, activeRegions, regionCount, members, threat, primaryActivities, extraCount }) {
   return (
     <Link href={`/gangs/${id}`} className={styles.row}>
-      <img src={image} alt={name} className={styles.avatar} width={48} height={48} />
+      <SafeImage src={image} alt={name} className={styles.avatar} width={48} height={48} />
 
       <div className={styles.nameCell}>
         <span className={styles.name}>{name}</span>
@@ -64,11 +65,13 @@ function GangRow({ id, name, alias, image, activeRegions, regionCount, members, 
       </div>
 
       <div className={styles.threatCell}>
-        <Badge threat={threat}>{threat.toUpperCase()}</Badge>
+        {threat
+          ? <Badge threat={threat}>{threat.toUpperCase()}</Badge>
+          : <span>—</span>}
       </div>
 
       <div className={styles.activitiesCell}>
-        {primaryActivities.map(act => (
+        {(primaryActivities ?? []).map(act => (
           <span key={act} className={styles.actTag}>{act}</span>
         ))}
         {extraCount > 0 && (

@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './LocationActivityCard.module.css'
 
 export default function LocationActivityCard({ id, image, title, date, threatLevel }) {
   return (
     <Link href={`/activities/${id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        <img src={image} alt={title} className={styles.image} loading="lazy" />
+        <SafeImage src={image} alt={title} className={styles.image} />
       </div>
       <div className={styles.content}>
         <Badge threat={threatLevel} variant="sm">

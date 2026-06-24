@@ -5,35 +5,33 @@ import { PieChart, Pie, Cell } from 'recharts'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-const HOTSPOTS = [
-  { rank: 1, city: 'Chicago (USA)',        activities: 187, color: '#F2464A' },
-  { rank: 2, city: 'Johannesburg, SA',     activities: 97,  color: '#F3921B' },
-  { rank: 3, city: 'Mexico City, Mexico',  activities: 85,  color: '#F3921B' },
-  { rank: 4, city: 'Tokyo, Japan',         activities: 72,  color: '#F3921B' },
-  { rank: 5, city: 'Paris, France',        activities: 68,  color: '#F3921B' },
-]
-const MAX_ACT = 187
-const TOTAL   = 424
+const ROW_COLORS = ['#F2464A', '#F3921B', '#F3921B', '#F3921B', '#F3921B']
 
-/* Geographic coordinates [lng, lat] for each hotspot marker */
-const MAP_MARKERS = [
-  { coords: [-87.6298, 41.8781], r: 7,   color: '#F2464A' }, // Chicago
-  { coords: [-99.1332, 19.4326], r: 5,   color: '#F3921B' }, // Mexico City
-  { coords: [28.0473, -26.2041], r: 5,   color: '#F3921B' }, // Johannesburg
-  { coords: [2.3522,  48.8566],  r: 3.5, color: '#F3921B' }, // Paris
-  { coords: [139.6917, 35.6895], r: 3.5, color: '#F3921B' }, // Tokyo
-  { coords: [44.3661,  33.3152], r: 3,   color: '#F3921B' }, // Baghdad
-  { coords: [3.3792,   6.5244],  r: 3,   color: '#F2464A' }, // Lagos
-  { coords: [100.9925, 15.87],   r: 2.5, color: '#F0C028' }, // SE Asia
-]
+const THREAT_ORDER = ['high', 'medium', 'low']
+const THREAT_COLORS = { high: '#F2464A', medium: '#F3921B', low: '#F0C028' }
 
-const DONUT_DATA = [
-  { value: 53, color: '#F2464A' },
-  { value: 27, color: '#F3921B' },
-  { value: 20, color: '#F0C028' },
-]
+function toTitleCase(str) {
+  return str
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
 
-function DonutChart() {
+function buildDonutData(byThreatLevel) {
+  if (!byThreatLevel?.length) return [{ value: 1, color: '#12304D' }]
+  return THREAT_ORDER
+    .map(level => {
+      const found = byThreatLevel.find(x => x.threat_level?.toLowerCase() === level)
+      return found ? { value: found.count, color: THREAT_COLORS[level] } : null
+    })
+    .filter(Boolean)
+}
+
+function DonutChart({ overview }) {
+  const byThreat  = overview?.by_threat_level ?? []
+  const donutData = buildDonutData(byThreat)
+  const total     = overview?.total_articles ?? byThreat.reduce((s, x) => s + (x.count ?? 0), 0)
+
   return (
     <div className={styles.donutWrapper}>
       <PieChart width={108} height={108} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -50,7 +48,7 @@ function DonutChart() {
         />
         {/* colored segments */}
         <Pie
-          data={DONUT_DATA}
+          data={donutData}
           cx={54}
           cy={54}
           innerRadius={33}
@@ -61,20 +59,30 @@ function DonutChart() {
           strokeWidth={0}
           paddingAngle={0}
         >
-          {DONUT_DATA.map((entry, i) => (
+          {donutData.map((entry, i) => (
             <Cell key={i} fill={entry.color} />
           ))}
         </Pie>
       </PieChart>
       <div className={styles.donutCenter}>
-        <span className={styles.donutTotal}>{TOTAL}</span>
+        <span className={styles.donutTotal}>{Number(total).toLocaleString()}</span>
         <span className={styles.donutLabel}>Total Activities</span>
       </div>
     </div>
   )
 }
 
-export default function GlobalMap() {
+export default function GlobalMap({ hotspots = [], overview = null }) {
+  const maxCount = hotspots.length > 0 ? Math.max(...hotspots.map(h => h.doc_count ?? 0), 1) : 1
+
+  const markers = hotspots
+    .filter(h => h.lat != null && h.lng != null)
+    .map((h, idx) => ({
+      coords: [parseFloat(h.lng), parseFloat(h.lat)],
+      r: 2.5 + ((h.doc_count ?? 0) / maxCount) * 4.5,
+      color: idx === 0 ? '#F2464A' : '#F3921B',
+    }))
+
   return (
     <div className="section-card h-100">
       <div className="section-card-header">
@@ -112,9 +120,8 @@ export default function GlobalMap() {
                 }
               </Geographies>
 
-              {MAP_MARKERS.map((m, i) => (
+              {markers.map((m, i) => (
                 <Marker key={i} coordinates={m.coords}>
-                  {/* layered circles create a soft glow effect */}
                   <circle r={m.r * 3.2} fill={m.color} fillOpacity={0.07} />
                   <circle r={m.r * 2}   fill={m.color} fillOpacity={0.15} />
                   <circle r={m.r}       fill={m.color} fillOpacity={0.6} />
@@ -129,24 +136,24 @@ export default function GlobalMap() {
             <h3 className={styles.analysisTitle}>Hotspot Analysis</h3>
             <div className={styles.analysisBody}>
               <div className={styles.hotspotList}>
-                {HOTSPOTS.map(({ rank, city, activities, color }) => (
-                  <div key={rank} className={styles.hotspotRow}>
-                    <span className={styles.rank}>{rank}.</span>
-                    <span className={styles.city}>{city}</span>
+                {hotspots.slice(0, 5).map(({ location, doc_count }, idx) => (
+                  <div key={location} className={styles.hotspotRow}>
+                    <span className={styles.rank}>{idx + 1}.</span>
+                    <span className={styles.city}>{toTitleCase(location)}</span>
                     <div className={styles.barTrack}>
                       <div
                         className={styles.barFill}
                         style={{
-                          width:      `${(activities / MAX_ACT) * 100}%`,
-                          background: color,
+                          width:      `${((doc_count ?? 0) / maxCount) * 100}%`,
+                          background: ROW_COLORS[idx],
                         }}
                       />
                     </div>
-                    <span className={styles.count}>{activities} Activities</span>
+                    <span className={styles.count}>{(doc_count ?? 0).toLocaleString()} Activities</span>
                   </div>
                 ))}
               </div>
-              <DonutChart />
+              <DonutChart overview={overview} />
             </div>
           </div>
 

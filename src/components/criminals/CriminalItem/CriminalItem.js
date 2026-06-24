@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './CriminalItem.module.css'
 
 const THREAT_LABELS = {
@@ -44,7 +45,7 @@ export default function CriminalItem({
     <>
       <span className={styles.avatarWrap} aria-hidden="true">
         {image ? (
-          <img src={image} alt={name} className={styles.avatar} />
+          <SafeImage src={image} alt={name} className={styles.avatar} />
         ) : (
           <span className={styles.avatarFallback}>{initials}</span>
         )}

@@ -1,21 +1,21 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { PieChart, Pie, Cell } from 'recharts'
 import styles from './ActivityOverview.module.css'
 
-const DATA = [
-  { label: 'Robbery',          pct: 28, count: 349, color: '#F2464A' },
-  { label: 'Drug Trafficking', pct: 24, count: 299, color: '#70EA8D' },
-  { label: 'Homicide',         pct: 18, count: 225, color: '#F3921B' },
-  { label: 'Vehicle Crime',    pct: 14, count: 174, color: '#F0C028' },
-  { label: 'Assault',          pct: 8,  count: 112, color: '#3DA1D8' },
-  { label: 'Terrorism',        pct: 7,  count: 112, color: '#AF83EA' },
-]
+const COLORS = ['#F2464A', '#70EA8D', '#F3921B', '#F0C028', '#3DA1D8', '#AF83EA']
 
-export default function ActivityOverview() {
+export default function ActivityOverview({ crimeTypes = [] }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+
+  const total = crimeTypes.reduce((s, d) => s + (d.doc_count ?? 0), 0) || 1
+  const data = crimeTypes.slice(0, 6).map((d, i) => ({
+    label: d.crime_type,
+    pct:   Math.round(((d.doc_count ?? 0) / total) * 100),
+    count: d.doc_count ?? 0,
+    color: COLORS[i % COLORS.length],
+  }))
 
   return (
     <div className="section-card">
@@ -25,10 +25,10 @@ export default function ActivityOverview() {
       <div className="section-card-content">
         <div className={styles.body}>
           <div className={styles.chartWrap}>
-            {mounted ? (
+            {mounted && data.length > 0 ? (
               <PieChart width={120} height={120} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
-                  data={DATA}
+                  data={data}
                   cx={60}
                   cy={60}
                   innerRadius={34}
@@ -39,7 +39,7 @@ export default function ActivityOverview() {
                   paddingAngle={2}
                   strokeWidth={0}
                 >
-                  {DATA.map((entry, i) => (
+                  {data.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
@@ -49,11 +49,11 @@ export default function ActivityOverview() {
             )}
           </div>
           <ul className={styles.legend}>
-            {DATA.map(({ label, pct, count, color }) => (
+            {data.map(({ label, pct, count, color }) => (
               <li key={label} className={styles.row}>
                 <span className={styles.swatch} style={{ background: color }} aria-hidden="true" />
                 <span className={styles.label}>{label}</span>
-                <span className={styles.value}>{pct}%&nbsp;({count})</span>
+                <span className={styles.value}>{pct}%&nbsp;({count.toLocaleString()})</span>
               </li>
             ))}
           </ul>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import CriminalItem from '@/components/criminals/CriminalItem/CriminalItem'
 import LocationsMapTab from '@/components/activities/LocationsMapTab/LocationsMapTab'
 import RelatedNewsTab from '@/components/activities/RelatedNewsTab/RelatedNewsTab'
@@ -16,7 +17,7 @@ const TABS = [
 
 const THUMB_LIMIT = 4
 
-export default function ActivityDetailContent({ activity, relatedNews }) {
+export default function ActivityDetailContent({ activity, relatedNews, similarNews = [], locationData = [], locationNews = [] }) {
   const [activeTab, setActiveTab] = useState('full-details')
   const [selectedThumb, setSelectedThumb] = useState(0)
 
@@ -65,7 +66,7 @@ export default function ActivityDetailContent({ activity, relatedNews }) {
               {/* Image gallery */}
               <div className={styles.gallery}>
                 <div className={styles.mainImageWrap}>
-                  <img
+                  <SafeImage
                     key={selectedThumb}
                     src={activity.gallery[selectedThumb]}
                     alt={activity.title}
@@ -83,7 +84,7 @@ export default function ActivityDetailContent({ activity, relatedNews }) {
                       aria-label={`View image ${i + 1}`}
                       aria-pressed={i === selectedThumb}
                     >
-                      <img src={src} alt="" className={styles.thumbImage} />
+                      <SafeImage src={src} alt="" className={styles.thumbImage} />
                       {i === THUMB_LIMIT - 1 && hiddenCount > 0 && (
                         <span className={styles.thumbMore} aria-hidden="true">
                           +{hiddenCount}
@@ -106,9 +107,13 @@ export default function ActivityDetailContent({ activity, relatedNews }) {
                   </div>
                   <div className={styles.metaCell}>
                     <span className={styles.metaCellLabel}>Threat Level</span>
-                    <Badge threat={activity.threatLevel}>
-                      {activity.threatLevel.charAt(0).toUpperCase() + activity.threatLevel.slice(1)}
-                    </Badge>
+                    {activity.threatLevel ? (
+                      <Badge threat={activity.threatLevel}>
+                        {activity.threatLevel.charAt(0).toUpperCase() + activity.threatLevel.slice(1)}
+                      </Badge>
+                    ) : (
+                      <span className={styles.metaCellValue}>—</span>
+                    )}
                   </div>
                   <div className={styles.metaCell}>
                     <span className={styles.metaCellLabel}>Reporting Agency</span>
@@ -171,9 +176,9 @@ export default function ActivityDetailContent({ activity, relatedNews }) {
               {activeTab === 'full-details' ? (
                 <FullDetailsTab activity={activity} />
               ) : activeTab === 'locations-map' ? (
-                <LocationsMapTab activity={activity} />
+                <LocationsMapTab activity={activity} locations={locationData} locationNews={locationNews} />
               ) : activeTab === 'related-news' ? (
-                <RelatedNewsTab activity={activity} />
+                <RelatedNewsTab similarNews={similarNews} />
               ):(<></>)}
             </div>
           </div>
@@ -219,7 +224,7 @@ export default function ActivityDetailContent({ activity, relatedNews }) {
                   <li key={news.id}>
                     <Link href={`/activities/${news.id}`} className={styles.relatedNewsLink}>
                       <div className={styles.relatedNewsImageWrap}>
-                        <img
+                        <SafeImage
                           src={news.image}
                           alt={news.title}
                           className={styles.relatedNewsImage}

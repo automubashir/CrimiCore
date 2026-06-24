@@ -1,56 +1,107 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { apiFetch, buildQuery } from '@/lib/api'
 import CriminalFilterBar from '@/components/criminals/CriminalFilterBar/CriminalFilterBar'
 import CriminalTable from '@/components/criminals/CriminalTable/CriminalTable'
 import ThreatDistribution from '@/components/criminals/ThreatDistribution/ThreatDistribution'
 import CriminalTopActivities from '@/components/criminals/CriminalTopActivities/CriminalTopActivities'
 import CriminalWatchlist from '@/components/criminals/CriminalWatchlist/CriminalWatchlist'
 import RecentAdditions from '@/components/criminals/RecentAdditions/RecentAdditions'
-import { CRIMINALS, CRIMINAL_STATS } from '@/lib/data/criminals'
+import NotFound from '@/components/ui/NotFound/NotFound'
 import styles from './criminals.module.css'
 
 const PAGE_SIZE = 10
 
-export default function CriminalsContent() {
-  const [search, setSearch]         = useState('')
-  const [filters, setFilters]       = useState({})
+function toTitleCase(str) {
+  if (!str) return ''
+  return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+function mapCriminal(c) {
+  const crimes = (c.crimeType ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  return {
+    id:            encodeURIComponent((c.criminalName ?? '').toLowerCase()),
+    name:          toTitleCase(c.criminalName ?? ''),
+    alias:         '—',
+    gang:          toTitleCase(c.affiliation ?? '—'),
+    image:         c.imageUrl ?? null,
+    threat:        c.threat_level?.toLowerCase() ?? null,
+    activeRegions: toTitleCase(c.country ?? c.location ?? '—'),
+    regionCount:   '—',
+    crimes:        crimes.slice(0, 2),
+    extraCount:    Math.max(0, crimes.length - 2),
+  }
+}
+
+export default function CriminalsContent({
+  criminalsRaw     = [],
+  stats            = { total: 0, high: 0, medium: 0, low: 0 },
+  pieStats,
+  crimeTypes       = [],
+  topCriminals     = [],
+  recentCriminals  = [],
+  gangOptions      = [],
+  countryOptions   = [],
+  crimeTypeOptions = [],
+}) {
+  const [search,       setSearch]       = useState('')
+  const [filters,      setFilters]      = useState({})
+  const [allCriminals, setAllCriminals] = useState(() => criminalsRaw.map(mapCriminal))
+  const [currentPage,  setCurrentPage]  = useState(1)
+  const [hasMorePages, setHasMorePages] = useState(true)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const filtered = useMemo(() => {
     setVisibleCount(PAGE_SIZE)
     const q = search.trim().toLowerCase()
-    return CRIMINALS.filter(c => {
+    return allCriminals.filter(c => {
       if (q && !(
         c.name.toLowerCase().includes(q) ||
         c.alias.toLowerCase().includes(q) ||
         c.gang.toLowerCase().includes(q) ||
         c.activeRegions.toLowerCase().includes(q) ||
-        c.crimes.some(cr => cr.toLowerCase().includes(q))
+        (c.crimes ?? []).some(cr => cr.toLowerCase().includes(q))
       )) return false
 
-      if (filters.threatLevel && filters.threatLevel !== 'Any') {
+      if (filters.threatLevel && filters.threatLevel !== 'Any')
         if (c.threat !== filters.threatLevel.toLowerCase()) return false
-      }
 
-      if (filters.gang && filters.gang !== 'Any') {
+      if (filters.gang && filters.gang !== 'Any')
         if (!c.gang.toLowerCase().includes(filters.gang.toLowerCase())) return false
-      }
 
-      if (filters.country && filters.country !== 'All Countries') {
+      if (filters.country && filters.country !== 'All Countries')
         if (!c.activeRegions.toLowerCase().includes(filters.country.toLowerCase())) return false
-      }
 
-      if (filters.crimeType && filters.crimeType !== 'All Crime Types') {
-        if (!c.crimes.some(cr => cr.toLowerCase().includes(filters.crimeType.toLowerCase()))) return false
-      }
+      if (filters.crimeType && filters.crimeType !== 'All Crime Types')
+        if (!(c.crimes ?? []).some(cr => cr.toLowerCase().includes(filters.crimeType.toLowerCase()))) return false
 
       return true
     })
-  }, [search, filters])
+  }, [allCriminals, search, filters])
 
-  const visible = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
+  const visible        = filtered.slice(0, visibleCount)
+  const hasMoreVisible = visibleCount < filtered.length
+
+  async function fetchNextPage() {
+    const nextPage = currentPage + 1
+    try {
+      const data = await apiFetch('/api/criminals/filter' + buildQuery({ page: nextPage }))
+      const newItems = (data.all_criminal ?? []).map(mapCriminal)
+      setAllCriminals(prev => [...prev, ...newItems])
+      setCurrentPage(nextPage)
+      setHasMorePages(newItems.length > 0)
+      setVisibleCount(c => c + PAGE_SIZE)
+    } catch { /* ignore */ }
+  }
+
+  function handleSeeMore() {
+    if (hasMoreVisible) {
+      setVisibleCount(c => c + PAGE_SIZE)
+    } else if (hasMorePages) {
+      fetchNextPage()
+    }
+  }
 
   return (
     <main className={styles.page}>
@@ -70,7 +121,7 @@ export default function CriminalsContent() {
               </div>
               <div className={styles.headerRight}>
                 <div className={styles.totalBadge}>
-                  <span className={styles.totalNum}>{CRIMINAL_STATS.total}</span>
+                  <span className={styles.totalNum}>{stats.total.toLocaleString()}</span>
                   <span className={styles.totalLabel}>Total Criminals</span>
                 </div>
                 <div className={styles.updatedLine}>
@@ -89,33 +140,43 @@ export default function CriminalsContent() {
 
             {/* Filters */}
             <div className={styles.filterSection}>
-              <CriminalFilterBar onSearch={setSearch} onFilterChange={setFilters} />
+              <CriminalFilterBar
+                onSearch={setSearch}
+                onFilterChange={setFilters}
+                gangOptions={gangOptions}
+                countryOptions={countryOptions}
+                crimeTypeOptions={crimeTypeOptions}
+              />
             </div>
 
             {/* Stats */}
             <div className={styles.statsRow}>
-              <StatCard iconColor="brand"   value={CRIMINAL_STATS.total}  label="Total Criminals" />
-              <StatCard iconColor="error"   value={CRIMINAL_STATS.high}   label="High Threat" />
-              <StatCard iconColor="alert"   value={CRIMINAL_STATS.medium} label="Medium Threat" />
-              <StatCard iconColor="success" value={CRIMINAL_STATS.low}    label="Low Threat" />
+              <StatCard iconColor="brand"   value={stats.total}  label="Total Criminals" />
+              <StatCard iconColor="error"   value={stats.high}   label="High Threat" />
+              <StatCard iconColor="alert"   value={stats.medium} label="Medium Threat" />
+              <StatCard iconColor="success" value={stats.low}    label="Low Threat" />
             </div>
 
             {/* Table */}
-            <CriminalTable
-              criminals={visible}
-              hasMore={hasMore}
-              onSeeMore={() => setVisibleCount(c => c + PAGE_SIZE)}
-            />
+            {allCriminals.length === 0 ? (
+              <NotFound title="No criminals found" message="No criminal data is available right now." />
+            ) : (
+              <CriminalTable
+                criminals={visible}
+                hasMore={hasMoreVisible || hasMorePages}
+                onSeeMore={handleSeeMore}
+              />
+            )}
 
           </div>
         </div>
 
         {/* ── Right: sidebar ── */}
         <aside className={styles.sidebar}>
-          <ThreatDistribution />
-          <CriminalTopActivities />
-          <CriminalWatchlist />
-          <RecentAdditions />
+          <ThreatDistribution pieStats={pieStats} />
+          <CriminalTopActivities crimeTypes={crimeTypes} />
+          <CriminalWatchlist topCriminals={topCriminals} />
+          <RecentAdditions recentCriminals={recentCriminals} />
         </aside>
 
       </div>

@@ -4,27 +4,28 @@ import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-const MAP_MARKERS = [
-  { coords: [-87.6298, 41.8781], r: 7,   color: '#F2464A' }, // Chicago
-  { coords: [-99.1332, 19.4326], r: 5,   color: '#F3921B' }, // Mexico City
-  { coords: [28.0473, -26.2041], r: 5,   color: '#F3921B' }, // Johannesburg
-  { coords: [2.3522,  48.8566],  r: 3.5, color: '#F3921B' }, // Paris
-  { coords: [139.6917, 35.6895], r: 3.5, color: '#F3921B' }, // Tokyo
-  { coords: [44.3661,  33.3152], r: 3,   color: '#F3921B' }, // Baghdad
-  { coords: [3.3792,   6.5244],  r: 3,   color: '#F2464A' }, // Lagos
-  { coords: [100.9925, 15.87],   r: 2.5, color: '#F0C028' }, // SE Asia
-]
+function toTitleCase(str) {
+  return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
 
-const ACTIVE_AREAS = [
-  { rank: 1, city: 'Chicago (USA)',       activities: 187, color: '#F2464A' },
-  { rank: 2, city: 'Johannesburg, SA',    activities: 97,  color: '#F3921B' },
-  { rank: 3, city: 'Mexico City, Mexico', activities: 85,  color: '#F3921B' },
-  { rank: 4, city: 'Tokyo, Japan',        activities: 72,  color: '#F3921B' },
-  { rank: 5, city: 'Paris, France',       activities: 68,  color: '#F3921B' },
-]
-const MAX_ACT = 187
+export default function CrimeHeatMap({ locations = [] }) {
+  const maxCount = locations.length > 0 ? Math.max(...locations.map(l => l.doc_count ?? 0), 1) : 1
 
-export default function CrimeHeatMap() {
+  const markers = locations
+    .filter(l => l.lat != null && l.lng != null)
+    .map((l, idx) => ({
+      coords: [parseFloat(l.lng), parseFloat(l.lat)],
+      r:      2.5 + ((l.doc_count ?? 0) / maxCount) * 4.5,
+      color:  idx === 0 ? '#F2464A' : '#F3921B',
+    }))
+
+  const activeAreas = locations.slice(0, 5).map((l, idx) => ({
+    rank:       idx + 1,
+    city:       toTitleCase(l.location ?? ''),
+    activities: l.doc_count ?? 0,
+    color:      idx === 0 ? '#F2464A' : '#F3921B',
+  }))
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -57,7 +58,7 @@ export default function CrimeHeatMap() {
             }
           </Geographies>
 
-          {MAP_MARKERS.map((m, i) => (
+          {markers.map((m, i) => (
             <Marker key={i} coordinates={m.coords}>
               <circle r={m.r * 3.2} fill={m.color} fillOpacity={0.07} />
               <circle r={m.r * 2}   fill={m.color} fillOpacity={0.15} />
@@ -73,18 +74,18 @@ export default function CrimeHeatMap() {
             Most active places where the mentioned criminals are operating
           </p>
           <div className={styles.areaList}>
-            {ACTIVE_AREAS.map(({ rank, city, activities, color }) => (
+            {activeAreas.map(({ rank, city, activities, color }) => (
               <div key={rank} className={styles.areaRow}>
                 <span className={styles.areaRank}>{rank}.</span>
                 <span className={styles.areaCity}>{city}</span>
                 <div className={styles.barTrack}>
                   <div
                     className={styles.barFill}
-                    style={{ width: `${(activities / MAX_ACT) * 100}%`, background: color }}
+                    style={{ width: `${(activities / maxCount) * 100}%`, background: color }}
                   />
                 </div>
                 <span className={styles.areaCount}>
-                  <strong>{activities}</strong> Activities
+                  <strong>{activities.toLocaleString()}</strong> Activities
                 </span>
               </div>
             ))}

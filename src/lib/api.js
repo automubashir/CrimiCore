@@ -1,14 +1,12 @@
-import { cookies } from 'next/headers'
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
 
-const BASE_URL = process.env.API_BASE_URL
-
-async function getToken() {
-  const store = await cookies()
-  return store.get('cp_session')?.value ?? null
+function getToken() {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('cp_session')
 }
 
 export async function apiFetch(path, { auth = true, ...init } = {}) {
-  const token = auth ? await getToken() : null
+  const token = auth ? getToken() : null
 
   const headers = {
     'Content-Type': 'application/json',
@@ -16,13 +14,12 @@ export async function apiFetch(path, { auth = true, ...init } = {}) {
     ...init.headers,
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...init,
-    headers,
-    next: { revalidate: 0 },
-  })
+  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers })
 
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.location.replace('/login')
+    }
     const text = await res.text().catch(() => '')
     throw new ApiError(res.status, text)
   }

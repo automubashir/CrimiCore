@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './ActivityCard.module.css'
 
 export default function ActivityCard({
@@ -19,7 +20,7 @@ export default function ActivityCard({
     <Link href={`/activities/${id}`} className={styles.cardLink}>
     <article className={styles.card}>
       <div className={styles.imageWrap}>
-        <img src={image} alt={title} className={styles.image} loading="lazy" />
+        <SafeImage src={image} alt={title} className={styles.image} />
         {reporter && (
           <span
             className={styles.reporter}

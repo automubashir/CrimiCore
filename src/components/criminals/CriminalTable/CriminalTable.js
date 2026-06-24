@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './CriminalTable.module.css'
 
 export default function CriminalTable({ criminals, hasMore, onSeeMore }) {
@@ -37,7 +38,7 @@ export default function CriminalTable({ criminals, hasMore, onSeeMore }) {
 function CriminalRow({ id, name, alias, gang, image, threat, activeRegions, regionCount, crimes, extraCount }) {
   return (
     <Link href={`/criminals/${id}`} className={styles.row}>
-      <img src={image} alt={name} className={styles.avatar} width={48} height={48} />
+      <SafeImage src={image} alt={name} className={styles.avatar} width={48} height={48} />
 
       <div className={styles.nameCell}>
         <span className={styles.name}>{name}</span>
@@ -45,7 +46,9 @@ function CriminalRow({ id, name, alias, gang, image, threat, activeRegions, regi
       </div>
 
       <div className={styles.threatCell}>
-        <Badge threat={threat}>{threat.toUpperCase()}</Badge>
+        {threat
+          ? <Badge threat={threat}>{threat.toUpperCase()}</Badge>
+          : <span>—</span>}
       </div>
 
       <div className={styles.regionCell}>

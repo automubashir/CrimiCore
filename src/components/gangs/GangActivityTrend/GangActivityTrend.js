@@ -5,7 +5,6 @@ import {
   LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { GANG_TREND_DATA } from '@/lib/data/gangs'
 import styles from './GangActivityTrend.module.css'
 
 const LINES = [
@@ -14,7 +13,7 @@ const LINES = [
   { key: 'low',    label: 'Low Threat',    color: '#70EA8D' },
 ]
 
-export default function GangActivityTrend() {
+export default function GangActivityTrend({ trendData = [] }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -32,7 +31,7 @@ export default function GangActivityTrend() {
           {mounted ? (
             <ResponsiveContainer width="100%" height={150}>
               <LineChart
-                data={GANG_TREND_DATA}
+                data={trendData}
                 margin={{ top: 8, right: 8, bottom: 0, left: -28 }}
               >
                 <CartesianGrid

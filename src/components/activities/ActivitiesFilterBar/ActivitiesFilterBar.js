@@ -4,38 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './ActivitiesFilterBar.module.css'
 
-const FILTERS = [
-  {
-    key: 'dateRange',
-    label: 'DATE RANGE',
-    default: 'Feb 01 - 2024',
-    options: ['Jan 01 - 2024', 'Feb 01 - 2024', 'Mar 01 - 2024', 'Apr 01 - 2024', 'May 01 - 2025'],
-  },
-  {
-    key: 'crimeType',
-    label: 'CRIME TYPE',
-    default: 'All Crime Types',
-    options: ['All Crime Types', 'Robbery', 'Vandalism', 'Cyber Attack', 'Arson', 'Homicide', 'Drug Trafficking', 'Terrorism', 'Assault'],
-  },
-  {
-    key: 'gangs',
-    label: 'GANGS',
-    default: 'Any',
-    options: ['Any', 'Unknown Gang', 'Local Taggers', 'Shadow Hackers', 'Fire Starters Crew', 'Black Ravens', 'Street Kings'],
-  },
-  {
-    key: 'criminal',
-    label: 'CRIMINAL',
-    default: 'All Criminals',
-    options: ['All Criminals', 'Known Criminals', 'Unknown Criminals'],
-  },
-  {
-    key: 'country',
-    label: 'COUNTRY/REGION',
-    default: 'Any',
-    options: ['Any', 'USA', 'Mexico', 'United Kingdom', 'Canada', 'Germany'],
-  },
-]
+const DATE_OPTIONS = ['Jan 01 - 2024', 'Feb 01 - 2024', 'Mar 01 - 2024', 'Apr 01 - 2024', 'May 01 - 2025']
+const CRIMINAL_OPTIONS = ['All Criminals', 'Known Criminals', 'Unknown Criminals']
 
 function FilterItem({ label, value, options, onChange }) {
   const [open, setOpen] = useState(false)
@@ -92,7 +62,21 @@ function FilterItem({ label, value, options, onChange }) {
   )
 }
 
-export default function ActivitiesFilterBar({ onSearch, onFilterChange }) {
+export default function ActivitiesFilterBar({
+  onSearch,
+  onFilterChange,
+  crimeTypeOptions = ['All Crime Types'],
+  gangOptions      = ['Any'],
+  countryOptions   = ['Any'],
+}) {
+  const FILTERS = [
+    { key: 'dateRange', label: 'DATE RANGE',     default: 'Feb 01 - 2024',   options: DATE_OPTIONS },
+    { key: 'crimeType', label: 'CRIME TYPE',     default: 'All Crime Types', options: crimeTypeOptions },
+    { key: 'gangs',     label: 'GANGS',          default: 'Any',             options: gangOptions },
+    { key: 'criminal',  label: 'CRIMINAL',       default: 'All Criminals',   options: CRIMINAL_OPTIONS },
+    { key: 'country',   label: 'COUNTRY/REGION', default: 'Any',             options: countryOptions },
+  ]
+
   const [values, setValues] = useState(() =>
     Object.fromEntries(FILTERS.map(f => [f.key, f.default]))
   )

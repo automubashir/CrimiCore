@@ -1098,3 +1098,220 @@
   .mediaGrid { grid-template-columns: repeat(2, 1fr); }
   .mediaTabGrid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ═══════════════════════════════════════════════
+   Members Tab
+   ══════════════════════════════════════════════ */
+
+.membersSearchBox {
+  max-width: 700px;
+  background: var(--bg-elevated);
+}
+
+.membersWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.membersSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.membersSectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.membersSectionTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.membersSectionBadge {
+  background: var(--bg-brand-light);
+  color: var(--text-brand);
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  padding: 2px 8px;
+  line-height: 16px;
+}
+
+.membersCardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.memberCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  display: flex;
+  flex-direction: column;
+}
+
+.memberCardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  background: var(--bg-elevated);
+}
+
+.memberCardAvatar {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+}
+
+.memberCardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: 2px;
+}
+
+.memberCardName {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.memberCardBadges {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.memberRoleBadge {
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 16px;
+}
+
+.roleLeader   { background: var(--bg-brand-light);  color: var(--text-brand);         border: 1px solid var(--border-brand); }
+.roleEnforcer { background: rgba(27,177,240,0.12);  color: #1BB1F0;                   border: 1px solid rgba(27,177,240,0.3); }
+.roleMember   { background: rgba(100,120,160,0.12); color: var(--text-secondary);     border: 1px solid var(--border-primary); }
+
+.memberStatusBadge {
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 16px;
+}
+
+.statusActive    { background: var(--success-bg);        color: var(--success-primary); border: 1px solid rgba(112,234,141,0.3); }
+.statusConvicted { background: var(--alert-bg);          color: var(--alert-primary);   border: 1px solid rgba(243,146,27,0.3); }
+.statusInTrial   { background: rgba(27,177,240,0.12);    color: #1BB1F0;                border: 1px solid rgba(27,177,240,0.3); }
+.statusArrested  { background: var(--error-bg);          color: var(--error-primary);   border: 1px solid rgba(242,70,74,0.3); }
+
+.memberCardDivider {
+  height: 1px;
+  background: var(--border-secondary);
+  flex-shrink: 0;
+}
+
+.memberCardBottom {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.memberCardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.threatSolidHigh {
+  background: #F2464A;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.threatSolidMedium {
+  background: #F3921B;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.memberCardJoined {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.memberCardCrimesLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.memberCardCrimesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memberCardCrimeTag {
+  padding: 3px 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 16px;
+}
+
+.memberCardExtraTag {
+  padding: 3px 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: 16px;
+}
+
+@media (max-width: 1100px) {
+  .membersCardGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 680px) {
+  .membersCardGrid { grid-template-columns: 1fr; }
+}

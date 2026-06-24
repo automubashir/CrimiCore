@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './CrimesTab.module.css'
 
 /* ── Constants ── */
@@ -252,7 +253,7 @@ function CrimeReportItem({ report }) {
 
   return (
     <div className={styles.reportItem}>
-      <img
+      <SafeImage
         src={report.image}
         alt={report.title}
         className={styles.reportThumb}

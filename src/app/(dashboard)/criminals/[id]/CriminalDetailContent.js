@@ -7,6 +7,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
+import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import CriminalLocationsMap from '@/components/criminals/CriminalLocationsMap/CriminalLocationsMap'
 import CrimesTab from '@/components/criminals/CrimesTab/CrimesTab'
 import CriminalMediaTab from '@/components/criminals/CriminalMediaTab/CriminalMediaTab'
@@ -15,13 +17,12 @@ import LocationsMapTab from '@/components/activities/LocationsMapTab/LocationsMa
 import styles from './criminal-detail.module.css'
 
 const TABS = [
-  { key: 'overview',     label: 'Overview'     },
-  { key: 'profile',      label: 'Profile'      },
-  { key: 'association',  label: 'Association'  },
-  { key: 'crimes',       label: 'Crimes'       },
-  { key: 'activities',   label: 'Activities'   },
-  { key: 'locations',    label: 'Locations'    },
-  { key: 'media',        label: 'Media'        },
+  { key: 'overview',    label: 'Overview'   },
+  { key: 'members',     label: 'Members'    },
+  { key: 'crimes',      label: 'Crimes'     },
+  { key: 'activities',  label: 'Activities' },
+  { key: 'locations',   label: 'Locations'  },
+  { key: 'media',       label: 'Media'      },
 ]
 
 const TREND_PERIODS = ['This Month', 'Last 6 Months', 'Last Year']
@@ -42,7 +43,7 @@ export default function CriminalDetailContent({ criminal }) {
           {/* Profile card */}
           <div className={styles.profileCard}>
             <div className={styles.profileTop}>
-              <img
+              <SafeImage
                 src={criminal.image}
                 alt={criminal.name}
                 className={styles.avatar}
@@ -52,9 +53,11 @@ export default function CriminalDetailContent({ criminal }) {
               <div className={styles.profileInfo}>
                 <div className={styles.profileNameRow}>
                   <h1 className={styles.profileName}>{criminal.name}</h1>
-                  <Badge threat={criminal.threat}>
-                    {criminal.threat.toUpperCase()} THREAT
-                  </Badge>
+                  {criminal.threat && (
+                    <Badge threat={criminal.threat}>
+                      {criminal.threat.toUpperCase()} THREAT
+                    </Badge>
+                  )}
                 </div>
                 <span className={styles.profileGang}>{criminal.gangLabel}</span>
                 <span className={styles.profileType}>{criminal.type}</span>
@@ -92,9 +95,9 @@ export default function CriminalDetailContent({ criminal }) {
               <span className={styles.metaDivider} aria-hidden="true" />
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Threat Level</span>
-                <Badge threat={criminal.threat}>
-                  {criminal.threat.toUpperCase()} THREAT
-                </Badge>
+                {criminal.threat
+                  ? <Badge threat={criminal.threat}>{criminal.threat.toUpperCase()} THREAT</Badge>
+                  : <span className={styles.metaValue}>—</span>}
               </div>
               <span className={styles.metaDivider} aria-hidden="true" />
               <div className={styles.metaItem}>
@@ -139,11 +142,12 @@ export default function CriminalDetailContent({ criminal }) {
 
           <div className={styles.tabsArea}>
             <div className={styles.tabContent} role="tabpanel">
-              {activeTab === 'overview'    ? <OverviewTab criminal={criminal} /> :
-               activeTab === 'crimes'      ? <CrimesTab criminal={criminal} /> :
-               activeTab === 'activities'  ? <RelatedNewsTab height="52rem" /> :
-               activeTab === 'locations'   ? <LocationsMapTab /> :
-               activeTab === 'media'       ? <CriminalMediaTab criminal={criminal} /> :
+              {activeTab === 'overview'   ? <OverviewTab criminal={criminal} /> :
+               activeTab === 'members'    ? <MembersTab criminal={criminal} /> :
+               activeTab === 'crimes'     ? <CrimesTab criminal={criminal} /> :
+               activeTab === 'activities' ? <RelatedNewsTab height="52rem" /> :
+               activeTab === 'locations'  ? <LocationsMapTab /> :
+               activeTab === 'media'      ? <CriminalMediaTab criminal={criminal} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}
             </div>
           </div>
@@ -152,8 +156,8 @@ export default function CriminalDetailContent({ criminal }) {
         {/* ── Sidebar ── */}
         <aside className={styles.sidebar}>
           <ThreatAssessmentCard criminal={criminal} />
-          <KeyAliasesCard aliases={criminal.aliases} />
-          <AssociatesCard associates={criminal.associates} count={criminal.associateCount} />
+          {criminal.aliases.length > 0 && <KeyAliasesCard aliases={criminal.aliases} />}
+          {criminal.associates.length > 0 && <AssociatesCard associates={criminal.associates} count={criminal.associateCount} />}
           <RecentNewsCard news={criminal.recentNews} count={criminal.recentNewsCount} />
         </aside>
       </div>
@@ -225,11 +229,13 @@ function BiographicalCard({ criminal }) {
           </div>
           <div className={styles.bioRow}>
             <span className={styles.bioLabel}>Threat</span>
-            <Badge threat={criminal.threat}>{criminal.threat.toUpperCase()} THREAT</Badge>
+            {criminal.threat
+              ? <Badge threat={criminal.threat}>{criminal.threat.toUpperCase()} THREAT</Badge>
+              : <span className={styles.bioValue}>—</span>}
           </div>
           <div className={styles.bioRow}>
             <span className={styles.bioLabel}>INTERPOL</span>
-            <span className={`${styles.interpolBadge} ${styles[`interpol_${criminal.threat}`]}`}>
+            <span className={`${styles.interpolBadge} ${criminal.threat ? styles[`interpol_${criminal.threat}`] : ''}`}>
               {criminal.interpol}
             </span>
           </div>
@@ -265,7 +271,7 @@ function GangsAssociatedCard({ gangs }) {
       <div className={styles.gangsGrid}>
         {gangs.map(g => (
           <div key={g.id} className={styles.gangItem}>
-            <img
+            <SafeImage
               src={g.image}
               alt={g.name}
               className={styles.gangImage}
@@ -273,7 +279,9 @@ function GangsAssociatedCard({ gangs }) {
               height={80}
             />
             <span className={styles.gangName}>{g.name}</span>
-            <Badge threat={g.threat}>{g.threat.toUpperCase()} THREAT</Badge>
+            {g.threat
+              ? <Badge threat={g.threat}>{g.threat.toUpperCase()} THREAT</Badge>
+              : <span>—</span>}
           </div>
         ))}
       </div>
@@ -291,7 +299,7 @@ function KeyConnectionsCard({ connections, count }) {
       <div className={styles.connectionsList}>
         {connections.map(c => (
           <div key={c.id} className={styles.connectionItem}>
-            <img
+            <SafeImage
               src={c.image}
               alt={c.name}
               className={styles.connectionAvatar}
@@ -299,7 +307,9 @@ function KeyConnectionsCard({ connections, count }) {
               height={80}
             />
             <span className={styles.connectionName}>{c.name}</span>
-            <Badge threat={c.threat}>{c.threat.toUpperCase()} THREAT</Badge>
+            {c.threat
+              ? <Badge threat={c.threat}>{c.threat.toUpperCase()} THREAT</Badge>
+              : <span>—</span>}
           </div>
         ))}
       </div>
@@ -386,7 +396,7 @@ function RecentActivitiesCard({ news, count }) {
       <div className={styles.recentList}>
         {news.slice(0, 3).map(item => (
           <div key={item.id} className={styles.recentItem}>
-            <img
+            <SafeImage
               src={item.image}
               alt={item.title}
               className={styles.recentItemImage}
@@ -394,14 +404,16 @@ function RecentActivitiesCard({ news, count }) {
               height={64}
             />
             <div className={styles.recentItemBody}>
-              <Badge category={item.category} variant="sm">
-                {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-              </Badge>
+              {item.category && (
+                <Badge category={item.category} variant="sm">
+                  {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                </Badge>
+              )}
               <span className={styles.recentItemTitle}>{item.title}</span>
-              <span className={styles.recentItemDesc}>{item.description}...</span>
+              <span className={styles.recentItemDesc}>{item.description}</span>
               <div className={styles.recentItemFooter}>
-                <span className={styles.recentItemMeta}><CalendarIcon />May 19, 2025</span>
-                <span className={styles.recentItemMeta}><PinIcon />Downtown, Chicago, USA</span>
+                <span className={styles.recentItemMeta}><CalendarIcon />{item.date}</span>
+                <span className={styles.recentItemMeta}><PinIcon />{item.location}</span>
               </div>
             </div>
             <button className={styles.recentItemArrow} type="button" aria-label="View activity">
@@ -435,7 +447,7 @@ function MediaGridCard({ media }) {
       </div>
       <div className={styles.mediaGrid}>
         {media.map((src, i) => (
-          <img
+          <SafeImage
             key={i}
             src={src}
             alt={`Media ${i + 1}`}
@@ -449,6 +461,143 @@ function MediaGridCard({ media }) {
   )
 }
 
+
+/* ─────────────────── Members tab ─────────────────── */
+
+const LEADER_EXTRAS = [
+  { status: 'Convicted', joinedSince: 2005 },
+  { status: 'Active',    joinedSince: 2007 },
+  { status: 'In-Trial',  joinedSince: 2009 },
+  { status: 'Active',    joinedSince: 2011 },
+  { status: 'Convicted', joinedSince: 2003 },
+]
+
+const MOCK_MEMBERS = [
+  { id: 'mm-1', name: 'Alfonso Santillan-Sanchez',   image: null, role: 'Enforcer', status: 'Active',    threat: 'high',   joinedSince: 2015, crimes: ['Smuggling', 'Kidnapping', 'Arson'],        extraCrimes: 3 },
+  { id: 'mm-2', name: 'Roudy Dorccilhomme',          image: null, role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2018, crimes: ['Tax Evasion', 'Bribery', 'Fraud'],         extraCrimes: 3 },
+  { id: 'mm-3', name: 'Carols Cardona',              image: null, role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2010, crimes: ['Money Laundering', 'Armed Assault'],        extraCrimes: 3 },
+  { id: 'mm-4', name: 'Carlos Alfredo Romero',       image: null, role: 'Member',   status: 'Arrested',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Robbery'],             extraCrimes: 5 },
+  { id: 'mm-5', name: 'Fernando Melendez-Ramirez',   image: null, role: 'Member',   status: 'In-Trial',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Human Trafficking'],   extraCrimes: 5 },
+  { id: 'mm-6', name: 'Diego Mejia-Canales',         image: null, role: 'Member',   status: 'Convicted', threat: 'medium', joinedSince: 2001, crimes: ['Arms Dealing', 'Racketeering'],            extraCrimes: 5 },
+  { id: 'mm-7', name: 'Alex Ucles Cruz',             image: null, role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Illegal Arms Trade'],     extraCrimes: 2 },
+  { id: 'mm-8', name: 'Jonathan Jafet Lopez-Coronel',image: null, role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Assault'],               extraCrimes: 2 },
+  { id: 'mm-9', name: 'Dariusz Blaszczyk',           image: null, role: 'Member',   status: 'Active',    threat: 'medium', joinedSince: 2008, crimes: ['Extortion', 'Bribery', 'Counterfeiting'], extraCrimes: 2 },
+]
+
+const ROLE_CLASS = {
+  'Leader':          'roleLeader',
+  'Co-Leader':       'roleLeader',
+  'Regional Leader': 'roleLeader',
+  'Former Leader':   'roleLeader',
+  'Enforcer':        'roleEnforcer',
+  'Member':          'roleMember',
+}
+
+const STATUS_CLASS = {
+  'Active':    'statusActive',
+  'Convicted': 'statusConvicted',
+  'In-Trial':  'statusInTrial',
+  'Arrested':  'statusArrested',
+}
+
+function MemberCard({ member }) {
+  return (
+    <div className={styles.memberCard}>
+      <div className={styles.memberCardTop}>
+        <SafeImage
+          src={member.image}
+          alt={member.name}
+          className={styles.memberCardAvatar}
+          width={72}
+          height={72}
+        />
+        <div className={styles.memberCardInfo}>
+          <span className={styles.memberCardName}>{member.name}</span>
+          <div className={styles.memberCardBadges}>
+            <span className={`${styles.memberRoleBadge} ${styles[ROLE_CLASS[member.role] ?? 'roleLeader']}`}>
+              {member.role}
+            </span>
+            <span className={`${styles.memberStatusBadge} ${styles[STATUS_CLASS[member.status] ?? 'statusActive']}`}>
+              {member.status}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.memberCardDivider} />
+
+      <div className={styles.memberCardBottom}>
+        <div className={styles.memberCardMeta}>
+          <span className={member.threat === 'high' ? styles.threatSolidHigh : styles.threatSolidMedium}>
+            {member.threat === 'high' ? 'HIGH THREAT' : 'MEDIUM THREAT'}
+          </span>
+          <span className={styles.memberCardJoined}>Joined Since: {member.joinedSince}</span>
+        </div>
+        <span className={styles.memberCardCrimesLabel}>Crimes Involved</span>
+        <div className={styles.memberCardCrimesList}>
+          {member.crimes.map(c => (
+            <span key={c} className={styles.memberCardCrimeTag}>{c}</span>
+          ))}
+          {member.extraCrimes > 0 && (
+            <span className={styles.memberCardExtraTag}>+{member.extraCrimes}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MembersTab({ criminal }) {
+  const [search, setSearch] = useState('')
+
+  const leaders = (criminal.gangs ?? []).slice(0, 3).map((g, i) => ({
+    id:          `leader-${i}`,
+    name:        g.name,
+    image:       g.image,
+    role:        'Leader',
+    status:      LEADER_EXTRAS[i]?.status     ?? 'Active',
+    joinedSince: LEADER_EXTRAS[i]?.joinedSince ?? 2010,
+    threat:      g.threat ?? 'medium',
+    crimes:      (criminal.crimesInvolved ?? []).slice(0, 3),
+    extraCrimes: Math.max(0, (criminal.crimesInvolved ?? []).length - 3),
+  }))
+
+  const query           = search.toLowerCase()
+  const filteredLeaders = leaders.filter(m => m.name.toLowerCase().includes(query))
+  const filteredMembers = MOCK_MEMBERS.filter(m => m.name.toLowerCase().includes(query))
+
+  return (
+    <div className={styles.membersWrap}>
+      <div className={styles.membersSearchBox}>
+        <SearchInput placeholder="Search Members" onSearch={setSearch} />
+      </div>
+
+      {filteredLeaders.length > 0 && (
+        <div className={styles.membersSection}>
+          <div className={styles.membersSectionHead}>
+            <span className={styles.membersSectionTitle}>Leaders</span>
+            <span className={styles.membersSectionBadge}>{filteredLeaders.length}</span>
+          </div>
+          <div className={styles.membersCardGrid}>
+            {filteredLeaders.map(m => <MemberCard key={m.id} member={m} />)}
+          </div>
+        </div>
+      )}
+
+      {filteredMembers.length > 0 && (
+        <div className={styles.membersSection}>
+          <div className={styles.membersSectionHead}>
+            <span className={styles.membersSectionTitle}>All Members</span>
+            <span className={styles.membersSectionBadge}>{MOCK_MEMBERS.length}</span>
+          </div>
+          <div className={styles.membersCardGrid}>
+            {filteredMembers.map(m => <MemberCard key={m.id} member={m} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function ComingSoonTab({ label }) {
   return (
@@ -467,7 +616,8 @@ function ThreatAssessmentCard({ criminal }) {
   const pct   = score / 100
   const fgColor =
     criminal.threat === 'high'   ? '#F2464A' :
-    criminal.threat === 'medium' ? '#F3921B' : '#70EA8D'
+    criminal.threat === 'medium' ? '#F3921B' :
+    criminal.threat === 'low'    ? '#70EA8D' : '#12304D'
 
   const cx = 80, cy = 88, r = 72
   const circumference = Math.PI * r
@@ -498,9 +648,11 @@ function ThreatAssessmentCard({ criminal }) {
             <span className={styles.threatLabelLow}>Low</span>
             <span className={styles.threatLabelHigh}>High</span>
           </div>
-          <span className={styles.threatLevelPill} style={{ background: fgColor }}>
-            {criminal.threat.toUpperCase()} THREAT
-          </span>
+          {criminal.threat && (
+            <span className={styles.threatLevelPill} style={{ background: fgColor }}>
+              {criminal.threat.toUpperCase()} THREAT
+            </span>
+          )}
         </div>
 
         {/* Per-crime scores */}
@@ -557,7 +709,7 @@ function AssociatesCard({ associates, count }) {
       <div className={styles.leadersList}>
         {associates.map(a => (
           <div key={a.id} className={styles.leaderRow}>
-            <img
+            <SafeImage
               src={a.image}
               alt={a.name}
               className={styles.leaderAvatar}
@@ -568,9 +720,11 @@ function AssociatesCard({ associates, count }) {
               <span className={styles.leaderName}>{a.name}</span>
               <span className={styles.leaderRole}>{a.role}</span>
             </div>
-            <Badge threat={a.threat}>
-              {a.threat.charAt(0).toUpperCase() + a.threat.slice(1)}
-            </Badge>
+            {a.threat && (
+              <Badge threat={a.threat}>
+                {a.threat.charAt(0).toUpperCase() + a.threat.slice(1)}
+              </Badge>
+            )}
           </div>
         ))}
       </div>
@@ -591,7 +745,7 @@ function RecentNewsCard({ news, count }) {
       <div className={styles.newsList}>
         {news.map(item => (
           <div key={item.id} className={styles.newsItem}>
-            <img
+            <SafeImage
               src={item.image}
               alt={item.title}
               className={styles.newsThumb}
@@ -599,11 +753,13 @@ function RecentNewsCard({ news, count }) {
               height={60}
             />
             <div className={styles.newsBody}>
-              <Badge category={item.category} variant="sm">
-                {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-              </Badge>
+              {item.category && (
+                <Badge category={item.category} variant="sm">
+                  {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                </Badge>
+              )}
               <span className={styles.newsTitle}>{item.title}</span>
-              <span className={styles.newsDesc}>{item.description}...</span>
+              <span className={styles.newsDesc}>{item.description}</span>
             </div>
           </div>
         ))}

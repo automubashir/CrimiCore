@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './RelatedNewsCard.module.css'
 
 export default function RelatedNewsCard({
@@ -16,7 +17,7 @@ export default function RelatedNewsCard({
   return (
     <Link href={`/activities/${id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        <img src={image} alt={title} className={styles.image} loading="lazy" />
+        <SafeImage src={image} alt={title} className={styles.image} />
         {reporter && (
           <span
             className={styles.reporter}

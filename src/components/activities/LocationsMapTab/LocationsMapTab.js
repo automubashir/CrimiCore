@@ -1,6 +1,5 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { ACTIVITIES } from '@/lib/data/activities'
 import CrimeHeatMap from '@/components/activities/CrimeHeatMap/CrimeHeatMap'
 import LocationActivityCard from '@/components/activities/LocationActivityCard/LocationActivityCard'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
@@ -8,61 +7,64 @@ import FilterDropdown from '@/components/ui/FilterDropdown/FilterDropdown'
 import styles from './LocationsMapTab.module.css'
 
 const COUNTRY_ABBR = {
-  'United States': 'US',
-  'United Kingdom': 'UK',
-  'South Africa': 'SA',
-  'South Korea': 'KR',
-  'New Zealand': 'NZ',
-  'United Arab Emirates': 'UAE',
+  'United States': 'US', 'United Kingdom': 'UK', 'South Africa': 'SA',
+  'South Korea': 'KR', 'New Zealand': 'NZ', 'United Arab Emirates': 'UAE',
 }
 
-function abbrevCountry(country) {
-  return COUNTRY_ABBR[country] ?? country
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function LocationsMapTab({ activity }) {
-  const [search, setSearch] = useState('')
+function abbrevCountry(c) { return COUNTRY_ABBR[c] ?? c }
+
+function unique(arr) { return [...new Set(arr.filter(Boolean))].sort() }
+
+export default function LocationsMapTab({ activity, locations = [], locationNews = [] }) {
+  const [search,    setSearch]    = useState('')
   const [crimeType, setCrimeType] = useState(null)
-  const [gang, setGang] = useState(null)
+  const [gang,      setGang]      = useState(null)
 
   const locationLabel = activity
     ? `${activity.locationCity}, ${abbrevCountry(activity.locationCountry)}`
     : 'Global'
 
-  const locationActivities = useMemo(() =>
-    activity
-      ? ACTIVITIES.filter(a => a.id !== activity.id && a.locationCity === activity.locationCity)
-      : ACTIVITIES,
-    [activity?.id, activity?.locationCity]
+  const items = useMemo(() =>
+    locationNews.map(item => ({
+      id:          encodeURIComponent(item.news?.news_link ?? item.news?.link ?? ''),
+      image:       item.news?.thumbnail ?? null,
+      title:       item.news?.title ?? '—',
+      date:        formatDate(item.news?.published_date),
+      threatLevel: 'low',
+      _crimeType:  item.news?.crimeType ?? '',
+      _gang:       item.news?.affiliation ?? '',
+    })),
+    [locationNews]
   )
 
-  const crimeTypes = useMemo(
-    () => [...new Set(locationActivities.map(a => a.categoryLabel))],
-    [locationActivities]
-  )
-  const gangs = useMemo(
-    () => [...new Set(locationActivities.map(a => a.gang).filter(Boolean))],
-    [locationActivities]
+  const crimeTypes = useMemo(() =>
+    unique(locationNews.flatMap(item => item.news?.crimeType?.split(',').map(s => s.trim()) ?? [])),
+    [locationNews]
   )
 
-  const filtered = useMemo(() =>
-    locationActivities.filter(a => {
-      if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false
-      if (crimeType && a.categoryLabel !== crimeType) return false
-      if (gang && a.gang !== gang) return false
-      return true
-    }),
-    [locationActivities, search, crimeType, gang]
+  const gangs = useMemo(() =>
+    unique(locationNews.map(item => item.news?.affiliation).filter(Boolean)),
+    [locationNews]
   )
+
+  const filtered = useMemo(() => items.filter(a => {
+    if (search    && !a.title.toLowerCase().includes(search.toLowerCase())) return false
+    if (crimeType && !a._crimeType.includes(crimeType)) return false
+    if (gang      && !a._gang.toLowerCase().includes(gang.toLowerCase())) return false
+    return true
+  }), [items, search, crimeType, gang])
 
   return (
     <div className={styles.container}>
-      {/* ── Left: map ── */}
       <div className={styles.mapPanel}>
-        <CrimeHeatMap />
+        <CrimeHeatMap locations={locations} />
       </div>
 
-      {/* ── Right: location activity list ── */}
       <div className={styles.listPanel}>
         <div className={styles.panelHeader}>
           <h3 className={styles.locationTitle}>{locationLabel}</h3>
@@ -75,8 +77,8 @@ export default function LocationsMapTab({ activity }) {
 
         <div className={styles.filtersRow}>
           <FilterDropdown label="Crime Type" options={crimeTypes} onChange={setCrimeType} />
-          <FilterDropdown label="Gang" options={gangs} onChange={setGang} />
-          <FilterDropdown label="Criminal" options={[]} />
+          <FilterDropdown label="Gang"       options={gangs}      onChange={setGang} />
+          <FilterDropdown label="Criminal"   options={[]} />
           <FilterDropdown label="Date Range" options={[]} />
         </div>
 

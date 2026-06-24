@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import Badge from '@/components/ui/Badge/Badge'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import GangTerritorialMap from '@/components/gangs/GangTerritorialMap/GangTerritorialMap'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import RelatedNewsTab from '@/components/activities/RelatedNewsTab/RelatedNewsTab'
@@ -40,7 +41,7 @@ export default function GangDetailContent({ gang }) {
           {/* Profile card */}
           <div className={styles.profileCard}>
             <div className={styles.profileTop}>
-              <img
+              <SafeImage
                 src={gang.image}
                 alt={gang.name}
                 className={styles.avatar}
@@ -94,9 +95,11 @@ export default function GangDetailContent({ gang }) {
               <span className={styles.metaDivider} aria-hidden="true" />
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Threat Level</span>
-                <Badge threat={gang.threat}>
-                  {gang.threat.charAt(0).toUpperCase() + gang.threat.slice(1)}
-                </Badge>
+                {gang.threat ? (
+                  <Badge threat={gang.threat}>
+                    {gang.threat.charAt(0).toUpperCase() + gang.threat.slice(1)}
+                  </Badge>
+                ) : <span className={styles.metaValue}>—</span>}
               </div>
             </div>
           </div>
@@ -131,9 +134,9 @@ export default function GangDetailContent({ gang }) {
         {/* ── Sidebar ── */}
         <aside className={styles.sidebar}>
           <ThreatOverviewCard gang={gang} />
-          <KeyAliasesCard aliases={gang.aliases} />
-          <TopLeadersCard leaders={gang.leaders} />
-          <CrimesInvolvedCard crimes={gang.topCrimes} />
+          {gang.aliases.length > 0 && <KeyAliasesCard aliases={gang.aliases} />}
+          {gang.leaders.length > 0 && <TopLeadersCard leaders={gang.leaders} />}
+          {gang.topCrimes.length > 0 && <CrimesInvolvedCard crimes={gang.topCrimes} />}
         </aside>
       </div>
     </main>
@@ -177,9 +180,11 @@ function OverviewTab({ gang }) {
             <div className={styles.summaryItem}>
               <div className={styles.summaryLabelRow}>
                 <span className={styles.summaryLabel}>Violence Index</span>
-                <Badge threat={gang.threat} variant="sm">
-                  {gang.threat.charAt(0).toUpperCase() + gang.threat.slice(1)}
-                </Badge>
+                {gang.threat ? (
+                  <Badge threat={gang.threat} variant="sm">
+                    {gang.threat.charAt(0).toUpperCase() + gang.threat.slice(1)}
+                  </Badge>
+                ) : <span>—</span>}
               </div>
               <p className={styles.summaryText}>{gang.threatDescription}</p>
             </div>
@@ -199,7 +204,7 @@ function OverviewTab({ gang }) {
       {/* Bottom: trend + recent activities */}
       <div className={styles.overviewBottomGrid}>
         <ActivityTrendSection trendData={gang.trendData} />
-        <RecentActivitiesSection />
+        <RecentActivitiesSection recentNews={gang.recentNews} />
       </div>
     </>
   )
@@ -257,50 +262,20 @@ function ActivityTrendSection({ trendData }) {
   )
 }
 
-const MOCK_RECENT = [
-  {
-    id: 1,
-    category: 'robbery',
-    image: 'https://picsum.photos/seed/act-rob1/80/80',
-    title: 'Armed Robbery at Downtown Commercial Bank',
-    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
-    date: 'May 19, 2025',
-    location: 'Downtown, Chicago, USA',
-  },
-  {
-    id: 2,
-    category: 'robbery',
-    image: 'https://picsum.photos/seed/act-rob2/80/80',
-    title: 'Armed Robbery at Downtown Commercial Bank',
-    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
-    date: 'May 19, 2025',
-    location: 'Downtown, Chicago, USA',
-  },
-  {
-    id: 3,
-    category: 'robbery',
-    image: 'https://picsum.photos/seed/act-rob3/80/80',
-    title: 'Armed Robbery at Downtown Commercial Bank',
-    description: 'Three masked suspects armed with firearms robbed the First National Bank in downtown Chicago. No injuries reported',
-    date: 'May 19, 2025',
-    location: 'Downtown, Chicago, USA',
-  },
-]
-
-function RecentActivitiesSection() {
+function RecentActivitiesSection({ recentNews = [] }) {
   return (
     <div className={styles.recentCard}>
       <div className={styles.recentHeader}>
         <div className={styles.recentHeaderLeft}>
           <span className={styles.recentTitle}>Recent Activities</span>
-          <span className={styles.recentCountBadge}>15</span>
+          <span className={styles.recentCountBadge}>{recentNews.length}</span>
         </div>
-        <a href="#" className={styles.viewAllLink}>View All</a>
+        <Link href="/activities" className={styles.viewAllLink}>View All</Link>
       </div>
       <div className={styles.recentList}>
-        {MOCK_RECENT.map(act => (
+        {recentNews.map(act => (
           <div key={act.id} className={styles.recentItem}>
-            <img
+            <SafeImage
               src={act.image}
               alt={act.title}
               className={styles.recentItemImage}
@@ -312,7 +287,7 @@ function RecentActivitiesSection() {
                 {act.category.charAt(0).toUpperCase() + act.category.slice(1)}
               </Badge>
               <span className={styles.recentItemTitle}>{act.title}</span>
-              <span className={styles.recentItemDesc}>{act.description}...</span>
+              <span className={styles.recentItemDesc}>{act.description}</span>
               <div className={styles.recentItemFooter}>
                 <span className={styles.recentItemMeta}>
                   <CalendarIcon />
@@ -345,15 +320,15 @@ const LEADER_EXTRAS = [
 ]
 
 const MOCK_MEMBERS = [
-  { id: 'mm-1', name: 'Alfonso Santillan-Sanchez',   image: 'https://picsum.photos/seed/mm1/80/80',  role: 'Enforcer', status: 'Active',    threat: 'high',   joinedSince: 2015, crimes: ['Smuggling', 'Kidnapping', 'Arson'],           extraCrimes: 3 },
-  { id: 'mm-2', name: 'Roudy Dorccilhomme',          image: 'https://picsum.photos/seed/mm2/80/80',  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2018, crimes: ['Tax Evasion', 'Bribery', 'Fraud'],            extraCrimes: 3 },
-  { id: 'mm-3', name: 'Carols Cardona',               image: 'https://picsum.photos/seed/mm3/80/80',  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2010, crimes: ['Money Laundering', 'Armed Assault'],           extraCrimes: 3 },
-  { id: 'mm-4', name: 'Carlos Alfredo Romero',        image: 'https://picsum.photos/seed/mm4/80/80',  role: 'Member',   status: 'Arrested',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Robbery'],                extraCrimes: 5 },
-  { id: 'mm-5', name: 'Fernando Melendez-Ramirez',    image: 'https://picsum.photos/seed/mm5/80/80',  role: 'Member',   status: 'In-Trial',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Human Trafficking'],      extraCrimes: 5 },
-  { id: 'mm-6', name: 'Diego Mejia-Canales',          image: 'https://picsum.photos/seed/mm6/80/80',  role: 'Member',   status: 'Convicted', threat: 'medium', joinedSince: 2001, crimes: ['Arms Dealing', 'Racketeering'],               extraCrimes: 5 },
-  { id: 'mm-7', name: 'Alex Ucles Cruz',              image: 'https://picsum.photos/seed/mm7/80/80',  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Illegal Arms Trade'],        extraCrimes: 2 },
-  { id: 'mm-8', name: 'Jonathan Jafet Lopez-Coronel', image: 'https://picsum.photos/seed/mm8/80/80',  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Assault'],                  extraCrimes: 2 },
-  { id: 'mm-9', name: 'Dariusz Blaszczyk',            image: 'https://picsum.photos/seed/mm9/80/80',  role: 'Member',   status: 'Active',    threat: 'medium', joinedSince: 2008, crimes: ['Extortion', 'Bribery', 'Counterfeiting'],    extraCrimes: 2 },
+  { id: 'mm-1', name: 'Alfonso Santillan-Sanchez',   image: null,  role: 'Enforcer', status: 'Active',    threat: 'high',   joinedSince: 2015, crimes: ['Smuggling', 'Kidnapping', 'Arson'],           extraCrimes: 3 },
+  { id: 'mm-2', name: 'Roudy Dorccilhomme',          image: null,  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2018, crimes: ['Tax Evasion', 'Bribery', 'Fraud'],            extraCrimes: 3 },
+  { id: 'mm-3', name: 'Carols Cardona',               image: null,  role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2010, crimes: ['Money Laundering', 'Armed Assault'],           extraCrimes: 3 },
+  { id: 'mm-4', name: 'Carlos Alfredo Romero',        image: null,  role: 'Member',   status: 'Arrested',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Robbery'],                extraCrimes: 5 },
+  { id: 'mm-5', name: 'Fernando Melendez-Ramirez',    image: null,  role: 'Member',   status: 'In-Trial',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Human Trafficking'],      extraCrimes: 5 },
+  { id: 'mm-6', name: 'Diego Mejia-Canales',          image: null,  role: 'Member',   status: 'Convicted', threat: 'medium', joinedSince: 2001, crimes: ['Arms Dealing', 'Racketeering'],               extraCrimes: 5 },
+  { id: 'mm-7', name: 'Alex Ucles Cruz',              image: null,  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Illegal Arms Trade'],        extraCrimes: 2 },
+  { id: 'mm-8', name: 'Jonathan Jafet Lopez-Coronel', image: null,  role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Assault'],                  extraCrimes: 2 },
+  { id: 'mm-9', name: 'Dariusz Blaszczyk',            image: null,  role: 'Member',   status: 'Active',    threat: 'medium', joinedSince: 2008, crimes: ['Extortion', 'Bribery', 'Counterfeiting'],    extraCrimes: 2 },
 ]
 
 const ROLE_CLASS = {
@@ -376,7 +351,7 @@ function MemberCard({ member }) {
   return (
     <div className={styles.memberCard}>
       <div className={styles.memberCardTop}>
-        <img
+        <SafeImage
           src={member.image}
           alt={member.name}
           className={styles.memberCardAvatar}
@@ -490,7 +465,8 @@ function ThreatOverviewCard({ gang }) {
   const bgColor = '#12304D'
   const fgColor =
     gang.threat === 'high'   ? '#F2464A' :
-    gang.threat === 'medium' ? '#F3921B' : '#70EA8D'
+    gang.threat === 'medium' ? '#F3921B' :
+    gang.threat === 'low'    ? '#70EA8D' : '#12304D'
 
   // Semicircle arc: viewBox 0 0 160 88, center 80 88, radius 72
   const cx = 80, cy = 88, r = 72
@@ -572,7 +548,7 @@ function TopLeadersCard({ leaders }) {
       <div className={styles.leadersList}>
         {leaders.map(leader => (
           <div key={leader.id} className={styles.leaderRow}>
-            <img
+            <SafeImage
               src={leader.image}
               alt={leader.name}
               className={styles.leaderAvatar}
@@ -583,9 +559,11 @@ function TopLeadersCard({ leaders }) {
               <span className={styles.leaderName}>{leader.name}</span>
               <span className={styles.leaderRole}>{leader.role}</span>
             </div>
-            <Badge threat={leader.threat}>
-              {leader.threat.charAt(0).toUpperCase() + leader.threat.slice(1)}
-            </Badge>
+            {leader.threat && (
+              <Badge threat={leader.threat}>
+                {leader.threat.charAt(0).toUpperCase() + leader.threat.slice(1)}
+              </Badge>
+            )}
           </div>
         ))}
       </div>

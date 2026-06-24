@@ -4,39 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './CriminalFilterBar.module.css'
 
-const FILTERS = [
-  {
-    key: 'duration',
-    label: 'DURATION',
-    default: 'All Time',
-    options: ['All Time', 'Last 30 Days', 'Last 90 Days', 'Last Year'],
-  },
-  {
-    key: 'gang',
-    label: 'GANGS AFFILIATED',
-    default: 'Any',
-    options: ['Any', 'Las Zetas', 'Sinaloa Cartel', 'MS-13', 'Cali Cartel', 'Yakuza', 'Camorra', 'Ndrangheta', 'Triads'],
-  },
-  {
-    key: 'country',
-    label: 'COUNTRY',
-    default: 'All Countries',
-    options: ['All Countries', 'USA', 'Mexico', 'Colombia', 'Japan', 'Italy', 'Brazil', 'China'],
-  },
-  {
-    key: 'crimeType',
-    label: 'CRIME TYPE',
-    default: 'All Crime Types',
-    options: ['All Crime Types', 'Drug Trafficking', 'Extortion', 'Murder', 'Terrorism', 'Robbery', 'Money Laundering', 'Human Trafficking'],
-  },
-  {
-    key: 'threatLevel',
-    label: 'THREAT LEVELS',
-    default: 'Any',
-    options: ['Any', 'High', 'Medium', 'Low'],
-  },
-]
-
 function FilterItem({ label, value, options, onChange }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -92,10 +59,14 @@ function FilterItem({ label, value, options, onChange }) {
   )
 }
 
-export default function CriminalFilterBar({ onSearch, onFilterChange }) {
-  const [values, setValues] = useState(() =>
-    Object.fromEntries(FILTERS.map(f => [f.key, f.default]))
-  )
+export default function CriminalFilterBar({ onSearch, onFilterChange, gangOptions = [], countryOptions = [], crimeTypeOptions = [] }) {
+  const [values, setValues] = useState({
+    duration:    'All Time',
+    gang:        'Any',
+    country:     'All Countries',
+    crimeType:   'All Crime Types',
+    threatLevel: 'Any',
+  })
 
   function handleChange(key, value) {
     const next = { ...values, [key]: value }
@@ -103,13 +74,21 @@ export default function CriminalFilterBar({ onSearch, onFilterChange }) {
     onFilterChange?.(next)
   }
 
+  const filters = [
+    { key: 'duration',    label: 'DURATION',         options: ['All Time', 'Last 30 Days', 'Last 90 Days', 'Last Year'] },
+    { key: 'gang',        label: 'GANGS AFFILIATED',  options: ['Any', ...gangOptions] },
+    { key: 'country',     label: 'COUNTRY',           options: ['All Countries', ...countryOptions] },
+    { key: 'crimeType',   label: 'CRIME TYPE',        options: ['All Crime Types', ...crimeTypeOptions] },
+    { key: 'threatLevel', label: 'THREAT LEVELS',     options: ['Any', 'High', 'Medium', 'Low'] },
+  ]
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.searchWrap}>
         <SearchInput placeholder="Search criminals" onSearch={onSearch} />
       </div>
       <div className={styles.filterBar}>
-        {FILTERS.map(f => (
+        {filters.map(f => (
           <FilterItem
             key={f.key}
             label={f.label}

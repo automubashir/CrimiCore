@@ -1,28 +1,15 @@
 'use client'
 import styles from './ActivitiesByType.module.css'
 import { PieChart, Pie, Cell } from 'recharts'
+import NotFound from '@/components/ui/NotFound/NotFound'
 
-/*
-  Colors are mapped directly to design-system tokens:
-  error-primary  #F2464A  |  success-primary #70EA8D
-  alert-primary  #F3921B  |  warning-primary #F0C028
-  info-primary   #3DA1D8  |  indigo-primary  #AF83EA
-*/
+const COLORS = ['#F2464A', '#70EA8D', '#F3921B', '#F0C028', '#3DA1D8', '#AF83EA']
 
-const DATA = [
-  { label: 'Robbery',          pct: 28, count: 349, color: '#F2464A' },
-  { label: 'Drug Trafficking', pct: 24, count: 299, color: '#70EA8D' },
-  { label: 'Homicide',         pct: 18, count: 225, color: '#F3921B' },
-  { label: 'Vehicle Crime',    pct: 14, count: 174, color: '#F0C028' },
-  { label: 'Assault',          pct: 8,  count: 112, color: '#3DA1D8' },
-  { label: 'Terrorism',        pct: 7,  count: 112, color: '#AF83EA' },
-]
-
-function ActivityDonut() {
+function ActivityDonut({ chartData }) {
   return (
     <PieChart width={124} height={124} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
       <Pie
-        data={DATA}
+        data={chartData}
         cx={62}
         cy={62}
         innerRadius={36}
@@ -33,7 +20,7 @@ function ActivityDonut() {
         paddingAngle={2}
         strokeWidth={0}
       >
-        {DATA.map((entry, i) => (
+        {chartData.map((entry, i) => (
           <Cell key={i} fill={entry.color} />
         ))}
       </Pie>
@@ -41,7 +28,16 @@ function ActivityDonut() {
   )
 }
 
-export default function ActivitiesByType() {
+export default function ActivitiesByType({ data = [] }) {
+  const total = data.reduce((sum, d) => sum + (d.doc_count ?? 0), 0) || 1
+
+  const chartData = data.slice(0, 6).map((d, i) => ({
+    label: d.crime_type,
+    count: d.doc_count ?? 0,
+    pct: Math.round(((d.doc_count ?? 0) / total) * 100),
+    color: COLORS[i % COLORS.length],
+  }))
+
   return (
     <div className="section-card">
       <div className="section-card-header">
@@ -49,28 +45,28 @@ export default function ActivitiesByType() {
         <a href="/activities" className="linkButton">View All</a>
       </div>
       <div className="section-card-content">
-        <div className={styles.body}>
-
-          {/* Donut chart */}
-          <div className={styles.chartWrap}>
-            <ActivityDonut />
+        {chartData.length === 0 ? (
+          <NotFound title="No activity data" message="No crime type data is available right now." />
+        ) : (
+          <div className={styles.body}>
+            <div className={styles.chartWrap}>
+              <ActivityDonut chartData={chartData} />
+            </div>
+            <ul className={styles.legend}>
+              {chartData.map(({ label, pct, count, color }) => (
+                <li key={label} className={styles.row}>
+                  <span
+                    className={styles.swatch}
+                    style={{ background: color }}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.label} title={label}>{label}</span>
+                  <span className={styles.value}>{pct}%&nbsp;({count.toLocaleString()})</span>
+                </li>
+              ))}
+            </ul>
           </div>
-
-          {/* Legend */}
-          <ul className={styles.legend}>
-            {DATA.map(({ label, pct, count, color }) => (
-              <li key={label} className={styles.row}>
-                <span
-                  className={styles.swatch}
-                  style={{ background: color }}
-                  aria-hidden="true"
-                />
-                <span className={styles.label} title={label}>{label}</span>
-                <span className={styles.value}>{pct}%&nbsp;({count})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        )}
       </div>
     </div>
   )

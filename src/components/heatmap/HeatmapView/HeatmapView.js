@@ -6,7 +6,6 @@ import styles from './HeatmapView.module.css'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-// [lng, lat] centroids for country name labels
 const COUNTRY_LABELS = [
   { name: 'Canada',        coords: [-96,    60]    },
   { name: 'USA',           coords: [-100,   38]    },
@@ -50,115 +49,27 @@ const COUNTRY_LABELS = [
   { name: 'Madagascar',    coords: [ 47,   -20]    },
 ]
 
-const MAP_MARKERS = [
-  {
-    coords: [-87.6298, 41.8781], r: 7, color: '#F2464A',
-    city: 'Chicago', country: 'USA', activities: 187,
-    crimes: ['Drug Trafficking', 'Assault', 'Robbery'], trend: '+12%', risk: 'High',
-  },
-  {
-    coords: [-118.2437, 34.0522], r: 5, color: '#F2464A',
-    city: 'Los Angeles', country: 'USA', activities: 134,
-    crimes: ['Gang Activity', 'Drug Trafficking', 'Robbery'], trend: '+8%', risk: 'High',
-  },
-  {
-    coords: [-99.1332, 19.4326], r: 5, color: '#F3921B',
-    city: 'Mexico City', country: 'Mexico', activities: 85,
-    crimes: ['Drug Trafficking', 'Extortion'], trend: '+5%', risk: 'Medium',
-  },
-  {
-    coords: [-46.6333, -23.5505], r: 4, color: '#F3921B',
-    city: 'São Paulo', country: 'Brazil', activities: 74,
-    crimes: ['Armed Robbery', 'Gang Activity'], trend: '-2%', risk: 'Medium',
-  },
-  {
-    coords: [28.0473, -26.2041], r: 5, color: '#F3921B',
-    city: 'Johannesburg', country: 'South Africa', activities: 97,
-    crimes: ['Armed Robbery', 'Fraud', 'Assault'], trend: '+3%', risk: 'Medium',
-  },
-  {
-    coords: [3.3792, 6.5244], r: 4, color: '#F2464A',
-    city: 'Lagos', country: 'Nigeria', activities: 91,
-    crimes: ['Cybercrime', 'Fraud', 'Gang Activity'], trend: '+18%', risk: 'High',
-  },
-  {
-    coords: [31.2357, 30.0444], r: 3, color: '#F3921B',
-    city: 'Cairo', country: 'Egypt', activities: 56,
-    crimes: ['Trafficking', 'Assault'], trend: '+1%', risk: 'Medium',
-  },
-  {
-    coords: [2.3522, 48.8566], r: 3.5, color: '#F3921B',
-    city: 'Paris', country: 'France', activities: 68,
-    crimes: ['Fraud', 'Robbery', 'Cybercrime'], trend: '-4%', risk: 'Medium',
-  },
-  {
-    coords: [-0.1276, 51.5074], r: 3, color: '#F0C028',
-    city: 'London', country: 'UK', activities: 49,
-    crimes: ['Cybercrime', 'Fraud'], trend: '-7%', risk: 'Low',
-  },
-  {
-    coords: [44.3661, 33.3152], r: 3, color: '#F3921B',
-    city: 'Baghdad', country: 'Iraq', activities: 62,
-    crimes: ['Trafficking', 'Extortion'], trend: '+2%', risk: 'Medium',
-  },
-  {
-    coords: [67.0099, 24.8607], r: 3, color: '#F3921B',
-    city: 'Karachi', country: 'Pakistan', activities: 58,
-    crimes: ['Drug Trafficking', 'Gang Activity'], trend: '+6%', risk: 'Medium',
-  },
-  {
-    coords: [72.8777, 19.076], r: 3.5, color: '#F3921B',
-    city: 'Mumbai', country: 'India', activities: 79,
-    crimes: ['Fraud', 'Extortion', 'Gang Activity'], trend: '+4%', risk: 'Medium',
-  },
-  {
-    coords: [139.6917, 35.6895], r: 3.5, color: '#F3921B',
-    city: 'Tokyo', country: 'Japan', activities: 72,
-    crimes: ['Cybercrime', 'Fraud'], trend: '-1%', risk: 'Medium',
-  },
-  {
-    coords: [100.9925, 15.87], r: 2.5, color: '#F0C028',
-    city: 'Southeast Asia', country: 'Regional', activities: 43,
-    crimes: ['Trafficking', 'Drug Trade'], trend: '+9%', risk: 'Low',
-  },
-]
-
-const HOTSPOTS = MAP_MARKERS
-  .slice()
-  .sort((a, b) => b.activities - a.activities)
-  .slice(0, 8)
-
-const MAX_ACT = 187
-
-const STATS = [
-  { label: 'Active Hotspots',  value: '14',      sub: 'Across 6 continents'  },
-  { label: 'Total Activities', value: '813',     sub: 'Last 30 days'         },
-  { label: 'Highest Density',  value: 'Chicago', sub: '187 activities'       },
-  { label: 'High Risk Zones',  value: '4',       sub: 'Critical alert level' },
-]
-
-const DONUT_DATA = [
-  { value: 53, color: '#F2464A' },
-  { value: 27, color: '#F3921B' },
-  { value: 20, color: '#F0C028' },
-]
-
 const LEGEND = [
   { color: '#F2464A', label: 'High Risk'   },
   { color: '#F3921B', label: 'Medium Risk' },
   { color: '#F0C028', label: 'Low Risk'    },
 ]
 
-const CRIME_TYPES  = ['All Crime Types', 'Drug Trafficking', 'Assault', 'Robbery', 'Homicide', 'Fraud']
 const TIME_PERIODS = ['Last 30 Days', 'Last 90 Days', 'Last 6 Months', 'Last Year', 'All Time']
-
-const RISK_COLOR = { High: '#F2464A', Medium: '#F3921B', Low: '#F0C028' }
-
+const RISK_COLOR   = { High: '#F2464A', Medium: '#F3921B', Low: '#F0C028' }
 const MIN_ZOOM = 1
 const MAX_ZOOM = 8
 
-export default function HeatmapView() {
-  const [crimeType,    setCrimeType]    = useState(CRIME_TYPES[0])
+export default function HeatmapView({
+  markers    = [],
+  hotspots   = [],
+  maxAct     = 1,
+  stats      = [],
+  donutData  = [],
+  totalCount = 0,
+  crimeTypes = ['All Crime Types'],
+}) {
+  const [crimeType,    setCrimeType]    = useState(crimeTypes[0] ?? 'All Crime Types')
   const [timePeriod,   setTimePeriod]   = useState(TIME_PERIODS[0])
   const [zoom,         setZoom]         = useState(1)
   const [center,       setCenter]       = useState([0, 0])
@@ -185,11 +96,11 @@ export default function HeatmapView() {
       <div className={styles.controls}>
         <div className={styles.controlsLeft}>
           <h1 className={styles.pageTitle}>Heatmap</h1>
-          <p className={styles.pageSubtitle}>Crime density & hotspot analysis across regions</p>
+          <p className={styles.pageSubtitle}>Crime density &amp; hotspot analysis across regions</p>
         </div>
         <div className={styles.controlsRight}>
           <select className={styles.select} value={crimeType}  onChange={e => setCrimeType(e.target.value)}>
-            {CRIME_TYPES.map(t  => <option key={t}>{t}</option>)}
+            {crimeTypes.map(t  => <option key={t}>{t}</option>)}
           </select>
           <select className={styles.select} value={timePeriod} onChange={e => setTimePeriod(e.target.value)}>
             {TIME_PERIODS.map(t => <option key={t}>{t}</option>)}
@@ -199,7 +110,7 @@ export default function HeatmapView() {
 
       {/* ── Stats row ── */}
       <div className={styles.statsRow}>
-        {STATS.map(({ label, value, sub }) => (
+        {stats.map(({ label, value, sub }) => (
           <div key={label} className={styles.statCard}>
             <span className={styles.statValue}>{value}</span>
             <span className={styles.statLabel}>{label}</span>
@@ -262,7 +173,7 @@ export default function HeatmapView() {
               </Marker>
             ))}
 
-            {MAP_MARKERS.map((m, i) => (
+            {markers.map((m, i) => (
               <Marker
                 key={i}
                 coordinates={m.coords}
@@ -337,7 +248,7 @@ export default function HeatmapView() {
               <div className={styles.popupStat}>
                 <span
                   className={styles.popupStatValue}
-                  style={{ color: activeMarker.trend.startsWith('+') ? '#F2464A' : '#70EA8D' }}
+                  style={{ color: activeMarker.trend?.startsWith('+') ? '#F2464A' : '#70EA8D' }}
                 >
                   {activeMarker.trend}
                 </span>
@@ -352,7 +263,7 @@ export default function HeatmapView() {
               </div>
             </div>
             <div className={styles.popupCrimes}>
-              {activeMarker.crimes.map(c => (
+              {(activeMarker.crimeTypes ?? []).map(c => (
                 <span key={c} className={styles.popupCrimeTag}>{c}</span>
               ))}
             </div>
@@ -363,14 +274,14 @@ export default function HeatmapView() {
         <div className={styles.hotspotOverlay}>
           <p className={styles.overlayTitle}>Hotspot Analysis</p>
           <div className={styles.hotspotList}>
-            {HOTSPOTS.map(({ city, country, activities, color }, i) => (
+            {hotspots.map(({ city, country, activities, color }, i) => (
               <div key={city} className={styles.hotspotRow}>
                 <span className={styles.rank}>{i + 1}.</span>
-                <span className={styles.city}>{city}, {country}</span>
+                <span className={styles.city}>{city}{country ? `, ${country}` : ''}</span>
                 <div className={styles.barTrack}>
                   <div
                     className={styles.barFill}
-                    style={{ width: `${(activities / MAX_ACT) * 100}%`, background: color }}
+                    style={{ width: `${(activities / maxAct) * 100}%`, background: color }}
                   />
                 </div>
                 <span className={styles.count}><strong>{activities}</strong></span>
@@ -392,18 +303,18 @@ export default function HeatmapView() {
                 fill="#091A29"
               />
               <Pie
-                data={DONUT_DATA}
+                data={donutData}
                 cx={45} cy={45}
                 innerRadius={27} outerRadius={39}
                 startAngle={90} endAngle={-270}
                 dataKey="value"
                 strokeWidth={0}
               >
-                {DONUT_DATA.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                {donutData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
               </Pie>
             </PieChart>
             <div className={styles.donutCenter}>
-              <span className={styles.donutTotal}>813</span>
+              <span className={styles.donutTotal}>{totalCount.toLocaleString()}</span>
               <span className={styles.donutLabel}>Total</span>
             </div>
           </div>
