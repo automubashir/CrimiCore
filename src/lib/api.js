@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 function getToken() {
   if (typeof window === 'undefined') return null
@@ -17,9 +17,6 @@ export async function apiFetch(path, { auth = true, ...init } = {}) {
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers })
 
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== 'undefined') {
-      window.location.replace('/login')
-    }
     const text = await res.text().catch(() => '')
     throw new ApiError(res.status, text)
   }

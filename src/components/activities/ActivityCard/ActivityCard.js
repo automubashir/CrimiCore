@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './ActivityCard.module.css'
@@ -17,7 +17,7 @@ export default function ActivityCard({
   criminals,
 }) {
   return (
-    <Link href={`/activities/${id}`} className={styles.cardLink}>
+    <Link to={`/activities/${encodeURIComponent(id)}`} className={styles.cardLink}>
     <article className={styles.card}>
       <div className={styles.imageWrap}>
         <SafeImage src={image} alt={title} className={styles.image} />

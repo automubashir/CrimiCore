@@ -1,11 +1,11 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './LocationActivityCard.module.css'
 
 export default function LocationActivityCard({ id, image, title, date, threatLevel }) {
   return (
-    <Link href={`/activities/${id}`} className={styles.card}>
+    <Link to={`/activities/${encodeURIComponent(id)}`} className={styles.card}>
       <div className={styles.imageWrap}>
         <SafeImage src={image} alt={title} className={styles.image} />
       </div>

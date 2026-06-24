@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import CriminalItem from '@/components/criminals/CriminalItem/CriminalItem'
@@ -28,7 +28,7 @@ export default function ActivityDetailContent({ activity, relatedNews, similarNe
     <main className={styles.page}>
       {/* ── Header ── */}
       <div className={styles.header}>
-        <Link href="/activities" className={styles.backLink}>
+        <Link to="/activities" className={styles.backLink}>
           <ChevronLeftIcon />
           Back to Activities
         </Link>
@@ -202,7 +202,7 @@ export default function ActivityDetailContent({ activity, relatedNews, similarNe
                       city={criminal.city}
                       country={criminal.country}
                       threat={criminal.threat}
-                      href={criminal.id ? `/criminals/${criminal.id}` : undefined}
+                      href={criminal.id ? `/criminals/${encodeURIComponent(criminal.id)}` : undefined}
                     />
                   </li>
                 ))}
@@ -215,14 +215,14 @@ export default function ActivityDetailContent({ activity, relatedNews, similarNe
             <div className={styles.sideCard}>
               <div className={styles.sideCardHeader}>
                 <span className={styles.sideCardTitle}>Related News</span>
-                <Link href="/activities" className={styles.viewAllLink}>
+                <Link to="/activities" className={styles.viewAllLink}>
                   View All
                 </Link>
               </div>
               <ul className={styles.relatedNewsList}>
                 {relatedNews.map((news) => (
                   <li key={news.id}>
-                    <Link href={`/activities/${news.id}`} className={styles.relatedNewsLink}>
+                    <Link to={`/activities/${encodeURIComponent(news.id)}`} className={styles.relatedNewsLink}>
                       <div className={styles.relatedNewsImageWrap}>
                         <SafeImage
                           src={news.image}

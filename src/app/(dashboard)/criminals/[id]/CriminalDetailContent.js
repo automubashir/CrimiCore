@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -32,7 +32,7 @@ export default function CriminalDetailContent({ criminal }) {
 
   return (
     <main className={styles.page}>
-      <Link href="/criminals" className={styles.backLink}>
+      <Link to="/criminals" className={styles.backLink}>
         <ChevronLeftIcon />
         Back to Criminals Directory
       </Link>

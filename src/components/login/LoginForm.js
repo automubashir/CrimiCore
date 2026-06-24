@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from '@/components/ui/Image/Image';
 import { login } from "@/app/(auth)/login/actions";
 import styles from "./LoginForm.module.css";
 import logoMain from "@/assets/images/logo-main.png";
@@ -98,7 +98,7 @@ export default function LoginForm() {
         setError(result.error);
         setIsLoading(false);
       } else if (result?.success) {
-        window.location.href = '/';
+        window.location.replace('/');
       }
     } catch {
       setError("Something went wrong. Please try again.");

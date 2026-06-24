@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -29,7 +29,7 @@ export default function GangDetailContent({ gang }) {
   return (
     <main className={styles.page}>
       {/* Back link */}
-      <Link href="/gangs" className={styles.backLink}>
+      <Link to="/gangs" className={styles.backLink}>
         <ChevronLeftIcon />
         Back to Gangs
       </Link>
@@ -270,7 +270,7 @@ function RecentActivitiesSection({ recentNews = [] }) {
           <span className={styles.recentTitle}>Recent Activities</span>
           <span className={styles.recentCountBadge}>{recentNews.length}</span>
         </div>
-        <Link href="/activities" className={styles.viewAllLink}>View All</Link>
+        <Link to="/activities" className={styles.viewAllLink}>View All</Link>
       </div>
       <div className={styles.recentList}>
         {recentNews.map(act => (

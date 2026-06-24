@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from '@/components/ui/Image/Image'
 import logo from '@/assets/images/logo-full.png'
 import NavLinks from './NavLinks'
 import HeaderRight from './HeaderRight'

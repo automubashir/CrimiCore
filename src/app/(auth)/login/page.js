@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from '@/components/ui/Image/Image';
 import styles from "./page.module.css";
 import LoginForm from "@/components/login/LoginForm";
 import logoFull from "@/assets/images/logo-full.png";

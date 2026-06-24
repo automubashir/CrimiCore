@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import CriminalItem from '@/components/criminals/CriminalItem/CriminalItem'
 import styles from './RecentAdditions.module.css'
 
@@ -9,7 +9,7 @@ export default function RecentAdditions({ recentCriminals = [] }) {
         <h2 className="section-card-title">Recent Additions</h2>
         <div className={styles.headerRight}>
           <span className={styles.countBadge}>{recentCriminals.length}</span>
-          <Link href="/criminals" className={styles.viewAll}>View All</Link>
+          <Link to="/criminals" className={styles.viewAll}>View All</Link>
         </div>
       </div>
       <div className="section-card-content">
@@ -21,7 +21,7 @@ export default function RecentAdditions({ recentCriminals = [] }) {
                 image={criminal.image}
                 city={criminal.organization}
                 threat={criminal.threat}
-                href={`/criminals/${criminal.id}`}
+                href={`/criminals/${encodeURIComponent(criminal.id)}`}
               />
             </li>
           ))}

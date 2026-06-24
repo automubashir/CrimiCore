@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './CriminalItem.module.css'
@@ -63,7 +63,7 @@ export default function CriminalItem({
 
   if (href) {
     return (
-      <Link href={href} className={hostClass}>
+      <Link to={href} className={hostClass}>
         {inner}
       </Link>
     )

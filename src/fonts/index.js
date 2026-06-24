@@ -1,10 +1,3 @@
-import localFont from 'next/font/local'
-
-export const ibmPlexSans = localFont(
-    {
-        src: '../assets/fonts/IBMPlexSans-VariableFont_wdth,wght.ttf',
-        variable: "--font-ibm-plex",
-        weight: "100 900",
-        display: "swap",
-    }
-)
+// Font is loaded via @font-face in globals.css.
+// This export is kept so any existing imports don't break.
+export const ibmPlexSans = { variable: '' }

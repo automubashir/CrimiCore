@@ -7,10 +7,10 @@ export default function AuthGuard({ children }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!getSession()) {
-      window.location.replace('/login')
-    } else {
+    if (getSession()) {
       setReady(true)
+    } else {
+      window.location.replace('/login')
     }
   }, [])
 

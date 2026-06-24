@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './CriminalTable.module.css'
@@ -37,7 +37,7 @@ export default function CriminalTable({ criminals, hasMore, onSeeMore }) {
 /* ── Individual row ── */
 function CriminalRow({ id, name, alias, gang, image, threat, activeRegions, regionCount, crimes, extraCount }) {
   return (
-    <Link href={`/criminals/${id}`} className={styles.row}>
+    <Link to={`/criminals/${encodeURIComponent(id)}`} className={styles.row}>
       <SafeImage src={image} alt={name} className={styles.avatar} width={48} height={48} />
 
       <div className={styles.nameCell}>

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import styles from './NotFound.module.css'
 
 export default function NotFound({
@@ -15,7 +15,7 @@ export default function NotFound({
       <p className={styles.title}>{title}</p>
       <p className={styles.message}>{message}</p>
       {href && (
-        <Link href={href} className={styles.action}>
+        <Link to={href} className={styles.action}>
           <ChevronLeftIcon />
           {linkLabel}
         </Link>

@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { Link, useLocation } from 'react-router-dom'
 import styles from './Header.module.css'
 
 const NAV_ITEMS = [
@@ -15,7 +14,7 @@ const NAV_ITEMS = [
 ]
 
 export default function NavLinks() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
 
   return (
     <nav className={styles.nav} aria-label="Main navigation">
@@ -24,7 +23,7 @@ export default function NavLinks() {
         return (
           <Link
             key={href}
-            href={href}
+            to={href}
             className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
             aria-current={isActive ? 'page' : undefined}
           >

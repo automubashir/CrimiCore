@@ -1,6 +1,6 @@
 import { createSession } from '@/lib/session'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export async function login(username, password) {
   try {
