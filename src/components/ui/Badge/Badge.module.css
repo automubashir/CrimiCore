@@ -10,6 +10,10 @@
   white-space: nowrap;
   line-height: 18px;
   width: fit-content;
+  /* Default for any unmapped category/threat so it never renders as
+     dark/invisible text. Specific data-cat/data-threat rules override this. */
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
 }
 
 /* ── Size variants ── */
@@ -35,6 +39,14 @@
 .badge[data-cat="assault"]               { background: var(--error-bg);    color: var(--error-primary); }
 .badge[data-cat="terrorism"]             { background: var(--warning-bg);  color: var(--warning-primary); }
 .badge[data-cat="vehicle-crime"]         { background: var(--warning-bg);  color: var(--warning-primary); }
+.badge[data-cat="human-trafficking"]     { background: var(--error-bg);    color: var(--error-primary); }
+.badge[data-cat="kidnapping"]            { background: var(--error-bg);    color: var(--error-primary); }
+.badge[data-cat="smuggling"]             { background: var(--warning-bg);  color: var(--warning-primary); }
+.badge[data-cat="weapons-offense"]       { background: var(--warning-bg);  color: var(--warning-primary); }
+.badge[data-cat="public-order"]          { background: var(--info-bg);     color: var(--info-primary); }
+.badge[data-cat="fraud"]                 { background: var(--indigo-bg);   color: var(--indigo-primary); }
+.badge[data-cat="money-laundering"]      { background: var(--indigo-bg);   color: var(--indigo-primary); }
+.badge[data-cat="corruption"]            { background: var(--alert-bg);    color: var(--alert-primary); }
 
 /* ── Gang tag variant ── */
 .badge[data-cat="gang"] {

@@ -1,6 +1,9 @@
 'use client'
 
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
+import MapMarkers, { MapTooltip, useMapTooltip } from '@/components/ui/MapMarkers/MapMarkers'
+import { useMapZoom, MapZoomControls } from '@/components/ui/MapMarkers/MapZoom'
+import { Bone } from '@/components/ui/Skeleton/Skeleton'
 import styles from './CriminalLocationsMap.module.css'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
@@ -17,13 +20,37 @@ const PRESENCE_DOT = {
   limited:  styles.dotLimited,
 }
 
-export default function CriminalLocationsMap({ locations }) {
+export default function CriminalLocationsMap({ locations, loading = false }) {
+  const { hovered, setHovered, pos, onMouseMove } = useMapTooltip()
+  const zoomCtl = useMapZoom()
+
+  if (loading) {
+    return (
+      <div className={styles.wrap}>
+        <div className={styles.mapWrap}><Bone width="100%" height={320} /></div>
+        <div className={styles.legend}>
+          <Bone width={120} height={14} />
+          <Bone width={140} height={14} />
+          <Bone width={120} height={14} />
+        </div>
+      </div>
+    )
+  }
+
   if (!locations) return null
+
+  const mapMarkers = (locations.markers ?? []).map(m => ({
+    coords: m.coords,
+    r:      m.r,
+    color:  MARKER_COLORS[m.type] ?? MARKER_COLORS.most,
+    label:  m.label,
+    count:  m.count,
+  }))
 
   return (
     <div className={styles.wrap}>
       {/* Map */}
-      <div className={styles.mapWrap}>
+      <div className={styles.mapWrap} style={{ position: 'relative' }} onMouseMove={onMouseMove}>
         <ComposableMap
           projection="geoNaturalEarth1"
           projectionConfig={{ scale: 145, center: [10, 5] }}
@@ -31,37 +58,44 @@ export default function CriminalLocationsMap({ locations }) {
           height={360}
           style={{ width: '100%', height: '100%' }}
         >
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map(geo => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill="#0A1F33"
-                  stroke="#0D2A40"
-                  strokeWidth={0.5}
-                  style={{
-                    default: { outline: 'none' },
-                    hover:   { outline: 'none', fill: '#102D47' },
-                    pressed: { outline: 'none' },
-                  }}
-                />
-              ))
-            }
-          </Geographies>
+          <ZoomableGroup
+            zoom={zoomCtl.zoom}
+            center={zoomCtl.center}
+            minZoom={zoomCtl.minZoom}
+            maxZoom={zoomCtl.maxZoom}
+            onMoveEnd={zoomCtl.onMoveEnd}
+          >
+            <Geographies geography={GEO_URL}>
+              {({ geographies }) =>
+                geographies.map(geo => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill="#0A1F33"
+                    stroke="#0D2A40"
+                    strokeWidth={0.5}
+                    style={{
+                      default: { outline: 'none' },
+                      hover:   { outline: 'none', fill: '#102D47' },
+                      pressed: { outline: 'none' },
+                    }}
+                  />
+                ))
+              }
+            </Geographies>
 
-          {(locations.markers ?? []).map((m, i) => {
-            const color = MARKER_COLORS[m.type] ?? MARKER_COLORS.most
-            return (
-              <Marker key={i} coordinates={m.coords}>
-                <circle r={m.r * 3.2} fill={color} fillOpacity={0.07} />
-                <circle r={m.r * 2}   fill={color} fillOpacity={0.15} />
-                <circle r={m.r}       fill={color} fillOpacity={0.6}  />
-                <circle r={m.r * 0.5} fill={color} />
-              </Marker>
-            )
-          })}
+            <MapMarkers markers={mapMarkers} zoom={zoomCtl.zoom} onHoverChange={setHovered} />
+          </ZoomableGroup>
         </ComposableMap>
+        <MapZoomControls
+          zoom={zoomCtl.zoom}
+          onZoomIn={zoomCtl.zoomIn}
+          onZoomOut={zoomCtl.zoomOut}
+          onReset={zoomCtl.reset}
+          minZoom={zoomCtl.minZoom}
+          maxZoom={zoomCtl.maxZoom}
+        />
+        <MapTooltip marker={hovered} x={pos.x} y={pos.y} />
       </div>
 
       {/* Legend */}

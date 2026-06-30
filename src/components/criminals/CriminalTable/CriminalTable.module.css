@@ -9,7 +9,7 @@
 .thead,
 .row {
   display: grid;
-  grid-template-columns: 48px 1fr 110px 1fr 1fr 32px;
+  grid-template-columns: 48px minmax(0, 1fr) 110px minmax(0, 1fr) minmax(0, 1fr) 32px;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
@@ -146,6 +146,9 @@
   color: var(--text-secondary);
   white-space: nowrap;
   line-height: 18px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .overflowTag {
@@ -160,6 +163,7 @@
   color: var(--text-brand);
   white-space: nowrap;
   line-height: 18px;
+  flex-shrink: 0;
 }
 
 /* ── Arrow icon ── */
@@ -221,7 +225,7 @@
 @media (max-width: 1200px) {
   .thead,
   .row {
-    grid-template-columns: 48px 1fr 110px 180px 1fr 32px;
+    grid-template-columns: 48px minmax(0, 1fr) 110px 180px minmax(0, 1fr) 32px;
   }
 }
 
@@ -235,7 +239,7 @@
   }
 
   .row {
-    grid-template-columns: 48px 1fr 100px 32px;
+    grid-template-columns: 48px minmax(0, 1fr) 100px 32px;
     grid-template-rows: auto auto;
   }
 

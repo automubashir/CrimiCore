@@ -331,24 +331,50 @@ All organizations/affiliations with criminal counts — good for a sidebar filte
 const data = await api('/api/affiliations', { location: 'all' });
 ```
 
-Response `200` (sorted by `unique_criminal_count` descending):
+Returns the **full** list in one call (no `page`/`size`), sorted by `unique_criminal_count` descending. Only `location` filters server-side — do threat-level / crime-type filtering and pagination client-side.
+
+Response `200`:
 
 ```json
 {
   "selected_location": "all",
-  "total_affiliations": 128,
+  "total_affiliations": 3232,
   "data": [
     {
-      "affiliation": "sun yee on",
-      "unique_criminal_count": 43,
-      "doc_count": 67,
-      "top_location": "hong kong, kowloon"
+      "affiliation": "the united self-defense forces of colombia",
+      "unique_criminal_count": 477,
+      "doc_count": 477,
+      "top_location": "colombia",
+      "threat_level": "Low",
+      "top_crime_types": ["Terrorism"]
+    },
+    {
+      "affiliation": "Paisas",
+      "unique_criminal_count": 367,
+      "doc_count": 367,
+      "top_location": "MEXICO",
+      "threat_level": "High",
+      "top_crime_types": ["Smuggling Aliens", "Drug Trafficking"]
+    },
+    {
+      "affiliation": "al-qaeda",
+      "unique_criminal_count": 241,
+      "doc_count": 241,
+      "top_location": null,
+      "threat_level": "High",
+      "top_crime_types": ["Terrorism", "Terrorism, Homicide"]
     }
   ]
 }
 ```
 
-`unique_criminal_count` is the number of distinct criminals — use this for display. `doc_count` is the raw record count (can include duplicates) — useful for debugging only.
+Field notes:
+- `unique_criminal_count` — distinct criminals; use this for display. `doc_count` is the raw record count.
+- `top_location` — single most-common location string (can be `null`).
+- `threat_level` — capitalized (`"High"` / `"Medium"` / `"Low"`); lowercase it before mapping to a badge.
+- `top_crime_types` — array of **strings** (each may itself be a comma-joined list of crimes).
+
+**Bind to UI:** a paginated gangs/affiliations directory table.
 
 ---
 
@@ -483,8 +509,6 @@ Response `200`:
   "data": [
     {
       "location": "hong kong, kowloon",
-      "lat": "32.32",
-      "lng" "73.32",
       "criminal_count": 120,
       "affiliation_count": 8,
       "doc_count": 165,

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import { PieChart, Pie, Cell } from 'recharts'
+import MapMarkers from '@/components/ui/MapMarkers/MapMarkers'
 import styles from './HeatmapView.module.css'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
@@ -61,19 +62,27 @@ const MIN_ZOOM = 1
 const MAX_ZOOM = 8
 
 export default function HeatmapView({
-  markers    = [],
-  hotspots   = [],
-  maxAct     = 1,
-  stats      = [],
-  donutData  = [],
-  totalCount = 0,
-  crimeTypes = ['All Crime Types'],
+  markers            = [],
+  hotspots           = [],
+  maxAct             = 1,
+  stats              = [],
+  donutData          = [],
+  totalCount         = 0,
+  crimeTypes         = ['All Crime Types'],
+  crimeType:         crimeTypeProp,
+  timePeriod:        timePeriodProp,
+  onCrimeTypeChange,
+  onTimePeriodChange,
+  loading            = false,
 }) {
-  const [crimeType,    setCrimeType]    = useState(crimeTypes[0] ?? 'All Crime Types')
-  const [timePeriod,   setTimePeriod]   = useState(TIME_PERIODS[0])
-  const [zoom,         setZoom]         = useState(1)
-  const [center,       setCenter]       = useState([0, 0])
-  const [activeMarker, setActiveMarker] = useState(null)
+  const crimeType  = crimeTypeProp  ?? crimeTypes[0] ?? 'All Crime Types'
+  const timePeriod = timePeriodProp ?? TIME_PERIODS[4]
+  const [zoom,          setZoom]          = useState(1)
+  const [center,        setCenter]        = useState([0, 0])
+  const [activeMarker,  setActiveMarker]  = useState(null)
+  const [hoveredMarker, setHoveredMarker] = useState(null)
+
+  const popupMarker = hoveredMarker ?? activeMarker
 
   function handleMoveEnd({ coordinates, zoom: newZoom }) {
     setCenter(coordinates)
@@ -82,11 +91,10 @@ export default function HeatmapView({
 
   function handleZoomIn()  { setZoom(z => Math.min(+(z + 0.75).toFixed(2), MAX_ZOOM)) }
   function handleZoomOut() { setZoom(z => Math.max(+(z - 0.75).toFixed(2), MIN_ZOOM)) }
-  function handleReset()   { setZoom(1); setCenter([0, 0]); setActiveMarker(null) }
+  function handleReset()   { setZoom(1); setCenter([0, 0]); setActiveMarker(null); setHoveredMarker(null) }
 
-  function handleMarkerClick(e, marker) {
-    e.stopPropagation()
-    setActiveMarker(prev => prev?.city === marker.city ? null : marker)
+  function handleSelect(m) {
+    setActiveMarker(prev => (prev?._id === m._id ? null : m))
   }
 
   return (
@@ -99,10 +107,10 @@ export default function HeatmapView({
           <p className={styles.pageSubtitle}>Crime density &amp; hotspot analysis across regions</p>
         </div>
         <div className={styles.controlsRight}>
-          <select className={styles.select} value={crimeType}  onChange={e => setCrimeType(e.target.value)}>
+          <select className={styles.select} value={crimeType}  onChange={e => onCrimeTypeChange?.(e.target.value)}>
             {crimeTypes.map(t  => <option key={t}>{t}</option>)}
           </select>
-          <select className={styles.select} value={timePeriod} onChange={e => setTimePeriod(e.target.value)}>
+          <select className={styles.select} value={timePeriod} onChange={e => onTimePeriodChange?.(e.target.value)}>
             {TIME_PERIODS.map(t => <option key={t}>{t}</option>)}
           </select>
         </div>
@@ -121,6 +129,7 @@ export default function HeatmapView({
 
       {/* ── Map ── */}
       <div className={styles.mapSection} onClick={() => setActiveMarker(null)}>
+        {loading && <div className={styles.mapLoadingOverlay}><span className={styles.mapLoadingText}>Loading…</span></div>}
 
         <ComposableMap
           projection="geoNaturalEarth1"
@@ -173,25 +182,13 @@ export default function HeatmapView({
               </Marker>
             ))}
 
-            {markers.map((m, i) => (
-              <Marker
-                key={i}
-                coordinates={m.coords}
-                onClick={e => handleMarkerClick(e, m)}
-                style={{ cursor: 'pointer' }}
-              >
-                <circle r={m.r * 3.2} fill={m.color} fillOpacity={0.07} />
-                <circle r={m.r * 2}   fill={m.color} fillOpacity={0.15} />
-                <circle
-                  r={m.r}
-                  fill={m.color}
-                  fillOpacity={activeMarker?.city === m.city ? 1 : 0.6}
-                  stroke={activeMarker?.city === m.city ? '#fff' : 'none'}
-                  strokeWidth={activeMarker?.city === m.city ? 1.5 / zoom : 0}
-                />
-                <circle r={m.r * 0.5} fill={m.color} />
-              </Marker>
-            ))}
+            <MapMarkers
+              markers={markers}
+              zoom={zoom}
+              selectedId={activeMarker?._id ?? null}
+              onHoverChange={setHoveredMarker}
+              onSelect={handleSelect}
+            />
           </ZoomableGroup>
         </ComposableMap>
 
@@ -222,25 +219,27 @@ export default function HeatmapView({
           >−</button>
         </div>
 
-        {/* Active marker popup */}
-        {activeMarker && (
+        {/* Marker popup — shown on hover, or pinned open on click */}
+        {popupMarker && (
           <div className={styles.markerPopup} onClick={e => e.stopPropagation()}>
             <div className={styles.popupHeader}>
-              <div className={styles.popupDot} style={{ background: activeMarker.color }} />
+              <div className={styles.popupDot} style={{ background: popupMarker.color }} />
               <div>
-                <p className={styles.popupCity}>{activeMarker.city}</p>
-                <p className={styles.popupCountry}>{activeMarker.country}</p>
+                <p className={styles.popupCity}>{popupMarker.city}</p>
+                <p className={styles.popupCountry}>{popupMarker.country}</p>
               </div>
-              <button
-                className={styles.popupClose}
-                onClick={() => setActiveMarker(null)}
-                aria-label="Close"
-              >×</button>
+              {activeMarker?._id === popupMarker._id && (
+                <button
+                  className={styles.popupClose}
+                  onClick={() => setActiveId(null)}
+                  aria-label="Close"
+                >×</button>
+              )}
             </div>
             <div className={styles.popupStats}>
               <div className={styles.popupStat}>
-                <span className={styles.popupStatValue} style={{ color: activeMarker.color }}>
-                  {activeMarker.activities}
+                <span className={styles.popupStatValue} style={{ color: popupMarker.color }}>
+                  {popupMarker.activities}
                 </span>
                 <span className={styles.popupStatLabel}>Activities</span>
               </div>
@@ -248,22 +247,22 @@ export default function HeatmapView({
               <div className={styles.popupStat}>
                 <span
                   className={styles.popupStatValue}
-                  style={{ color: activeMarker.trend?.startsWith('+') ? '#F2464A' : '#70EA8D' }}
+                  style={{ color: popupMarker.trend?.startsWith('+') ? '#F2464A' : '#70EA8D' }}
                 >
-                  {activeMarker.trend}
+                  {popupMarker.trend}
                 </span>
                 <span className={styles.popupStatLabel}>Trend (30d)</span>
               </div>
               <div className={styles.popupDivider} />
               <div className={styles.popupStat}>
-                <span className={styles.popupStatValue} style={{ color: RISK_COLOR[activeMarker.risk] }}>
-                  {activeMarker.risk}
+                <span className={styles.popupStatValue} style={{ color: RISK_COLOR[popupMarker.risk] }}>
+                  {popupMarker.risk}
                 </span>
                 <span className={styles.popupStatLabel}>Risk Level</span>
               </div>
             </div>
             <div className={styles.popupCrimes}>
-              {(activeMarker.crimeTypes ?? []).map(c => (
+              {(popupMarker.crimeTypes ?? []).map(c => (
                 <span key={c} className={styles.popupCrimeTag}>{c}</span>
               ))}
             </div>

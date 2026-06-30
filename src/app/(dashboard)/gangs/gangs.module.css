@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   background: var(--bg-primary);
   height: calc(100vh - 81px);
   padding: var(--space-6);
@@ -6,7 +6,7 @@
   flex-direction: column;
 }
 
-/* ── Two-column layout ── */
+/* â”€â”€ Two-column layout â”€â”€ */
 
 .layout {
   display: grid;
@@ -17,7 +17,7 @@
   min-height: 0;
 }
 
-/* ── Main column ── */
+/* â”€â”€ Main column â”€â”€ */
 
 .main {
   display: flex;
@@ -36,7 +36,7 @@
   overflow: hidden;
 }
 
-/* ── Card header ── */
+/* â”€â”€ Card header â”€â”€ */
 
 .mainCardHeader {
   display: flex;
@@ -133,7 +133,7 @@
   background: var(--bg-brand-light);
 }
 
-/* ── Filter section ── */
+/* â”€â”€ Filter section â”€â”€ */
 
 .filterSection {
   padding: var(--space-4) var(--space-5);
@@ -141,7 +141,7 @@
   flex-shrink: 0;
 }
 
-/* ── Stats row ── */
+/* â”€â”€ Stats row â”€â”€ */
 
 .statsRow {
   display: grid;
@@ -197,7 +197,7 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Sidebar ── */
+/* â”€â”€ Sidebar â”€â”€ */
 
 .sidebar {
   display: flex;
@@ -205,7 +205,7 @@
   gap: var(--space-4);
 }
 
-/* ── Responsive ── */
+/* â”€â”€ Responsive â”€â”€ */
 
 @media (max-width: 1200px) {
   .layout {
@@ -288,3 +288,4 @@
     border-bottom: none;
   }
 }
+

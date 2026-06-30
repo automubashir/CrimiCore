@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
+import { Bone } from '@/components/ui/Skeleton/Skeleton'
 import styles from './ActivityCard.module.css'
 
 export default function ActivityCard({
@@ -60,6 +61,32 @@ export default function ActivityCard({
       </div>
     </article>
     </Link>
+  )
+}
+
+/* ── Skeleton — reuses the real card classes so it matches the design ── */
+export function ActivityCardSkeleton() {
+  return (
+    <article className={styles.card}>
+      <div className={styles.imageWrap}>
+        <Bone width="100%" height="100%" />
+      </div>
+      <div className={styles.content}>
+        <Bone width={80} height={20} />
+        <Bone width="70%" height={16} style={{ marginTop: 8 }} />
+        <Bone width="100%" height={13} style={{ marginTop: 6 }} />
+        <Bone width="88%" height={13} style={{ marginTop: 4 }} />
+        <div className={styles.meta} style={{ marginTop: 10 }}>
+          <Bone width={70} height={12} />
+          <Bone width={70} height={12} />
+          <Bone width={70} height={12} />
+        </div>
+      </div>
+      <div className={styles.criminalsCol}>
+        <Bone width={60} height={11} />
+        <Bone width={40} height={16} style={{ marginTop: 6 }} />
+      </div>
+    </article>
   )
 }
 

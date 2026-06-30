@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { dateRangeToParams, DATE_RANGE_OPTIONS } from '@/lib/dateRange'
+import COUNTRIES from '@/lib/countries'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './CriminalFilterBar.module.css'
 
-function FilterItem({ label, value, options, onChange }) {
+function FilterItem({ label, value, options, onChange, scrollable = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -40,7 +42,7 @@ function FilterItem({ label, value, options, onChange }) {
       </button>
 
       {open && (
-        <div className={styles.dropdown} role="listbox">
+        <div className={`${styles.dropdown} ${scrollable ? styles.dropdownScrollable : ''}`} role="listbox">
           {options.map(opt => (
             <button
               key={opt}
@@ -59,28 +61,34 @@ function FilterItem({ label, value, options, onChange }) {
   )
 }
 
-export default function CriminalFilterBar({ onSearch, onFilterChange, gangOptions = [], countryOptions = [], crimeTypeOptions = [] }) {
-  const [values, setValues] = useState({
-    duration:    'All Time',
-    gang:        'Any',
-    country:     'All Countries',
-    crimeType:   'All Crime Types',
-    threatLevel: 'Any',
-  })
+function valuesToApiFilters(values) {
+  const params = {}
+  if (values.threatLevel && values.threatLevel !== 'Any')             params.threat_level = values.threatLevel.toLowerCase()
+  if (values.gang        && values.gang        !== 'Any')             params.affiliation  = values.gang
+  if (values.country     && values.country     !== 'All Countries')   params.location     = values.country.toLowerCase()
+  if (values.crimeType   && values.crimeType   !== 'All Crime Types') params.crime_type   = values.crimeType
+  Object.assign(params, dateRangeToParams(values.dateRange))
+  return params
+}
+
+export default function CriminalFilterBar({ onSearch, onFilterChange, gangOptions = [], crimeTypeOptions = [] }) {
+  const FILTERS = [
+    { key: 'dateRange',   label: 'DATE RANGE',      default: 'All',             options: ['All', ...DATE_RANGE_OPTIONS],                                         scrollable: false },
+    { key: 'gang',        label: 'GANGS AFFILIATED', default: 'Any',             options: ['Any', ...gangOptions],                                                scrollable: gangOptions.length > 8 },
+    { key: 'country',     label: 'COUNTRY',          default: 'All Countries',   options: ['All Countries', ...COUNTRIES],                                        scrollable: true  },
+    { key: 'crimeType',   label: 'CRIME TYPE',       default: 'All Crime Types', options: crimeTypeOptions.length > 1 ? crimeTypeOptions : ['All Crime Types'],  scrollable: true  },
+    { key: 'threatLevel', label: 'THREAT LEVEL',     default: 'Any',             options: ['Any', 'High', 'Medium', 'Low'],                                       scrollable: false },
+  ]
+
+  const [values, setValues] = useState(() =>
+    Object.fromEntries(FILTERS.map(f => [f.key, f.default]))
+  )
 
   function handleChange(key, value) {
     const next = { ...values, [key]: value }
     setValues(next)
-    onFilterChange?.(next)
+    onFilterChange?.(valuesToApiFilters(next))
   }
-
-  const filters = [
-    { key: 'duration',    label: 'DURATION',         options: ['All Time', 'Last 30 Days', 'Last 90 Days', 'Last Year'] },
-    { key: 'gang',        label: 'GANGS AFFILIATED',  options: ['Any', ...gangOptions] },
-    { key: 'country',     label: 'COUNTRY',           options: ['All Countries', ...countryOptions] },
-    { key: 'crimeType',   label: 'CRIME TYPE',        options: ['All Crime Types', ...crimeTypeOptions] },
-    { key: 'threatLevel', label: 'THREAT LEVELS',     options: ['Any', 'High', 'Medium', 'Low'] },
-  ]
 
   return (
     <div className={styles.wrapper}>
@@ -88,13 +96,14 @@ export default function CriminalFilterBar({ onSearch, onFilterChange, gangOption
         <SearchInput placeholder="Search criminals" onSearch={onSearch} />
       </div>
       <div className={styles.filterBar}>
-        {filters.map(f => (
+        {FILTERS.map(f => (
           <FilterItem
             key={f.key}
             label={f.label}
             value={values[f.key]}
             options={f.options}
             onChange={v => handleChange(f.key, v)}
+            scrollable={f.scrollable}
           />
         ))}
       </div>

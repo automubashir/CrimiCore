@@ -9,60 +9,73 @@ import GlobalMap from '@/components/dashboard/GlobalMap/GlobalMap'
 import TopGangs from '@/components/dashboard/TopGangs/TopGangs'
 import ActivitiesByType from '@/components/dashboard/ActivitiesByType/ActivitiesByType'
 import RecentlyAddedCriminals from '@/components/dashboard/RecentlyAddedCriminals/RecentlyAddedCriminals'
-import DashboardLoading from './loading'
+import { StatsGridSkeleton } from '@/components/ui/Skeleton/Skeleton'
+import { NewsSkeleton, MapSkeleton, GangsSkeleton, CrimeTypesSkeleton, CriminalsSkeleton } from './loading'
 import styles from './dashboard.module.css'
 
+// Each slice starts as `undefined` (loading) and becomes its value (possibly
+// empty) once its own request settles — sections reveal as they arrive.
 export default function HomePage() {
-  const [pageData, setPageData] = useState(null)
+  const [overview,     setOverview]     = useState(undefined)
+  const [news,         setNews]         = useState(undefined)
+  const [affiliations, setAffiliations] = useState(undefined)
+  const [crimeTypes,   setCrimeTypes]   = useState(undefined)
+  const [topCriminals, setTopCriminals] = useState(undefined)
+  const [mapLocations, setMapLocations] = useState(undefined)
 
   useEffect(() => {
-    async function load() {
-      const [overviewRes, newsRes, affiliationsRes, crimeTypesRes, topCriminalsRes, locationsRes] =
-        await Promise.allSettled([
-          apiFetch('/api/analytics/overview'),
-          apiFetch('/api/news/filter' + buildQuery({ page: 1 })),
-          apiFetch('/api/analytics/by-affiliation' + buildQuery({ size: 5, breakdown: true })),
-          apiFetch('/api/analytics/by-crime-type' + buildQuery({ size: 6 })),
-          apiFetch('/api/analytics/top-criminals' + buildQuery({ size: 5 })),
-          apiFetch('/api/analytics/by-location' + buildQuery({ size: 5 })),
-        ])
+    apiFetch('/api/analytics/overview')
+      .then(setOverview).catch(() => setOverview(null))
 
-      const overview     = overviewRes.status     === 'fulfilled' ? overviewRes.value                    : null
-      const news         = newsRes.status         === 'fulfilled' ? (newsRes.value?.all_news    ?? [])   : []
-      const affiliations = affiliationsRes.status === 'fulfilled' ? (affiliationsRes.value?.data ?? [])  : []
-      const crimeTypes   = crimeTypesRes.status   === 'fulfilled' ? (crimeTypesRes.value?.data  ?? [])   : []
-      const topCriminals = topCriminalsRes.status === 'fulfilled' ? (topCriminalsRes.value?.data ?? [])  : []
-      const locations    = locationsRes.status    === 'fulfilled' ? (locationsRes.value?.data    ?? [])   : []
+    apiFetch('/api/news/filter' + buildQuery({ page: 1 }))
+      .then(r => setNews(r?.all_news ?? [])).catch(() => setNews([]))
 
-      const missingCoords = locations.filter(h => !h.lat || !h.lng).map(h => h.location ?? '')
-      const coordMap      = await geocodeAll(missingCoords)
-      const enrichedLocations = locations.map(h => {
-        if (h.lat && h.lng) return h
-        const c = coordMap[(h.location ?? '').trim().toLowerCase()]
-        return c ? { ...h, lat: c.lat, lng: c.lng } : h
+    apiFetch('/api/analytics/by-affiliation' + buildQuery({ size: 20, breakdown: true }))
+      .then(r => setAffiliations(r?.data ?? [])).catch(() => setAffiliations([]))
+
+    apiFetch('/api/analytics/by-crime-type' + buildQuery({ size: 6 }))
+      .then(r => setCrimeTypes(r?.data ?? [])).catch(() => setCrimeTypes([]))
+
+    apiFetch('/api/analytics/top-criminals' + buildQuery({ size: 20 }))
+      .then(r => setTopCriminals(r?.data ?? [])).catch(() => setTopCriminals([]))
+
+    apiFetch('/api/analytics/by-location' + buildQuery({ size: 5 }))
+      .then(async r => {
+        const locations     = r?.data ?? []
+        const missingCoords = locations.filter(h => !h.lat || !h.lng).map(h => h.location ?? '')
+        const coordMap      = await geocodeAll(missingCoords)
+        const enriched      = locations.map(h => {
+          if (h.lat && h.lng) return h
+          const c = coordMap[(h.location ?? '').trim().toLowerCase()]
+          return c ? { ...h, lat: c.lat, lng: c.lng } : h
+        })
+        setMapLocations(enriched)
       })
-
-      setPageData({ overview, news, affiliations, crimeTypes, topCriminals, enrichedLocations })
-    }
-
-    load()
+      .catch(() => setMapLocations([]))
   }, [])
-
-  if (!pageData) return <DashboardLoading />
-
-  const { overview, news, affiliations, crimeTypes, topCriminals, enrichedLocations } = pageData
 
   return (
     <main className={styles.dashboardWrapper}>
-      <StatsGrid stats={overview} />
+      {overview === undefined ? <StatsGridSkeleton /> : <StatsGrid stats={overview} />}
+
       <div className={styles.dashboardGrid}>
         <div className={styles.col1}>
-          <RecentNewsSection news={news} />
+          {news === undefined ? <NewsSkeleton /> : <RecentNewsSection news={news} />}
         </div>
-        <div className={styles.col2}><GlobalMap hotspots={enrichedLocations} overview={overview} /></div>
-        <div className={styles.col4}><TopGangs data={affiliations} /></div>
-        <div className={styles.col5}><ActivitiesByType data={crimeTypes} /></div>
-        <div className={styles.col6}><RecentlyAddedCriminals data={topCriminals} /></div>
+        <div className={styles.col2}>
+          {(overview === undefined || mapLocations === undefined)
+            ? <MapSkeleton />
+            : <GlobalMap hotspots={mapLocations} overview={overview} />}
+        </div>
+        <div className={styles.col4}>
+          {affiliations === undefined ? <GangsSkeleton /> : <TopGangs data={affiliations} />}
+        </div>
+        <div className={styles.col5}>
+          {crimeTypes === undefined ? <CrimeTypesSkeleton /> : <ActivitiesByType data={crimeTypes} />}
+        </div>
+        <div className={styles.col6}>
+          {topCriminals === undefined ? <CriminalsSkeleton /> : <RecentlyAddedCriminals data={topCriminals} />}
+        </div>
       </div>
     </main>
   )

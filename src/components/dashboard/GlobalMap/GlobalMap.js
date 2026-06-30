@@ -1,7 +1,9 @@
 'use client'
 import styles from './GlobalMap.module.css'
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import { PieChart, Pie, Cell } from 'recharts'
+import MapMarkers, { MapTooltip, useMapTooltip } from '@/components/ui/MapMarkers/MapMarkers'
+import { useMapZoom, MapZoomControls } from '@/components/ui/MapMarkers/MapZoom'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -73,6 +75,8 @@ function DonutChart({ overview }) {
 }
 
 export default function GlobalMap({ hotspots = [], overview = null }) {
+  const { hovered, setHovered, pos, onMouseMove } = useMapTooltip()
+  const zoomCtl = useMapZoom()
   const maxCount = hotspots.length > 0 ? Math.max(...hotspots.map(h => h.doc_count ?? 0), 1) : 1
 
   const markers = hotspots
@@ -81,6 +85,8 @@ export default function GlobalMap({ hotspots = [], overview = null }) {
       coords: [parseFloat(h.lng), parseFloat(h.lat)],
       r: 2.5 + ((h.doc_count ?? 0) / maxCount) * 4.5,
       color: idx === 0 ? '#F2464A' : '#F3921B',
+      label: toTitleCase(h.location ?? ''),
+      count: `${(h.doc_count ?? 0).toLocaleString()} Activities`,
     }))
 
   return (
@@ -93,7 +99,7 @@ export default function GlobalMap({ hotspots = [], overview = null }) {
         <div className={styles.inner}>
 
           {/* World map */}
-          <div className={styles.mapArea}>
+          <div className={styles.mapArea} style={{ position: 'relative' }} onMouseMove={onMouseMove}>
             <ComposableMap
               projection="geoNaturalEarth1"
               projectionConfig={{ scale: 145, center: [10, 5] }}
@@ -101,34 +107,44 @@ export default function GlobalMap({ hotspots = [], overview = null }) {
               height={380}
               style={{ width: '100%', height: '100%' }}
             >
-              <Geographies geography={GEO_URL}>
-                {({ geographies }) =>
-                  geographies.map(geo => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill="#0A1F33"
-                      stroke="#0D2A40"
-                      strokeWidth={0.5}
-                      style={{
-                        default: { outline: 'none' },
-                        hover:   { outline: 'none', fill: '#102D47' },
-                        pressed: { outline: 'none' },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
+              <ZoomableGroup
+                zoom={zoomCtl.zoom}
+                center={zoomCtl.center}
+                minZoom={zoomCtl.minZoom}
+                maxZoom={zoomCtl.maxZoom}
+                onMoveEnd={zoomCtl.onMoveEnd}
+              >
+                <Geographies geography={GEO_URL}>
+                  {({ geographies }) =>
+                    geographies.map(geo => (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill="#0A1F33"
+                        stroke="#0D2A40"
+                        strokeWidth={0.5}
+                        style={{
+                          default: { outline: 'none' },
+                          hover:   { outline: 'none', fill: '#102D47' },
+                          pressed: { outline: 'none' },
+                        }}
+                      />
+                    ))
+                  }
+                </Geographies>
 
-              {markers.map((m, i) => (
-                <Marker key={i} coordinates={m.coords}>
-                  <circle r={m.r * 3.2} fill={m.color} fillOpacity={0.07} />
-                  <circle r={m.r * 2}   fill={m.color} fillOpacity={0.15} />
-                  <circle r={m.r}       fill={m.color} fillOpacity={0.6} />
-                  <circle r={m.r * 0.5} fill={m.color} />
-                </Marker>
-              ))}
+                <MapMarkers markers={markers} zoom={zoomCtl.zoom} onHoverChange={setHovered} />
+              </ZoomableGroup>
             </ComposableMap>
+            <MapZoomControls
+              zoom={zoomCtl.zoom}
+              onZoomIn={zoomCtl.zoomIn}
+              onZoomOut={zoomCtl.zoomOut}
+              onReset={zoomCtl.reset}
+              minZoom={zoomCtl.minZoom}
+              maxZoom={zoomCtl.maxZoom}
+            />
+            <MapTooltip marker={hovered} x={pos.x} y={pos.y} />
           </div>
 
           {/* Hotspot Analysis */}

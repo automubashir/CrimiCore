@@ -9,6 +9,7 @@ import {
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
+import { Bone } from '@/components/ui/Skeleton/Skeleton'
 import CriminalLocationsMap from '@/components/criminals/CriminalLocationsMap/CriminalLocationsMap'
 import CrimesTab from '@/components/criminals/CrimesTab/CrimesTab'
 import CriminalMediaTab from '@/components/criminals/CriminalMediaTab/CriminalMediaTab'
@@ -27,7 +28,7 @@ const TABS = [
 
 const TREND_PERIODS = ['This Month', 'Last 6 Months', 'Last Year']
 
-export default function CriminalDetailContent({ criminal }) {
+export default function CriminalDetailContent({ criminal, locationsLoading = false, members = [], membersLoading = false, activitiesNews = [], activitiesHasMore = false, activitiesLoading = false, onActivitiesLoadMore }) {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
@@ -142,10 +143,10 @@ export default function CriminalDetailContent({ criminal }) {
 
           <div className={styles.tabsArea}>
             <div className={styles.tabContent} role="tabpanel">
-              {activeTab === 'overview'   ? <OverviewTab criminal={criminal} /> :
-               activeTab === 'members'    ? <MembersTab criminal={criminal} /> :
+              {activeTab === 'overview'   ? <OverviewTab criminal={criminal} locationsLoading={locationsLoading} /> :
+               activeTab === 'members'    ? <MembersTab members={members} loading={membersLoading} /> :
                activeTab === 'crimes'     ? <CrimesTab criminal={criminal} /> :
-               activeTab === 'activities' ? <RelatedNewsTab height="52rem" /> :
+               activeTab === 'activities' ? <RelatedNewsTab similarNews={activitiesNews} hasMore={activitiesHasMore} loadingMore={activitiesLoading} onLoadMore={onActivitiesLoadMore} height="52rem" /> :
                activeTab === 'locations'  ? <LocationsMapTab /> :
                activeTab === 'media'      ? <CriminalMediaTab criminal={criminal} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}
@@ -167,7 +168,7 @@ export default function CriminalDetailContent({ criminal }) {
 
 /* ─────────────────── Overview Tab ─────────────────── */
 
-function OverviewTab({ criminal }) {
+function OverviewTab({ criminal, locationsLoading = false }) {
   return (
     <>
       {/* Row 1: Biographical Info + Summary */}
@@ -190,7 +191,7 @@ function OverviewTab({ criminal }) {
 
       {/* Row 4: Known Locations + Media */}
       <div className={styles.overviewRow4}>
-        <KnownLocationsCard locations={criminal.locations} />
+        <KnownLocationsCard locations={criminal.locations} loading={locationsLoading} />
         <MediaGridCard media={criminal.media} />
       </div>
     </>
@@ -270,7 +271,7 @@ function GangsAssociatedCard({ gangs }) {
       <span className={styles.sectionTitle}>Gangs Associated</span>
       <div className={styles.gangsGrid}>
         {gangs.map(g => (
-          <div key={g.id} className={styles.gangItem}>
+          <Link key={g.id} to={`/gangs/${g.id}`} className={styles.gangItem} style={{ textDecoration: 'none' }}>
             <SafeImage
               src={g.image}
               alt={g.name}
@@ -282,7 +283,7 @@ function GangsAssociatedCard({ gangs }) {
             {g.threat
               ? <Badge threat={g.threat}>{g.threat.toUpperCase()} THREAT</Badge>
               : <span>—</span>}
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -395,7 +396,7 @@ function RecentActivitiesCard({ news, count }) {
       </div>
       <div className={styles.recentList}>
         {news.slice(0, 3).map(item => (
-          <div key={item.id} className={styles.recentItem}>
+          <Link key={item.id} to={`/activities/${encodeURIComponent(item.id)}`} className={styles.recentItem} style={{ textDecoration: 'none' }}>
             <SafeImage
               src={item.image}
               alt={item.title}
@@ -416,24 +417,24 @@ function RecentActivitiesCard({ news, count }) {
                 <span className={styles.recentItemMeta}><PinIcon />{item.location}</span>
               </div>
             </div>
-            <button className={styles.recentItemArrow} type="button" aria-label="View activity">
+            <span className={styles.recentItemArrow} aria-hidden="true">
               <ArrowRightIcon />
-            </button>
-          </div>
+            </span>
+          </Link>
         ))}
       </div>
     </div>
   )
 }
 
-function KnownLocationsCard({ locations }) {
+function KnownLocationsCard({ locations, loading = false }) {
   return (
     <div className={styles.locationsCard}>
       <div className={styles.locationsHeader}>
         <span className={styles.sectionTitle}>Known Locations</span>
         <span className={styles.locationsSubtitle}>Places where the criminal activity records have been found.</span>
       </div>
-      <CriminalLocationsMap locations={locations} />
+      <CriminalLocationsMap locations={locations} loading={loading} />
     </div>
   )
 }
@@ -464,26 +465,6 @@ function MediaGridCard({ media }) {
 
 /* ─────────────────── Members tab ─────────────────── */
 
-const LEADER_EXTRAS = [
-  { status: 'Convicted', joinedSince: 2005 },
-  { status: 'Active',    joinedSince: 2007 },
-  { status: 'In-Trial',  joinedSince: 2009 },
-  { status: 'Active',    joinedSince: 2011 },
-  { status: 'Convicted', joinedSince: 2003 },
-]
-
-const MOCK_MEMBERS = [
-  { id: 'mm-1', name: 'Alfonso Santillan-Sanchez',   image: null, role: 'Enforcer', status: 'Active',    threat: 'high',   joinedSince: 2015, crimes: ['Smuggling', 'Kidnapping', 'Arson'],        extraCrimes: 3 },
-  { id: 'mm-2', name: 'Roudy Dorccilhomme',          image: null, role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2018, crimes: ['Tax Evasion', 'Bribery', 'Fraud'],         extraCrimes: 3 },
-  { id: 'mm-3', name: 'Carols Cardona',              image: null, role: 'Enforcer', status: 'Active',    threat: 'medium', joinedSince: 2010, crimes: ['Money Laundering', 'Armed Assault'],        extraCrimes: 3 },
-  { id: 'mm-4', name: 'Carlos Alfredo Romero',       image: null, role: 'Member',   status: 'Arrested',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Robbery'],             extraCrimes: 5 },
-  { id: 'mm-5', name: 'Fernando Melendez-Ramirez',   image: null, role: 'Member',   status: 'In-Trial',  threat: 'high',   joinedSince: 2005, crimes: ['Drug Trafficking', 'Human Trafficking'],   extraCrimes: 5 },
-  { id: 'mm-6', name: 'Diego Mejia-Canales',         image: null, role: 'Member',   status: 'Convicted', threat: 'medium', joinedSince: 2001, crimes: ['Arms Dealing', 'Racketeering'],            extraCrimes: 5 },
-  { id: 'mm-7', name: 'Alex Ucles Cruz',             image: null, role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Illegal Arms Trade'],     extraCrimes: 2 },
-  { id: 'mm-8', name: 'Jonathan Jafet Lopez-Coronel',image: null, role: 'Member',   status: 'Convicted', threat: 'high',   joinedSince: 2005, crimes: ['Armed Robbery', 'Assault'],               extraCrimes: 2 },
-  { id: 'mm-9', name: 'Dariusz Blaszczyk',           image: null, role: 'Member',   status: 'Active',    threat: 'medium', joinedSince: 2008, crimes: ['Extortion', 'Bribery', 'Counterfeiting'], extraCrimes: 2 },
-]
-
 const ROLE_CLASS = {
   'Leader':          'roleLeader',
   'Co-Leader':       'roleLeader',
@@ -502,7 +483,7 @@ const STATUS_CLASS = {
 
 function MemberCard({ member }) {
   return (
-    <div className={styles.memberCard}>
+    <Link to={`/criminals/${member.id}`} className={styles.memberCard} style={{ textDecoration: 'none' }}>
       <div className={styles.memberCardTop}>
         <SafeImage
           src={member.image}
@@ -514,7 +495,7 @@ function MemberCard({ member }) {
         <div className={styles.memberCardInfo}>
           <span className={styles.memberCardName}>{member.name}</span>
           <div className={styles.memberCardBadges}>
-            <span className={`${styles.memberRoleBadge} ${styles[ROLE_CLASS[member.role] ?? 'roleLeader']}`}>
+            <span className={`${styles.memberRoleBadge} ${styles[ROLE_CLASS[member.role] ?? 'roleMember']}`}>
               {member.role}
             </span>
             <span className={`${styles.memberStatusBadge} ${styles[STATUS_CLASS[member.status] ?? 'statusActive']}`}>
@@ -528,9 +509,11 @@ function MemberCard({ member }) {
 
       <div className={styles.memberCardBottom}>
         <div className={styles.memberCardMeta}>
-          <span className={member.threat === 'high' ? styles.threatSolidHigh : styles.threatSolidMedium}>
-            {member.threat === 'high' ? 'HIGH THREAT' : 'MEDIUM THREAT'}
-          </span>
+          {member.threat && (
+            <span className={member.threat === 'high' ? styles.threatSolidHigh : styles.threatSolidMedium}>
+              {member.threat.toUpperCase()} THREAT
+            </span>
+          )}
           <span className={styles.memberCardJoined}>Joined Since: {member.joinedSince}</span>
         </div>
         <span className={styles.memberCardCrimesLabel}>Crimes Involved</span>
@@ -543,28 +526,15 @@ function MemberCard({ member }) {
           )}
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
-function MembersTab({ criminal }) {
+function MembersTab({ members = [], loading = false }) {
   const [search, setSearch] = useState('')
 
-  const leaders = (criminal.gangs ?? []).slice(0, 3).map((g, i) => ({
-    id:          `leader-${i}`,
-    name:        g.name,
-    image:       g.image,
-    role:        'Leader',
-    status:      LEADER_EXTRAS[i]?.status     ?? 'Active',
-    joinedSince: LEADER_EXTRAS[i]?.joinedSince ?? 2010,
-    threat:      g.threat ?? 'medium',
-    crimes:      (criminal.crimesInvolved ?? []).slice(0, 3),
-    extraCrimes: Math.max(0, (criminal.crimesInvolved ?? []).length - 3),
-  }))
-
-  const query           = search.toLowerCase()
-  const filteredLeaders = leaders.filter(m => m.name.toLowerCase().includes(query))
-  const filteredMembers = MOCK_MEMBERS.filter(m => m.name.toLowerCase().includes(query))
+  const query = search.toLowerCase()
+  const filtered = members.filter(m => m.name.toLowerCase().includes(query))
 
   return (
     <div className={styles.membersWrap}>
@@ -572,29 +542,45 @@ function MembersTab({ criminal }) {
         <SearchInput placeholder="Search Members" onSearch={setSearch} />
       </div>
 
-      {filteredLeaders.length > 0 && (
+      {loading ? (
+        <div className={styles.membersCardGrid}>
+          {Array.from({ length: 6 }, (_, i) => <MemberCardSkeleton key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className={styles.comingSoon}>
+          <span className={styles.comingSoonText}>No members found</span>
+          <span className={styles.comingSoonSub}>No other criminals are linked to this affiliation.</span>
+        </div>
+      ) : (
         <div className={styles.membersSection}>
           <div className={styles.membersSectionHead}>
-            <span className={styles.membersSectionTitle}>Leaders</span>
-            <span className={styles.membersSectionBadge}>{filteredLeaders.length}</span>
+            <span className={styles.membersSectionTitle}>Affiliated Criminals</span>
+            <span className={styles.membersSectionBadge}>{filtered.length}</span>
           </div>
           <div className={styles.membersCardGrid}>
-            {filteredLeaders.map(m => <MemberCard key={m.id} member={m} />)}
+            {filtered.map(m => <MemberCard key={m.id} member={m} />)}
           </div>
         </div>
       )}
+    </div>
+  )
+}
 
-      {filteredMembers.length > 0 && (
-        <div className={styles.membersSection}>
-          <div className={styles.membersSectionHead}>
-            <span className={styles.membersSectionTitle}>All Members</span>
-            <span className={styles.membersSectionBadge}>{MOCK_MEMBERS.length}</span>
-          </div>
-          <div className={styles.membersCardGrid}>
-            {filteredMembers.map(m => <MemberCard key={m.id} member={m} />)}
-          </div>
+function MemberCardSkeleton() {
+  return (
+    <div className={styles.memberCard}>
+      <div className={styles.memberCardTop}>
+        <Bone width={72} height={72} style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }} />
+        <div className={styles.memberCardInfo} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Bone width="70%" height={14} />
+          <Bone width={120} height={20} />
         </div>
-      )}
+      </div>
+      <div className={styles.memberCardDivider} />
+      <div className={styles.memberCardBottom} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Bone width={100} height={16} />
+        <Bone width="100%" height={20} />
+      </div>
     </div>
   )
 }
@@ -744,7 +730,7 @@ function RecentNewsCard({ news, count }) {
       </div>
       <div className={styles.newsList}>
         {news.map(item => (
-          <div key={item.id} className={styles.newsItem}>
+          <Link key={item.id} to={`/activities/${encodeURIComponent(item.id)}`} className={styles.newsItem} style={{ textDecoration: 'none' }}>
             <SafeImage
               src={item.image}
               alt={item.title}
@@ -761,7 +747,7 @@ function RecentNewsCard({ news, count }) {
               <span className={styles.newsTitle}>{item.title}</span>
               <span className={styles.newsDesc}>{item.description}</span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

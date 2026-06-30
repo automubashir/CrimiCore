@@ -1,6 +1,8 @@
-import styles from './TopGangs.module.css'
+'use client'
+import { Link } from 'react-router-dom'
 import NotFound from '@/components/ui/NotFound/NotFound'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
+import styles from './TopGangs.module.css'
 
 const ROW_COLORS = ['#F2464A', '#F3921B', '#F0C028', '#1BB1F0', '#70EA8D']
 
@@ -26,35 +28,23 @@ export default function TopGangs({ data = [] }) {
           <NotFound title="No gang data" message="No affiliation data is available right now." />
         ) : (
           <div className={styles.list}>
-            {data.slice(0, 5).map(({ affiliation, doc_count, top_locations }, idx) => {
-              const color = ROW_COLORS[idx % ROW_COLORS.length]
-              const region = top_locations?.[0]?.location ?? '—'
+            {data.map(({ affiliation, doc_count, top_locations }, idx) => {
+              const color      = ROW_COLORS[idx % ROW_COLORS.length]
+              const region     = top_locations?.[0]?.location ?? '—'
               const activities = doc_count ?? 0
               return (
-                <div key={affiliation} className={styles.row}>
+                <Link key={affiliation} to={`/gangs/${encodeURIComponent(affiliation.toLowerCase())}`} className={styles.row} style={{ textDecoration: 'none' }}>
                   <span className={styles.rank}>{idx + 1}.</span>
-                  <SafeImage
-                    src={null}
-                    alt={affiliation}
-                    className={styles.logo}
-                    width={52}
-                    height={52}
-                  />
+                  <SafeImage src={null} alt={affiliation} className={styles.logo} width={52} height={52} />
                   <span className={styles.name}>{affiliation}</span>
                   <span className={styles.region}>{region}</span>
                   <div className={styles.actCell}>
                     <span className={styles.count}>{activities}</span>
                     <div className={styles.barTrack}>
-                      <div
-                        className={styles.barFill}
-                        style={{
-                          width: `${(activities / maxCount) * 100}%`,
-                          background: color,
-                        }}
-                      />
+                      <div className={styles.barFill} style={{ width: `${(activities / maxCount) * 100}%`, background: color }} />
                     </div>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

@@ -322,6 +322,9 @@
   letter-spacing: 0.4px;
   line-height: 16px;
   width: fit-content;
+  /* Visible default if threat is missing/unmapped. */
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
 }
 
 .interpol_high   { background: var(--error-bg);   color: var(--error-primary);   border: 1px solid rgba(242,70,74,0.3);   }

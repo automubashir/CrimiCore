@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import styles from './FilterDropdown.module.css'
 
-export default function FilterDropdown({ label, options = [], onChange }) {
+export default function FilterDropdown({ label, options = [], onChange, scrollable = false }) {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState(null)
   const ref = useRef(null)
@@ -42,7 +42,7 @@ export default function FilterDropdown({ label, options = [], onChange }) {
       </button>
 
       {open && (
-        <div className={styles.dropdown} role="listbox">
+        <div className={`${styles.dropdown} ${scrollable ? styles.dropdownScrollable : ''}`} role="listbox">
           {options.map((opt) => (
             <button
               key={opt}

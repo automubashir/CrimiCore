@@ -138,6 +138,13 @@
   color: var(--text-tertiary);
 }
 
+.loadingMsg {
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
 /* ── Sidebar ── */
 
 .sidebar {

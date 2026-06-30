@@ -116,11 +116,27 @@
   position: relative;
   overflow: hidden;
   background: var(--bg-primary);
-  cursor: grab;
+  cursor: default;
 }
 
-.mapSection:active {
-  cursor: grabbing;
+/* ── Map loading overlay ── */
+.mapLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 12, 20, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.mapLoadingText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-ibm-plex);
 }
 
 /* ── Zoom controls — right edge, vertically centered ── */
@@ -301,6 +317,8 @@
   padding: var(--space-4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  /* Above the map loading overlay so only the map blurs, not this panel. */
+  z-index: 31;
 }
 
 .overlayTitle {
@@ -383,6 +401,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-5);
+  /* Above the map loading overlay so only the map blurs, not this panel. */
+  z-index: 31;
 }
 
 .donutWrapper {

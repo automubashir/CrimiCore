@@ -1,60 +1,137 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { apiFetch, buildQuery } from '@/lib/api'
+import { dateRangeToParams, DATE_RANGE_OPTIONS } from '@/lib/dateRange'
+import COUNTRIES from '@/lib/countries'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import FilterDropdown from '@/components/ui/FilterDropdown/FilterDropdown'
 import NewsCard from '@/components/dashboard/NewsCard/NewsCard'
 import NotFound from '@/components/ui/NotFound/NotFound'
+import ScrollLoader from '@/components/ui/ScrollLoader/ScrollLoader'
+import { NewsCardSkeleton } from '@/components/ui/Skeleton/Skeleton'
 import styles from './RecentNewsSection.module.css'
 
-const DATE_OPTIONS = ['Last 24 hours', 'Last 7 days', 'Last 30 days', 'Last 90 days']
-
-const DATE_MS = {
-  'Last 24 hours': 864e5,
-  'Last 7 days':   6048e5,
-  'Last 30 days':  2592e6,
-  'Last 90 days':  7776e6,
-}
+const COUNTRY_OPTIONS = ['All', ...COUNTRIES]
 
 function unique(arr) {
   return ['All', ...new Set(arr.filter(Boolean))].sort((a, b) => a === 'All' ? -1 : a.localeCompare(b))
 }
 
-function withinRange(dateStr, range) {
-  if (!range || range === 'All' || !dateStr) return true
-  return Date.now() - new Date(dateStr).getTime() <= (DATE_MS[range] ?? Infinity)
-}
-
 export default function RecentNewsSection({ news = [] }) {
-  const [search,    setSearch]    = useState('')
-  const [country,   setCountry]   = useState(null)
-  const [crimeType, setCrimeType] = useState(null)
-  const [gang,      setGang]      = useState(null)
-  const [dateRange, setDateRange] = useState(null)
+  // ── API filter state ──────────────────────────────────────────────
+  const [apiFilters, setApiFilters] = useState({})
 
-  const countryOptions   = useMemo(() => unique(news.map(n => n.news?.country)), [news])
-  const crimeTypeOptions = useMemo(() =>
-    unique(news.flatMap(n => n.news?.crimeType?.split(',').map(s => s.trim()) ?? [])), [news])
-  const gangOptions = useMemo(() =>
-    unique(news.flatMap(n => n.news?.affiliation?.split(',').map(s => s.trim()) ?? [])), [news])
+  // ── News list state ───────────────────────────────────────────────
+  const [allNews,         setAllNews]         = useState(news)
+  const [apiPage,         setApiPage]         = useState(1)
+  const [hasMorePages,    setHasMorePages]    = useState(news.length > 0)
+  const [loadingFiltered, setLoadingFiltered] = useState(false)
+  const [loadingMore,     setLoadingMore]     = useState(false)
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase()
-    return news.filter(item => {
-      const n = item.news
-      if (q && !n.title?.toLowerCase()?.includes(q) && !n.description?.toLowerCase().includes(q)) return false
-      if (country   && country   !== 'All' && n.country !== country) return false
-      if (crimeType && crimeType !== 'All' && !n.crimeType?.split(',').map(s => s.trim()).includes(crimeType)) return false
-      if (gang      && gang      !== 'All' && !n.affiliation?.split(',').map(s => s.trim()).includes(gang)) return false
-      if (!withinRange(n.published_date, dateRange)) return false
-      return true
+  // ── Frontend-only filter ──────────────────────────────────────────
+  const [search, setSearch] = useState('')
+
+  // Prevent re-fetch on initial mount (pre-loaded data is already correct)
+  const isFirstRender = useRef(true)
+  // Race-condition guard: only apply results from the latest fetch
+  const fetchIdRef = useRef(0)
+
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+
+    const id = ++fetchIdRef.current
+    setLoadingFiltered(true)
+    setAllNews([])
+    setApiPage(1)
+    setHasMorePages(false)
+
+    apiFetch('/api/news/filter' + buildQuery({ ...apiFilters, page: 1 }))
+      .then(data => {
+        if (fetchIdRef.current !== id) return
+        const items = data.all_news ?? []
+        setAllNews(items)
+        setHasMorePages(items.length > 0)
+      })
+      .catch(() => { if (fetchIdRef.current === id) { setAllNews([]); setHasMorePages(false) } })
+      .finally(() => { if (fetchIdRef.current === id) setLoadingFiltered(false) })
+  }, [apiFilters])
+
+  const handleLoadMore = useCallback(async () => {
+    if (!hasMorePages || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const data = await apiFetch('/api/news/filter' + buildQuery({ ...apiFilters, page: apiPage + 1 }))
+      const items = data.all_news ?? []
+      if (items.length > 0) {
+        setAllNews(prev => [...prev, ...items])
+        setApiPage(p => p + 1)
+      } else {
+        setHasMorePages(false)
+      }
+    } catch {
+      setHasMorePages(false)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [hasMorePages, loadingMore, apiFilters, apiPage])
+
+  // ── Filter change handlers ────────────────────────────────────────
+  function setFilter(key, value) {
+    setApiFilters(prev => {
+      const next = { ...prev }
+      if (!value) delete next[key]
+      else next[key] = value
+      return next
     })
-  }, [news, search, country, crimeType, gang, dateRange])
+  }
+
+  function handleCountry(val) {
+    setFilter('location', val === 'All' ? null : val.toLowerCase())
+  }
+
+  function handleCrimeType(val) {
+    setFilter('crime_type', val === 'All' ? null : val)
+  }
+
+  function handleGang(val) {
+    setFilter('affiliation', val === 'All' ? null : val)
+  }
+
+  function handleDateRange(val) {
+    setApiFilters(prev => {
+      const next = { ...prev }
+      delete next.from_date
+      delete next.to_date
+      return { ...next, ...dateRangeToParams(val) }
+    })
+  }
+
+  // ── Derive options from loaded data ───────────────────────────────
+  const crimeTypeOptions = useMemo(() =>
+    unique(allNews.flatMap(n => n.news?.crimeType?.split(',').map(s => s.trim()) ?? [])),
+    [allNews])
+
+  const gangOptions = useMemo(() =>
+    unique(allNews.flatMap(n => n.news?.affiliation?.split(',').map(s => s.trim()) ?? [])),
+    [allNews])
+
+  // ── Client-side search only ───────────────────────────────────────
+  const filtered = useMemo(() => {
+    if (!search.trim()) return allNews
+    const q = search.toLowerCase()
+    return allNews.filter(item => {
+      const n = item.news
+      return n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q)
+    })
+  }, [allNews, search])
+
+  const isFiltered = filtered.length < allNews.length
 
   return (
     <div className="section-card">
       <div className="section-card-header">
         <h2 className="section-card-title">Recent News</h2>
-        <a href='/activities' className="linkButton" >View all</a>
+        <a href='/activities' className="linkButton">View all</a>
       </div>
       <div className="section-card-content">
         <div className={styles.body}>
@@ -64,34 +141,42 @@ export default function RecentNewsSection({ news = [] }) {
           <div className={styles.drops}>
             <FilterDropdown
               label="Country"
-              options={countryOptions}
-              onChange={val => setCountry(val === 'All' ? null : val)}
+              options={COUNTRY_OPTIONS}
+              onChange={handleCountry}
+              scrollable
             />
             <FilterDropdown
               label="Crime Type"
               options={crimeTypeOptions}
-              onChange={val => setCrimeType(val === 'All' ? null : val)}
+              onChange={handleCrimeType}
+              scrollable
             />
             <FilterDropdown
               label="Gang"
               options={gangOptions}
-              onChange={val => setGang(val === 'All' ? null : val)}
-            />
-            <FilterDropdown
-              label="Criminal"
-              options={[]}
+              onChange={handleGang}
+              scrollable
             />
             <FilterDropdown
               label="Date Range"
-              options={['All', ...DATE_OPTIONS]}
-              onChange={val => setDateRange(val === 'All' ? null : val)}
+              options={['All', ...DATE_RANGE_OPTIONS]}
+              onChange={handleDateRange}
             />
           </div>
           <div className={styles.newsList}>
-            {filtered.length === 0 ? (
+            {loadingFiltered ? (
+              Array.from({ length: 5 }, (_, i) => <NewsCardSkeleton key={i} />)
+            ) : filtered.length === 0 ? (
               <NotFound title="No news found" message="No articles match the current filters." />
             ) : (
               filtered.map((item, idx) => <NewsCard key={idx} item={item} />)
+            )}
+            {!loadingFiltered && (
+              <ScrollLoader
+                onLoad={handleLoadMore}
+                loading={loadingMore}
+                hasMore={hasMorePages && !isFiltered}
+              />
             )}
           </div>
         </div>

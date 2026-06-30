@@ -1,14 +1,12 @@
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
-import SafeImage from '@/components/ui/SafeImage/SafeImage'
+import { Bone } from '@/components/ui/Skeleton/Skeleton'
 import styles from './GangTable.module.css'
 
-/* ── Column headers ── */
-export default function GangTable({ gangs, hasMore, onSeeMore }) {
+export default function GangTable({ gangs, hasMore, loading = false, onSeeMore }) {
   return (
     <div className={styles.table}>
       <div className={styles.thead}>
-        <span />
         <span className={styles.th}>Gang / Alias</span>
         <span className={styles.th}>Active Regions</span>
         <span className={styles.th}>Members</span>
@@ -27,12 +25,8 @@ export default function GangTable({ gangs, hasMore, onSeeMore }) {
 
       {hasMore && (
         <div className={styles.seeMoreBar}>
-          <button
-            className={styles.seeMoreBtn}
-            type="button"
-            onClick={onSeeMore}
-          >
-            See More
+          <button className={styles.seeMoreBtn} type="button" onClick={onSeeMore} disabled={loading}>
+            {loading ? 'Loading…' : 'See More'}
           </button>
         </div>
       )}
@@ -41,11 +35,9 @@ export default function GangTable({ gangs, hasMore, onSeeMore }) {
 }
 
 /* ── Individual row ── */
-function GangRow({ id, name, alias, image, activeRegions, regionCount, members, threat, primaryActivities, extraCount }) {
+function GangRow({ id, name, alias, activeRegions, members, threat, primaryActivities, extraCount }) {
   return (
     <Link to={`/gangs/${encodeURIComponent(id)}`} className={styles.row}>
-      <SafeImage src={image} alt={name} className={styles.avatar} width={48} height={48} />
-
       <div className={styles.nameCell}>
         <span className={styles.name}>{name}</span>
         {alias && <span className={styles.alias}>({alias})</span>}
@@ -53,7 +45,6 @@ function GangRow({ id, name, alias, image, activeRegions, regionCount, members, 
 
       <div className={styles.regionCell}>
         <span className={styles.regions}>{activeRegions}</span>
-        <span className={styles.regionCount}>{regionCount}</span>
       </div>
 
       <div className={styles.membersCell}>
@@ -85,6 +76,42 @@ function GangRow({ id, name, alias, image, activeRegions, regionCount, members, 
         </svg>
       </span>
     </Link>
+  )
+}
+
+/* ── Skeleton — reuses the real grid/cell classes so it matches the table exactly ── */
+export function GangTableSkeleton({ rows = 6 }) {
+  return (
+    <div className={styles.table}>
+      <div className={styles.thead}>
+        <span className={styles.th}>Gang / Alias</span>
+        <span className={styles.th}>Active Regions</span>
+        <span className={styles.th}>Members</span>
+        <span className={styles.th}>Threat Level</span>
+        <span className={styles.th}>Primary Activities</span>
+        <span />
+      </div>
+      <div className={styles.tbody}>
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} className={styles.row}>
+            <div className={styles.nameCell}><Bone width="80%" height={14} /></div>
+            <div className={styles.regionCell}>
+              <Bone width="70%" height={13} />
+            </div>
+            <div className={styles.membersCell}>
+              <Bone width={16} height={16} />
+              <Bone width={60} height={26} />
+            </div>
+            <div className={styles.threatCell}><Bone width={64} height={22} /></div>
+            <div className={styles.activitiesCell}>
+              <Bone width={70} height={20} />
+              <Bone width={90} height={20} />
+            </div>
+            <span />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

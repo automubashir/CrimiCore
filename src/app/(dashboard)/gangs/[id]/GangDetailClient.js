@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { apiFetch, buildQuery } from '@/lib/api'
 import { geocodeAll } from '@/lib/geocode'
@@ -29,7 +29,13 @@ function buildTerritories(topLocations = [], coordMap = {}) {
   function toMarker(loc, type) {
     const c = coordMap[(loc.location ?? '').trim().toLowerCase()]
     if (!c) return null
-    return { coords: [c.lng, c.lat], type, r: 2.5 + ((loc.count ?? 0) / maxCount) * 4 }
+    return {
+      coords: [c.lng, c.lat],
+      type,
+      r:      2.5 + ((loc.count ?? 0) / maxCount) * 4,
+      label:  toTitleCase(loc.location ?? ''),
+      count:  (loc.count ?? 0).toLocaleString(),
+    }
   }
 
   const markers = [
@@ -62,11 +68,45 @@ function buildTrendData(timelineData = []) {
   })
 }
 
+function mapToNewsItem(item) {
+  const n = item.news ?? item
+  return {
+    title:          n.title ?? '',
+    published_date: n.published_date ?? '',
+    news_link:      n.news_link ?? n.link ?? '',
+    thumbnail:      n.thumbnail ?? null,
+    crimeType:      n.crimeType ?? n.type ?? '',
+    country:        n.country ?? '—',
+  }
+}
+
+// A gang member = a criminal affiliated with this gang.
+function buildMember(c) {
+  const crimes = (c.crimeType ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  return {
+    id:          encodeURIComponent((c.criminalName ?? '').toLowerCase()),
+    name:        toTitleCase(c.criminalName ?? ''),
+    image:       c.imageUrl ?? null,
+    role:        'Member',
+    status:      '—',
+    threat:      c.threat_level?.toLowerCase() ?? null,
+    joinedSince: '—',
+    crimes:      crimes.slice(0, 3),
+    extraCrimes: Math.max(0, crimes.length - 3),
+  }
+}
+
 export default function GangDetailClient() {
   const params = useParams()
   const affiliationName = decodeURIComponent(params?.id ?? '_')
-  const [pageData, setPageData] = useState(null)
-  const [notFound, setNotFound] = useState(false)
+  const [pageData,          setPageData]          = useState(null)
+  const [notFound,          setNotFound]           = useState(false)
+  const [territories,       setTerritories]        = useState(null) // markers filled in after geocode
+  const [members,           setMembers]            = useState(null) // null = still loading
+  const [relatedNews,       setRelatedNews]        = useState([])
+  const [relatedNewsPage,   setRelatedNewsPage]    = useState(1)
+  const [relatedNewsHasMore,setRelatedNewsHasMore] = useState(false)
+  const [relatedNewsLoading,setRelatedNewsLoading] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -86,7 +126,6 @@ export default function GangDetailClient() {
       }
 
       const topLocations = gangData.top_locations ?? []
-      const coordMap     = await geocodeAll(topLocations.map(l => l.location ?? ''))
 
       const threat      = dominantThreat(gangData.by_threat_level)
       const topCrimes   = (gangData.top_crime_types ?? []).map((c, i) => ({ rank: i + 1, name: c.crime_type, count: c.count ?? 0 }))
@@ -94,10 +133,13 @@ export default function GangDetailClient() {
       const highCount   = (gangData.by_threat_level ?? []).find(x => x.threat_level?.toLowerCase() === 'high')?.count ?? 0
       const threatScore = Math.round((highCount / totalDocs) * 100)
 
+      setRelatedNews(newsData.map(mapToNewsItem))
+      setRelatedNewsHasMore(newsData.length > 0)
+
       const recentNews = newsData.slice(0, 3).map((item, i) => {
         const n = item.news ?? item
         return {
-          id:          i + 1,
+          id:          n.news_link ?? n.link ?? i + 1,
           category:    (n.crimeType?.split(',')[0]?.trim() ?? 'general').toLowerCase().replace(/\s+/g, '-'),
           image:       n.thumbnail ?? null,
           title:       n.title ?? '—',
@@ -124,7 +166,7 @@ export default function GangDetailClient() {
         threatHighlights:   [],
         overview:           '—',
         crimesInvolved:     (gangData.top_crime_types ?? []).map(c => c.crime_type),
-        territories:        buildTerritories(topLocations, coordMap),
+        territories:        buildTerritories(topLocations, {}), // presence lists/tabs now; markers after geocode
         trendData:          buildTrendData(timelineData),
         aliases:            [],
         leaders:            [],
@@ -133,13 +175,50 @@ export default function GangDetailClient() {
       }
 
       setPageData({ gang })
+
+      // Geocode territory markers in the background — the presence lists/tabs
+      // already render; the map dots fill in once coordinates resolve.
+      geocodeAll(topLocations.map(l => l.location ?? ''))
+        .then(coordMap => setTerritories(buildTerritories(topLocations, coordMap)))
+        .catch(() => {})
+
+      // Members = criminals affiliated with this gang.
+      apiFetch('/api/criminals/filter' + buildQuery({ affiliation: affiliationName, page: 1 }))
+        .then(d => setMembers((d?.all_criminal ?? []).map(buildMember)))
+        .catch(() => setMembers([]))
     }
 
     load()
   }, [affiliationName])
 
+  const loadMoreRelatedNews = useCallback(async () => {
+    if (relatedNewsLoading || !relatedNewsHasMore) return
+    setRelatedNewsLoading(true)
+    try {
+      const data = await apiFetch('/api/news/filter' + buildQuery({ affiliation: affiliationName, page: relatedNewsPage + 1 }))
+      const items = (data.all_news ?? []).map(mapToNewsItem)
+      setRelatedNews(prev => [...prev, ...items])
+      setRelatedNewsPage(p => p + 1)
+      setRelatedNewsHasMore(items.length > 0)
+    } catch {
+      setRelatedNewsHasMore(false)
+    } finally {
+      setRelatedNewsLoading(false)
+    }
+  }, [relatedNewsLoading, relatedNewsHasMore, relatedNewsPage, affiliationName])
+
   if (notFound) return <NotFound title="Gang not found" message="No data was found for this gang." />
   if (!pageData) return <Loading />
 
-  return <GangDetailContent gang={pageData.gang} />
+  return (
+    <GangDetailContent
+      gang={{ ...pageData.gang, territories: territories ?? pageData.gang.territories }}
+      members={members ?? []}
+      membersLoading={members === null}
+      relatedNews={relatedNews}
+      relatedNewsHasMore={relatedNewsHasMore}
+      relatedNewsLoading={relatedNewsLoading}
+      onRelatedNewsLoadMore={loadMoreRelatedNews}
+    />
+  )
 }

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { dateRangeToParams, DATE_RANGE_OPTIONS } from '@/lib/dateRange'
+import COUNTRIES from '@/lib/countries'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './ActivitiesFilterBar.module.css'
 
-const DATE_OPTIONS = ['Jan 01 - 2024', 'Feb 01 - 2024', 'Mar 01 - 2024', 'Apr 01 - 2024', 'May 01 - 2025']
-const CRIMINAL_OPTIONS = ['All Criminals', 'Known Criminals', 'Unknown Criminals']
-
-function FilterItem({ label, value, options, onChange }) {
+function FilterItem({ label, value, options, onChange, scrollable = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -43,7 +42,7 @@ function FilterItem({ label, value, options, onChange }) {
       </button>
 
       {open && (
-        <div className={styles.dropdown} role="listbox">
+        <div className={`${styles.dropdown} ${scrollable ? styles.dropdownScrollable : ''}`} role="listbox">
           {options.map(opt => (
             <button
               key={opt}
@@ -62,19 +61,27 @@ function FilterItem({ label, value, options, onChange }) {
   )
 }
 
+function valuesToApiFilters(values) {
+  const params = {}
+  if (values.crimeType && values.crimeType !== 'All Crime Types') params.crime_type = values.crimeType
+  if (values.gangs     && values.gangs     !== 'Any')             params.affiliation = values.gangs
+  if (values.country   && values.country   !== 'Any')             params.location    = values.country.toLowerCase()
+  Object.assign(params, dateRangeToParams(values.dateRange))
+  return params
+}
+
 export default function ActivitiesFilterBar({
   onSearch,
   onFilterChange,
   crimeTypeOptions = ['All Crime Types'],
   gangOptions      = ['Any'],
-  countryOptions   = ['Any'],
+  externalCrimeType,
 }) {
   const FILTERS = [
-    { key: 'dateRange', label: 'DATE RANGE',     default: 'Feb 01 - 2024',   options: DATE_OPTIONS },
-    { key: 'crimeType', label: 'CRIME TYPE',     default: 'All Crime Types', options: crimeTypeOptions },
-    { key: 'gangs',     label: 'GANGS',          default: 'Any',             options: gangOptions },
-    { key: 'criminal',  label: 'CRIMINAL',       default: 'All Criminals',   options: CRIMINAL_OPTIONS },
-    { key: 'country',   label: 'COUNTRY/REGION', default: 'Any',             options: countryOptions },
+    { key: 'dateRange', label: 'DATE RANGE',     default: 'All',             options: ['All', ...DATE_RANGE_OPTIONS], scrollable: false },
+    { key: 'crimeType', label: 'CRIME TYPE',     default: 'All Crime Types', options: crimeTypeOptions,              scrollable: true  },
+    { key: 'gangs',     label: 'GANGS',          default: 'Any',             options: gangOptions,                   scrollable: true  },
+    { key: 'country',   label: 'COUNTRY/REGION', default: 'Any',             options: ['Any', ...COUNTRIES],         scrollable: true  },
   ]
 
   const [values, setValues] = useState(() =>
@@ -84,8 +91,18 @@ export default function ActivitiesFilterBar({
   function handleChange(key, value) {
     const next = { ...values, [key]: value }
     setValues(next)
-    onFilterChange?.(next)
+    onFilterChange?.(valuesToApiFilters(next))
   }
+
+  // Allow a Crime Tag elsewhere on the page to drive the crime-type filter.
+  useEffect(() => {
+    if (externalCrimeType && externalCrimeType !== values.crimeType) {
+      const next = { ...values, crimeType: externalCrimeType }
+      setValues(next)
+      onFilterChange?.(valuesToApiFilters(next))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalCrimeType])
 
   return (
     <div className={styles.wrapper}>
@@ -100,6 +117,7 @@ export default function ActivitiesFilterBar({
             value={values[f.key]}
             options={f.options}
             onChange={v => handleChange(f.key, v)}
+            scrollable={f.scrollable}
           />
         ))}
       </div>

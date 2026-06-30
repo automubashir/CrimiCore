@@ -1,3 +1,5 @@
+import { toLocationAlias } from './countries'
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 function getToken() {
@@ -38,7 +40,11 @@ export function isNotFound(err) {
 export function buildQuery(params) {
   const qs = Object.entries(params)
     .filter(([, v]) => v != null && v !== '')
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .map(([k, v]) => {
+      // Normalize location/country values to the API's short codes (usa/uae/uk).
+      const val = (k === 'location' || k === 'country') ? toLocationAlias(v) : v
+      return `${encodeURIComponent(k)}=${encodeURIComponent(val)}`
+    })
     .join('&')
   return qs ? `?${qs}` : ''
 }

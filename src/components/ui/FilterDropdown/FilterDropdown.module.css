@@ -46,6 +46,11 @@
   z-index: 300;
 }
 
+.dropdownScrollable {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .option {
   display: block;
   width: 100%;

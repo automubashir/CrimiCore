@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { apiFetch, buildQuery } from '@/lib/api'
 import { geocodeAll } from '@/lib/geocode'
@@ -33,7 +33,13 @@ function buildLocationsMap(locs = [], coordMap = {}) {
   function toMarker(loc, type) {
     const c = coordMap[(loc.value ?? '').trim().toLowerCase()]
     if (!c) return null
-    return { coords: [c.lng, c.lat], type, r: 2.5 + ((loc.count ?? 0) / maxCount) * 4 }
+    return {
+      coords: [c.lng, c.lat],
+      type,
+      r:      2.5 + ((loc.count ?? 0) / maxCount) * 4,
+      label:  toTitleCase(loc.value ?? ''),
+      count:  (loc.count ?? 0).toLocaleString(),
+    }
   }
 
   const markers = [
@@ -55,11 +61,45 @@ function buildLocationsMap(locs = [], coordMap = {}) {
   }
 }
 
+function mapToNewsItem(item) {
+  const n = item.news ?? item
+  return {
+    title:          n.title ?? '',
+    published_date: n.published_date ?? '',
+    news_link:      n.news_link ?? n.link ?? '',
+    thumbnail:      n.thumbnail ?? null,
+    crimeType:      n.crimeType ?? n.type ?? '',
+    country:        n.country ?? '—',
+  }
+}
+
+// A co-member = another criminal in the same affiliation.
+function buildMember(c) {
+  const crimes = (c.crimeType ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  return {
+    id:          encodeURIComponent((c.criminalName ?? '').toLowerCase()),
+    name:        toTitleCase(c.criminalName ?? ''),
+    image:       c.imageUrl ?? null,
+    role:        'Member',
+    status:      '—',
+    threat:      c.threat_level?.toLowerCase() ?? null,
+    joinedSince: '—',
+    crimes:      crimes.slice(0, 3),
+    extraCrimes: Math.max(0, crimes.length - 3),
+  }
+}
+
 export default function CriminalDetailClient() {
   const params = useParams()
   const criminalName = decodeURIComponent(params?.id ?? '_')
-  const [pageData, setPageData] = useState(null)
-  const [notFound, setNotFound] = useState(false)
+  const [pageData,     setPageData]     = useState(null)
+  const [notFound,     setNotFound]     = useState(false)
+  const [locations,    setLocations]    = useState(null) // null = still geocoding
+  const [members,      setMembers]      = useState(null) // null = still loading
+  const [actNews,      setActNews]      = useState([])
+  const [actPage,      setActPage]      = useState(1)
+  const [actHasMore,   setActHasMore]   = useState(false)
+  const [actLoading,   setActLoading]   = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -96,12 +136,15 @@ export default function CriminalDetailClient() {
         score: Math.round((c.count / maxCrimeCount) * 100),
       }))
 
-      const gangs = (coOccurrence?.affiliations ?? []).slice(0, 4).map((a, i) => ({
-        id:     i,
+      const gangs = (coOccurrence?.affiliations ?? []).slice(0, 4).map(a => ({
+        id:     encodeURIComponent((a.value ?? '').toLowerCase()),
         name:   toTitleCase(a.value ?? ''),
         image:  null,
         threat: null,
       }))
+
+      setActNews(allNews.map(mapToNewsItem))
+      setActHasMore(allNews.length > 0)
 
       const recentNews = allNews.slice(0, 6).map((item, i) => {
         const n = item.news ?? item
@@ -115,10 +158,6 @@ export default function CriminalDetailClient() {
           location:    n.country ?? '—',
         }
       })
-
-      const rawLocations = coOccurrence?.locations ?? []
-      const coordMap     = await geocodeAll(rawLocations.map(l => l.value ?? ''))
-      const locations    = buildLocationsMap(rawLocations, coordMap)
 
       const trendData = timelineData.slice(-12).map(point => {
         const bt  = point.by_threat_level ?? []
@@ -164,7 +203,6 @@ export default function CriminalDetailClient() {
         trendData,
         recentNews,
         recentNewsCount:    allNews.length,
-        locations,
         media:              [],
         associates:         [],
         associateCount:     0,
@@ -172,13 +210,61 @@ export default function CriminalDetailClient() {
       }
 
       setPageData({ criminal })
+
+      // Geocode the locations in the background so the map doesn't block the
+      // rest of the profile from rendering.
+      const rawLocations = coOccurrence?.locations ?? []
+      geocodeAll(rawLocations.map(l => l.value ?? ''))
+        .then(coordMap => setLocations(buildLocationsMap(rawLocations, coordMap)))
+        .catch(() => setLocations(buildLocationsMap(rawLocations, {})))
+
+      // Members = other criminals sharing this criminal's primary affiliation.
+      const primaryAff = coOccurrence?.affiliations?.[0]?.value ?? rawCriminal?.affiliation ?? ''
+      if (primaryAff) {
+        apiFetch('/api/criminals/filter' + buildQuery({ affiliation: primaryAff, page: 1 }))
+          .then(d => setMembers(
+            (d?.all_criminal ?? [])
+              .filter(c => (c.criminalName ?? '').toLowerCase() !== criminalName.toLowerCase())
+              .map(buildMember)
+          ))
+          .catch(() => setMembers([]))
+      } else {
+        setMembers([])
+      }
     }
 
     load()
   }, [criminalName])
 
+  const loadMoreActNews = useCallback(async () => {
+    if (actLoading || !actHasMore) return
+    setActLoading(true)
+    try {
+      const data = await apiFetch('/api/criminals/filter' + buildQuery({ criminal_name: criminalName, page: actPage + 1 }))
+      const items = (data.all_news ?? []).map(mapToNewsItem)
+      setActNews(prev => [...prev, ...items])
+      setActPage(p => p + 1)
+      setActHasMore(items.length > 0)
+    } catch {
+      setActHasMore(false)
+    } finally {
+      setActLoading(false)
+    }
+  }, [actLoading, actHasMore, actPage, criminalName])
+
   if (notFound) return <NotFound title="Criminal not found" message="No data was found for this criminal." />
   if (!pageData) return <Loading />
 
-  return <CriminalDetailContent criminal={pageData.criminal} />
+  return (
+    <CriminalDetailContent
+      criminal={{ ...pageData.criminal, locations: locations ?? undefined }}
+      locationsLoading={locations === null}
+      members={members ?? []}
+      membersLoading={members === null}
+      activitiesNews={actNews}
+      activitiesHasMore={actHasMore}
+      activitiesLoading={actLoading}
+      onActivitiesLoadMore={loadMoreActNews}
+    />
+  )
 }

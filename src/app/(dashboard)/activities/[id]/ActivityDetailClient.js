@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { apiFetch, buildQuery } from '@/lib/api'
+import { geocodeAll } from '@/lib/geocode'
 import ActivityDetailContent from './ActivityDetailContent'
 import NotFound from '@/components/ui/NotFound/NotFound'
 import Loading from './loading'
@@ -25,6 +26,7 @@ export default function ActivityDetailClient() {
   const newsLink = decodeURIComponent(params?.id ?? '_')
   const [pageData, setPageData] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [locationData, setLocationData] = useState([]) // map coords filled in after geocode
 
   useEffect(() => {
     async function load() {
@@ -39,7 +41,7 @@ export default function ActivityDetailClient() {
       }
 
       const { news, similar_news = [] } = newsResult.value
-      const locationData = locationsResult.status === 'fulfilled'
+      const rawLocations = locationsResult.status === 'fulfilled'
         ? (locationsResult.value?.data ?? [])
         : []
 
@@ -88,7 +90,17 @@ export default function ActivityDetailClient() {
         threatLevel: 'low',
       }))
 
-      setPageData({ activity, relatedNews, similarNews: similar_news, locationData, locationNews })
+      setPageData({ activity, relatedNews, similarNews: similar_news, locationNews })
+      setLocationData(rawLocations)
+
+      // Geocode the locations-tab map in the background (it's not the default
+      // tab, so it must never block the article from rendering).
+      geocodeAll(rawLocations.map(l => l.location ?? ''))
+        .then(coordMap => setLocationData(rawLocations.map(l => {
+          const c = coordMap[(l.location ?? '').trim().toLowerCase()]
+          return c ? { ...l, lat: c.lat, lng: c.lng } : l
+        })))
+        .catch(() => {})
     }
 
     load()
@@ -102,7 +114,7 @@ export default function ActivityDetailClient() {
       activity={pageData.activity}
       relatedNews={pageData.relatedNews}
       similarNews={pageData.similarNews}
-      locationData={pageData.locationData}
+      locationData={locationData}
       locationNews={pageData.locationNews}
     />
   )

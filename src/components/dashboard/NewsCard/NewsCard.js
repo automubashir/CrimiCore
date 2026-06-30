@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './NewsCard.module.css'
@@ -18,14 +19,15 @@ function relativeTime(dateStr) {
 
 export default function NewsCard({ item }) {
   const { news } = item
-  const { title, thumbnail, published_date, description, crimeType } = news
+  const { title, thumbnail, published_date, description, crimeType, news_link, link } = news
 
   const firstCrime = crimeType?.split(',')[0]?.trim() ?? 'General'
   const category = firstCrime.toLowerCase().replace(/\s+/g, '-')
   const time = relativeTime(published_date)
+  const href = `/activities/${encodeURIComponent(news_link ?? link ?? '')}`
 
   return (
-    <article className={styles.card}>
+    <Link to={href} className={styles.card} style={{ textDecoration: 'none' }}>
       <SafeImage
         src={thumbnail}
         alt={title}
@@ -41,6 +43,6 @@ export default function NewsCard({ item }) {
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.description}>{description}</p>
       </div>
-    </article>
+    </Link>
   )
 }
