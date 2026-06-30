@@ -41,3 +41,35 @@
   --heading-xl: 60px;
   --heading-xxl: 72px;
 }
+
+@media(max-width: 1350px){
+  :root{
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --heading-xs: 22px;
+  --heading-sm: 28px;
+  --heading-md: 34px;
+  --heading-lg: 46px;
+  --heading-xl: 58px;
+  --heading-xxl: 70px;
+    /* spacing  */
+  --space-1:2px;
+  --space-2:6px;
+  --space-3:8px;
+  --space-4:12px;
+  --space-5:16px;
+  --space-6:20px;
+  --space-7:24px;
+  --space-8:28px;
+  --space-9:32px;
+  --space-10:36px;
+  --space-11:40px;
+  --space-12:44px;
+  --space-13:48px;
+  --space-14:52px;
+  --space-15:56px;
+  }
+}

@@ -9,8 +9,6 @@ const NAV_ITEMS = [
   { label: 'Gangs',      href: '/gangs' },
   { label: 'Criminals',  href: '/criminals' },
   { label: 'Heatmap',    href: '/heatmap' },
-  { label: 'Reports',    href: '/reports' },
-  { label: 'Settings',   href: '/settings' },
 ]
 
 export default function NavLinks() {

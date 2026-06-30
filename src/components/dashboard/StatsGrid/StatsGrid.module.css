@@ -86,9 +86,6 @@
 }
 
 @media (max-width: 900px) {
-  .section {
-    padding: var(--space-5) var(--space-6);
-  }
 
   .grid {
     grid-template-columns: repeat(2, 1fr);
@@ -97,10 +94,6 @@
 }
 
 @media (max-width: 560px) {
-  .section {
-    padding: var(--space-4) var(--space-4);
-  }
-
   .grid {
     grid-template-columns: 1fr;
   }
