@@ -4,10 +4,16 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge/Badge'
 import SafeImage from '@/components/ui/SafeImage/SafeImage'
-import CriminalItem from '@/components/criminals/CriminalItem/CriminalItem'
 import LocationsMapTab from '@/components/activities/LocationsMapTab/LocationsMapTab'
 import RelatedNewsTab from '@/components/activities/RelatedNewsTab/RelatedNewsTab'
 import styles from './activity-detail.module.css'
+
+const THREAT_LABELS = {
+  critical: 'Critical',
+  high: 'High Threat',
+  medium: 'Medium Threat',
+  low: 'Low Threat',
+}
 
 const TABS = [
   { key: 'full-details', label: 'Full Details' },
@@ -187,38 +193,67 @@ export default function ActivityDetailContent({ activity, relatedNews, similarNe
         {/* ── Sidebar ── */}
         <aside className={styles.sidebar}>
           {/* Criminals Involved */}
-          {activity.criminalsInvolved.length > 0 && (
-            <div className={styles.sideCard}>
-              <div className={styles.sideCardHeader}>
-                <span className={styles.sideCardTitle}>Criminals Involved</span>
+          <div className={styles.sideCard}>
+            <div className={styles.sideCardHeader}>
+              <span className={styles.sideCardTitle}>Criminals Involved</span>
+              {activity.criminalsInvolved.length > 0 && (
                 <span className={styles.countBadge}>{activity.criminalsInvolved.length}</span>
-              </div>
-              <ul className={styles.criminalsList}>
-                {activity.criminalsInvolved.map((criminal) => (
-                  <li key={criminal.id}>
-                    <CriminalItem
-                      name={criminal.name}
-                      image={criminal.image}
-                      city={criminal.city}
-                      country={criminal.country}
-                      threat={criminal.threat}
-                      href={criminal.id ? `/criminals/${encodeURIComponent(criminal.id)}` : undefined}
-                    />
-                  </li>
-                ))}
-              </ul>
+              )}
             </div>
-          )}
+            {activity.criminalsInvolved.length === 0 ? (
+              <p className={styles.sideCardEmpty}>No criminals linked to this activity.</p>
+            ) : (
+              <ul className={styles.criminalsList}>
+                {activity.criminalsInvolved.map((criminal) => {
+                  const location = [criminal.city, criminal.country].filter(Boolean).join(', ')
+                  const threatLabel = THREAT_LABELS[criminal.threat] ?? criminal.threat
+                  const inner = (
+                    <>
+                      <SafeImage
+                        src={criminal.image}
+                        alt={criminal.name}
+                        className={styles.criminalCardImage}
+                      />
+                      <div className={styles.criminalCardInfo}>
+                        <div className={styles.criminalCardNameRow}>
+                          <span className={styles.criminalCardName}>{criminal.name}</span>
+                          {criminal.threat && (
+                            <Badge threat={criminal.threat} variant="sm">{threatLabel}</Badge>
+                          )}
+                        </div>
+                        {location && <span className={styles.criminalCardLocation}>{location}</span>}
+                      </div>
+                    </>
+                  )
+                  return (
+                    <li key={criminal.id}>
+                      {criminal.id ? (
+                        <Link to={`/criminals/${encodeURIComponent(criminal.id)}`} className={styles.criminalCard}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className={styles.criminalCard}>{inner}</div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
 
           {/* Related News */}
-          {relatedNews.length > 0 && (
-            <div className={styles.sideCard}>
-              <div className={styles.sideCardHeader}>
-                <span className={styles.sideCardTitle}>Related News</span>
+          <div className={styles.sideCard}>
+            <div className={styles.sideCardHeader}>
+              <span className={styles.sideCardTitle}>Related News</span>
+              {relatedNews.length > 0 && (
                 <Link to="/activities" className={styles.viewAllLink}>
                   View All
                 </Link>
-              </div>
+              )}
+            </div>
+            {relatedNews.length === 0 ? (
+              <p className={styles.sideCardEmpty}>No related news found.</p>
+            ) : (
               <ul className={styles.relatedNewsList}>
                 {relatedNews.map((news) => (
                   <li key={news.id}>
@@ -256,8 +291,8 @@ export default function ActivityDetailContent({ activity, relatedNews, similarNe
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
         </aside>
       </div>
     </main>

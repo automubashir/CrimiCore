@@ -301,6 +301,8 @@
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-xs);
   padding: 2px var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

@@ -56,14 +56,14 @@ export default function GangDetailContent({ gang, members = [], membersLoading =
               </div>
               <div className={styles.profileActions}>
                 <span className={styles.lastUpdated}>Last updated: {gang.lastUpdated}</span>
-                <div className={styles.actionButtons}>
+                {/* <div className={styles.actionButtons}>
                   <button className={styles.actionBtn} type="button">
                     <ExportIcon /> Export
                   </button>
                   <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} type="button">
                     <EditIcon /> Edit Gang
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
 
