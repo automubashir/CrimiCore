@@ -162,6 +162,7 @@
   animation: scaleIn 0.2s ease;
   border-radius: var(--radius-lg);
   border: 3px solid var(--border-primary);
+  background: #000000;
 }
 
 @keyframes scaleIn {
