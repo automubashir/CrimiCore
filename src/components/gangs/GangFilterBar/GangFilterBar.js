@@ -6,8 +6,11 @@ import COUNTRIES from '@/lib/countries'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import styles from './GangFilterBar.module.css'
 
+const SEARCH_THRESHOLD = 8
+
 function FilterItem({ label, value, options, onChange, scrollable = false }) {
   const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const ref = useRef(null)
 
   useEffect(() => {
@@ -17,6 +20,13 @@ function FilterItem({ label, value, options, onChange, scrollable = false }) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Reset the search whenever the dropdown closes.
+  useEffect(() => { if (!open) setQuery('') }, [open])
+
+  const showSearch = options.length > SEARCH_THRESHOLD
+  const q = query.trim().toLowerCase()
+  const filtered = q ? options.filter(o => String(o).toLowerCase().includes(q)) : options
 
   return (
     <div className={styles.filterItem} ref={ref}>
@@ -42,8 +52,17 @@ function FilterItem({ label, value, options, onChange, scrollable = false }) {
       </button>
 
       {open && (
-        <div className={`${styles.dropdown} ${scrollable ? styles.dropdownScrollable : ''}`} role="listbox">
-          {options.map(opt => (
+        <div className={`${styles.dropdown} ${(scrollable || showSearch) ? styles.dropdownScrollable : ''}`} role="listbox">
+          {showSearch && (
+            <input
+              className={styles.dropdownSearch}
+              placeholder="Search…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              autoFocus
+            />
+          )}
+          {filtered.map(opt => (
             <button
               key={opt}
               className={`${styles.dropdownOption} ${value === opt ? styles.dropdownOptionActive : ''}`}
@@ -55,6 +74,7 @@ function FilterItem({ label, value, options, onChange, scrollable = false }) {
               {opt}
             </button>
           ))}
+          {filtered.length === 0 && <div className={styles.dropdownEmpty}>No matches</div>}
         </div>
       )}
     </div>

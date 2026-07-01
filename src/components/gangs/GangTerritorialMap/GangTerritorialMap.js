@@ -20,7 +20,7 @@ const MARKER_COLORS = {
   limited:  '#1BB1F0',
 }
 
-export default function GangTerritorialMap({ territories }) {
+export default function GangTerritorialMap({ territories, loading = false }) {
   const [activeTab, setActiveTab] = useState('mostPresence')
   const { hovered, setHovered, pos, onMouseMove } = useMapTooltip()
   const zoomCtl = useMapZoom()
@@ -47,6 +47,7 @@ export default function GangTerritorialMap({ territories }) {
 
       {/* 1. Map */}
       <div className={styles.mapWrap} style={{ position: 'relative' }} onMouseMove={onMouseMove}>
+        {loading && <div className={styles.mapLoadingOverlay}><span className={styles.mapLoadingText}>Loading…</span></div>}
         <ComposableMap
           projection="geoNaturalEarth1"
           projectionConfig={{ scale: 145, center: [10, 5] }}

@@ -11,7 +11,7 @@ export default function HeatmapPage() {
   useEffect(() => {
     async function load() {
       const [byLocationRes, overviewRes, crimeTypesRes] = await Promise.allSettled([
-        apiFetch('/api/analytics/by-location' + buildQuery({ breakdown: true, size: 20 })),
+        apiFetch('/api/analytics/by-location' + buildQuery({ breakdown: true, size: 50 })),
         apiFetch('/api/analytics/overview'),
         apiFetch('/api/analytics/by-crime-type' + buildQuery({ size: 50 })),
       ])

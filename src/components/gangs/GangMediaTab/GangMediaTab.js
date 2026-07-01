@@ -1,153 +1,19 @@
 'use client'
 
+import { useMemo } from 'react'
 import MediaTab from '@/components/shared/MediaTab/MediaTab'
 
-/* ── Mock media keyed by gang id ── */
+// Media is assembled from two sources: the gang's related news articles
+// (thumbnail + title + date, built in GangDetailClient on `gang.media`) and
+// the photos of its members (criminals affiliated with the gang).
+export default function GangMediaTab({ gang, members = [] }) {
+  const items = useMemo(() => {
+    const newsMedia = gang?.media ?? []
+    const memberMedia = members
+      .filter(m => m.image)
+      .map(m => ({ id: `member-${m.id}`, image: m.image, title: m.name, date: '—' }))
+    return [...newsMedia, ...memberMedia]
+  }, [gang, members])
 
-function makeMedia(prefix, items) {
-  return items.map((title, i) => ({
-    id: `${prefix}-${i + 1}`,
-    image: `https://picsum.photos/seed/${prefix}-${i + 1}/800/500`,
-    title,
-    date: '01/02/2026',
-  }))
-}
-
-const GANG_MEDIA = {
-  1: makeMedia('zm', [
-    "Leader's Hideout Discovered",
-    'Drug Shipment Intercepted',
-    'Captured Arms Cache',
-    'Rival Gang Clash',
-    'Extortion Ring Busted',
-    'Money Laundering Operation',
-    'Border Crossing Surveillance',
-    'Smuggling Route Identified',
-    'Cartel Summit Intercepted',
-  ]),
-  2: makeMedia('sc', [
-    'Pacific Route Seizure',
-    'Tunnel Network Uncovered',
-    'Fentanyl Lab Dismantled',
-    'Cash Haul Confiscated',
-    'Smuggling Fleet Grounded',
-    'Cartel Safe House Raided',
-    'Drug Mule Operation',
-    'Corruption Investigation',
-    'Money Transfer Intercepted',
-  ]),
-  3: makeMedia('ms', [
-    'Gang Recruitment Drive',
-    'Extortion Victim Rescued',
-    'Tattoo Identification Evidence',
-    'MS-13 Cell Dismantled',
-    'Border Crossing Caught',
-    'Human Smuggling Bust',
-    'Weapons Cache Discovered',
-    'Drive-By Evidence',
-    'Informant Protection',
-  ]),
-  4: makeMedia('cc', [
-    'Cartel Compound Raided',
-    'Drug Lab Destroyed',
-    'Money Laundering Probe',
-    'Cali Network Exposed',
-    'Arms Shipment Blocked',
-    'Corruption Evidence',
-    'Financial Records Seized',
-    'Courier Arrested',
-    'Surveillance Operation',
-  ]),
-  5: makeMedia('yk', [
-    'Yakuza Meeting Surveilled',
-    'Gambling Den Raided',
-    'Construction Fraud Exposed',
-    'Extortion Network Busted',
-    'Port Infiltration Evidence',
-    'Loan Shark Ring Dismantled',
-    'Money Laundering Front Seized',
-    'Human Trafficking Bust',
-    'Arms Trade Intercepted',
-  ]),
-  6: makeMedia('cm', [
-    'Camorra Clan Meeting',
-    'Illegal Waste Dumping',
-    'Construction Racket Exposed',
-    'Drug Route Intercepted',
-    'Extortion Evidence Seized',
-    'Port Corruption Uncovered',
-    'Money Network Dismantled',
-    'Arms Cache Found',
-    'Clan Leader Arrested',
-  ]),
-  7: makeMedia('nd', [
-    "Ndrangheta's Summit Raided",
-    'Money Laundering HQ Seized',
-    'Drug Importation Bust',
-    'Clan Leader Arrested',
-    'Construction Fraud Probe',
-    'Cocaine Shipment Seized',
-    'Extortion Ring Dismantled',
-    'Political Ties Exposed',
-    'Arms Haul Confiscated',
-  ]),
-  8: makeMedia('tr', [
-    'Triad Meeting Surveilled',
-    'Gambling Operation Raided',
-    'Counterfeit Ring Busted',
-    'Smuggling Network Exposed',
-    'Protection Racket Evidence',
-    'Money Transfer Blocked',
-    'Human Trafficking Bust',
-    'Weapon Cache Discovered',
-    'Drug Route Dismantled',
-  ]),
-  9: makeMedia('ab', [
-    'Gang Recruitment Evidence',
-    'White Supremacy Rally',
-    'Arms Cache Uncovered',
-    'Drug Network Busted',
-    'Extortion Evidence',
-    'Prison Gang Link Exposed',
-    'Fraud Operation Raided',
-    'Militia Training Footage',
-    'Money Laundering Probe',
-  ]),
-  10: makeMedia('ha', [
-    'Chapter Headquarters Raided',
-    'Drug Trafficking Operation',
-    'Weapons Shipment Seized',
-    'Money Laundering Bust',
-    'Gang Fight Evidence',
-    'Club Compound Searched',
-    'Extortion Evidence',
-    'Arms Cache Discovered',
-    'Undercover Surveillance',
-  ]),
-  11: makeMedia('bl', [
-    'Gang Territory Dispute',
-    'Drive-By Evidence',
-    'Drug Corner Operation',
-    'Arms Seizure',
-    'Gang Initiation Evidence',
-    'Surveillance Footage',
-    'Drug Den Raided',
-    'Gang Graffiti Documented',
-    'Arrest Operation',
-  ]),
-  12: makeMedia('cr', [
-    'Crips Territory Raid',
-    'Drug Stash Discovered',
-    'Gang Member Arrested',
-    'Arms Cache Found',
-    'Drive-By Investigation',
-    'Drug Network Exposed',
-    'Gang Summit Intercepted',
-    'Surveillance Operation',
-    'Money Laundering Bust',
-  ]),
-}
-
-export default function GangMediaTab({ gang }) {
-  return <MediaTab items={GANG_MEDIA[gang?.id] ?? []} />
+  return <MediaTab items={items} showFilters={false} />
 }

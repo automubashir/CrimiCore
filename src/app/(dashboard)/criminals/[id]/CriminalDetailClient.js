@@ -73,6 +73,20 @@ function mapToNewsItem(item) {
   }
 }
 
+// Shape the monthly timeline buckets for the Activity Trends line chart.
+function buildTrend(timelineData = []) {
+  return timelineData.slice(-12).map(point => {
+    const bt  = point.by_threat_level ?? []
+    const get = lvl => bt.find(x => x.threat_level?.toLowerCase() === lvl)?.count ?? 0
+    return {
+      date:   new Date(point.date).toLocaleString('en-US', { month: 'short' }),
+      high:   get('high'),
+      medium: get('medium'),
+      low:    get('low'),
+    }
+  })
+}
+
 // A co-member = another criminal in the same affiliation.
 function buildMember(c) {
   const crimes = (c.crimeType ?? '').split(',').map(s => s.trim()).filter(Boolean)
@@ -95,6 +109,11 @@ export default function CriminalDetailClient() {
   const [pageData,     setPageData]     = useState(null)
   const [notFound,     setNotFound]     = useState(false)
   const [locations,    setLocations]    = useState(null) // null = still geocoding
+  const [mapLocations, setMapLocations] = useState([])   // Locations-tab heatmap (coords added after geocode)
+  const [mapsLoading,  setMapsLoading]  = useState(true)  // geocoding markers for the Locations tab
+  const [locationNews, setLocationNews] = useState([])   // news for the criminal's top location
+  const [locationLabel,setLocationLabel]= useState('Global')
+  const [trendData,    setTrendData]    = useState(null) // affiliation-scoped trend (overrides global once loaded)
   const [members,      setMembers]      = useState(null) // null = still loading
   const [actNews,      setActNews]      = useState([])
   const [actPage,      setActPage]      = useState(1)
@@ -103,6 +122,8 @@ export default function CriminalDetailClient() {
 
   useEffect(() => {
     async function load() {
+      setMapsLoading(true)
+      setTrendData(null)
       const [coRes, filterRes, timelineRes] = await Promise.allSettled([
         apiFetch('/api/analytics/co-occurrence' + buildQuery({ criminal_name: criminalName })),
         apiFetch('/api/criminals/filter'         + buildQuery({ criminal_name: criminalName, page: 1 })),
@@ -146,6 +167,19 @@ export default function CriminalDetailClient() {
       setActNews(allNews.map(mapToNewsItem))
       setActHasMore(allNews.length > 0)
 
+      // Media = news articles about this criminal that carry a thumbnail.
+      const media = allNews
+        .map((item, i) => {
+          const n = item.news ?? item
+          return {
+            id:    n.news_link ?? n.link ?? i,
+            image: n.thumbnail ?? null,
+            title: n.title ?? '—',
+            date:  n.published_date ? formatDate(n.published_date) : '—',
+          }
+        })
+        .filter(m => m.image)
+
       const recentNews = allNews.slice(0, 6).map((item, i) => {
         const n = item.news ?? item
         return {
@@ -159,16 +193,9 @@ export default function CriminalDetailClient() {
         }
       })
 
-      const trendData = timelineData.slice(-12).map(point => {
-        const bt  = point.by_threat_level ?? []
-        const get = lvl => bt.find(x => x.threat_level?.toLowerCase() === lvl)?.count ?? 0
-        return {
-          date:   new Date(point.date).toLocaleString('en-US', { month: 'short' }),
-          high:   get('high'),
-          medium: get('medium'),
-          low:    get('low'),
-        }
-      })
+      // Global timeline renders immediately; a criminal-scoped one (by primary
+      // affiliation) replaces it below once we know the affiliation.
+      const trendData = buildTrend(timelineData)
 
       const activeSince = coOccurrence?.active_since ? formatDate(coOccurrence.active_since) : '—'
       const lastSeen    = coOccurrence?.last_seen     ? formatDate(coOccurrence.last_seen)    : '—'
@@ -203,7 +230,7 @@ export default function CriminalDetailClient() {
         trendData,
         recentNews,
         recentNewsCount:    allNews.length,
-        media:              [],
+        media,
         associates:         [],
         associateCount:     0,
         crimeScores,
@@ -212,11 +239,33 @@ export default function CriminalDetailClient() {
       setPageData({ criminal })
 
       // Geocode the locations in the background so the map doesn't block the
-      // rest of the profile from rendering.
+      // rest of the profile from rendering. The same coordinates feed both the
+      // overview Known-Locations map and the Locations-tab heatmap.
       const rawLocations = coOccurrence?.locations ?? []
+      const heatLocs     = rawLocations
+        .map(l => ({ location: l.value ?? '', doc_count: l.count ?? 0 }))
+        .filter(l => l.location)
+      setMapLocations(heatLocs) // markers appear once coordinates resolve below
+
+      // The criminal's most-frequent location drives the Locations-tab news + label.
+      const selectedLocation = heatLocs[0]?.location ?? ''
+      if (selectedLocation) {
+        setLocationLabel(toTitleCase(selectedLocation))
+        apiFetch('/api/news/filter' + buildQuery({ location: selectedLocation, page: 1 }))
+          .then(d => setLocationNews(d?.all_news ?? []))
+          .catch(() => setLocationNews([]))
+      }
+
       geocodeAll(rawLocations.map(l => l.value ?? ''))
-        .then(coordMap => setLocations(buildLocationsMap(rawLocations, coordMap)))
+        .then(coordMap => {
+          setLocations(buildLocationsMap(rawLocations, coordMap))
+          setMapLocations(heatLocs.map(l => {
+            const c = coordMap[l.location.trim().toLowerCase()]
+            return c ? { ...l, lat: c.lat, lng: c.lng } : l
+          }))
+        })
         .catch(() => setLocations(buildLocationsMap(rawLocations, {})))
+        .finally(() => setMapsLoading(false))
 
       // Members = other criminals sharing this criminal's primary affiliation.
       const primaryAff = coOccurrence?.affiliations?.[0]?.value ?? rawCriminal?.affiliation ?? ''
@@ -228,6 +277,13 @@ export default function CriminalDetailClient() {
               .map(buildMember)
           ))
           .catch(() => setMembers([]))
+
+        // Scope the Activity Trends chart to this criminal's affiliation — the
+        // timeline endpoint has no per-criminal filter, so affiliation is the
+        // closest available context.
+        apiFetch('/api/analytics/timeline' + buildQuery({ interval: 'month', affiliation: primaryAff }))
+          .then(d => setTrendData(buildTrend(d?.data ?? [])))
+          .catch(() => {})
       } else {
         setMembers([])
       }
@@ -257,7 +313,7 @@ export default function CriminalDetailClient() {
 
   return (
     <CriminalDetailContent
-      criminal={{ ...pageData.criminal, locations: locations ?? undefined }}
+      criminal={{ ...pageData.criminal, locations: locations ?? undefined, trendData: trendData ?? pageData.criminal.trendData }}
       locationsLoading={locations === null}
       members={members ?? []}
       membersLoading={members === null}
@@ -265,6 +321,10 @@ export default function CriminalDetailClient() {
       activitiesHasMore={actHasMore}
       activitiesLoading={actLoading}
       onActivitiesLoadMore={loadMoreActNews}
+      locationData={mapLocations}
+      locationNews={locationNews}
+      locationLabel={locationLabel}
+      mapsLoading={mapsLoading}
     />
   )
 }

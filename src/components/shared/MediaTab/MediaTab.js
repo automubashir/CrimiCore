@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import SearchInput from '@/components/ui/SearchInput/SearchInput'
 import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker'
+import SafeImage from '@/components/ui/SafeImage/SafeImage'
 import styles from './MediaTab.module.css'
 
 function toLargeUrl(url) {
@@ -58,7 +59,7 @@ function MediaModal({ items, index, onClose, onPrev, onNext }) {
       </button>
 
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-        <img key={src} src={src} alt={item.title} className={styles.modalImage} />
+        <SafeImage key={src} src={src} alt={item.title} className={styles.modalImage} />
         <div className={styles.modalCaption}>
           <span className={styles.modalTitle}>{item.title}</span>
           <span className={styles.modalDate}>{item.date}</span>
@@ -90,7 +91,7 @@ function MediaCard({ image, title, date, onOpen }) {
       tabIndex={0}
       onKeyDown={e => e.key === 'Enter' && onOpen()}
     >
-      <img src={image} alt={title} className={styles.cardImage} loading="lazy" />
+      <SafeImage src={image} alt={title} className={styles.cardImage} />
       <button
         type="button"
         className={styles.expandBtn}
@@ -112,7 +113,7 @@ function MediaCard({ image, title, date, onOpen }) {
 /**
  * @param {{ items: Array<{id: string, image: string, title: string, date: string}> }} props
  */
-export default function MediaTab({ items = [] }) {
+export default function MediaTab({ items = [], showFilters = true }) {
   const [search,      setSearch]      = useState('')
   const [activeIndex, setActiveIndex] = useState(null)
 
@@ -135,10 +136,12 @@ export default function MediaTab({ items = [] }) {
           <div className={styles.searchWrap}>
             <SearchInput placeholder="Search Title" onSearch={setSearch} />
           </div>
-          <DateRangePicker
-            defaultFrom="2026-01-01"
-            defaultTo="2026-02-01"
-          />
+          {showFilters && (
+            <DateRangePicker
+              defaultFrom="2026-01-01"
+              defaultTo="2026-02-01"
+            />
+          )}
         </div>
       </div>
 

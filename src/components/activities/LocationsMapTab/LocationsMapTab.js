@@ -20,14 +20,14 @@ function abbrevCountry(c) { return COUNTRY_ABBR[c] ?? c }
 
 function unique(arr) { return [...new Set(arr.filter(Boolean))].sort() }
 
-export default function LocationsMapTab({ activity, locations = [], locationNews = [] }) {
+export default function LocationsMapTab({ activity, locations = [], locationNews = [], locationLabel, mapLoading = false }) {
   const [search,    setSearch]    = useState('')
   const [crimeType, setCrimeType] = useState(null)
   const [gang,      setGang]      = useState(null)
 
-  const locationLabel = activity
+  const resolvedLabel = locationLabel ?? (activity
     ? `${activity.locationCity}, ${abbrevCountry(activity.locationCountry)}`
-    : 'Global'
+    : 'Global')
 
   const items = useMemo(() =>
     locationNews.map(item => ({
@@ -62,12 +62,12 @@ export default function LocationsMapTab({ activity, locations = [], locationNews
   return (
     <div className={styles.container}>
       <div className={styles.mapPanel}>
-        <CrimeHeatMap locations={locations} />
+        <CrimeHeatMap locations={locations} loading={mapLoading} />
       </div>
 
       <div className={styles.listPanel}>
         <div className={styles.panelHeader}>
-          <h3 className={styles.locationTitle}>{locationLabel}</h3>
+          <h3 className={styles.locationTitle}>{resolvedLabel}</h3>
           <p className={styles.locationSub}>Other incidents that happened in the selected area.</p>
         </div>
 

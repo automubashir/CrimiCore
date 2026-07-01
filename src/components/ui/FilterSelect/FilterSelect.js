@@ -2,9 +2,12 @@
 import { useState, useRef, useEffect } from 'react'
 import styles from './FilterSelect.module.css'
 
+const SEARCH_THRESHOLD = 8
+
 export default function FilterSelect({ label, placeholder = 'Any', options = [], onChange }) {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState(null)
+  const [query, setQuery] = useState('')
   const ref = useRef(null)
 
   useEffect(() => {
@@ -14,6 +17,13 @@ export default function FilterSelect({ label, placeholder = 'Any', options = [],
     document.addEventListener('mousedown', onOutside)
     return () => document.removeEventListener('mousedown', onOutside)
   }, [])
+
+  // Reset the search whenever the dropdown closes.
+  useEffect(() => { if (!open) setQuery('') }, [open])
+
+  const showSearch = options.length > SEARCH_THRESHOLD
+  const q = query.trim().toLowerCase()
+  const filtered = q ? options.filter(o => String(o).toLowerCase().includes(q)) : options
 
   function select(val) {
     setSelected(val)
@@ -46,16 +56,27 @@ export default function FilterSelect({ label, placeholder = 'Any', options = [],
 
       {open && (
         <div className={styles.dropdown} role="listbox">
-          <button
-            className={`${styles.option} ${selected === null ? styles.optionActive : ''}`}
-            role="option"
-            aria-selected={selected === null}
-            type="button"
-            onClick={() => select(null)}
-          >
-            {placeholder}
-          </button>
-          {options.map(opt => (
+          {showSearch && (
+            <input
+              className={styles.dropdownSearch}
+              placeholder="Search…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              autoFocus
+            />
+          )}
+          {!q && (
+            <button
+              className={`${styles.option} ${selected === null ? styles.optionActive : ''}`}
+              role="option"
+              aria-selected={selected === null}
+              type="button"
+              onClick={() => select(null)}
+            >
+              {placeholder}
+            </button>
+          )}
+          {filtered.map(opt => (
             <button
               key={opt}
               className={`${styles.option} ${selected === opt ? styles.optionActive : ''}`}
@@ -67,6 +88,7 @@ export default function FilterSelect({ label, placeholder = 'Any', options = [],
               {opt}
             </button>
           ))}
+          {q && filtered.length === 0 && <div className={styles.dropdownEmpty}>No matches</div>}
         </div>
       )}
     </div>

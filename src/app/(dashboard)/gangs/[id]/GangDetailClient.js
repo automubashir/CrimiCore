@@ -55,6 +55,27 @@ function buildTerritories(topLocations = [], coordMap = {}) {
   }
 }
 
+// Collapse the heatmap location × crime-type matrix into per-location totals,
+// sorted most-active first. Both maps (territorial + territories tab) share this.
+function buildHeatLocations(heatmap) {
+  const matrix = heatmap?.matrix ?? []
+  return matrix
+    .map(row => ({
+      location:  row.location ?? '',
+      doc_count: (row.values ?? []).reduce((s, v) => s + (Number(v) || 0), 0),
+    }))
+    .filter(l => l.location)
+    .sort((a, b) => b.doc_count - a.doc_count)
+}
+
+// Attach cached coordinates to the heatmap locations for CrimeHeatMap markers.
+function withCoords(locs, coordMap) {
+  return locs.map(l => {
+    const c = coordMap[(l.location ?? '').trim().toLowerCase()]
+    return c ? { ...l, lat: c.lat, lng: c.lng } : l
+  })
+}
+
 function buildTrendData(timelineData = []) {
   return timelineData.slice(-12).map(point => {
     const bt  = point.by_threat_level ?? []
@@ -102,6 +123,10 @@ export default function GangDetailClient() {
   const [pageData,          setPageData]          = useState(null)
   const [notFound,          setNotFound]           = useState(false)
   const [territories,       setTerritories]        = useState(null) // markers filled in after geocode
+  const [mapLocations,      setMapLocations]        = useState([])   // territories-tab heatmap (coords added after geocode)
+  const [mapsLoading,       setMapsLoading]          = useState(true) // geocoding markers for both maps
+  const [locationNews,      setLocationNews]        = useState([])   // news for the gang's top territory
+  const [locationLabel,     setLocationLabel]       = useState('Global')
   const [members,           setMembers]            = useState(null) // null = still loading
   const [relatedNews,       setRelatedNews]        = useState([])
   const [relatedNewsPage,   setRelatedNewsPage]    = useState(1)
@@ -110,31 +135,65 @@ export default function GangDetailClient() {
 
   useEffect(() => {
     async function load() {
-      const [gangRes, newsRes, timelineRes] = await Promise.allSettled([
+      setMapsLoading(true)
+      const [detailsRes, gangRes, newsRes, timelineRes, heatmapRes] = await Promise.allSettled([
+        apiFetch('/api/gang-details?gang_name=' + encodeURIComponent(affiliationName)),
         apiFetch('/api/analytics/by-affiliation' + buildQuery({ affiliation: affiliationName, breakdown: true })),
         apiFetch('/api/news/filter'               + buildQuery({ affiliation: affiliationName, page: 1 })),
         apiFetch('/api/analytics/timeline'        + buildQuery({ affiliation: affiliationName, interval: 'month' })),
+        apiFetch('/api/analytics/heatmap'         + buildQuery({ affiliation: affiliationName })),
       ])
 
-      const gangData     = gangRes.status     === 'fulfilled' ? (gangRes.value?.data?.[0]  ?? null) : null
-      const newsData     = newsRes.status     === 'fulfilled' ? (newsRes.value?.all_news   ?? [])   : []
-      const timelineData = timelineRes.status === 'fulfilled' ? (timelineRes.value?.data   ?? [])   : []
+      const details      = detailsRes.status  === 'fulfilled' ? (detailsRes.value        ?? null) : null
+      const gangData     = gangRes.status      === 'fulfilled' ? (gangRes.value?.data?.[0] ?? null) : null
+      const newsData     = newsRes.status      === 'fulfilled' ? (newsRes.value?.all_news  ?? [])   : []
+      const timelineData = timelineRes.status  === 'fulfilled' ? (timelineRes.value?.data  ?? [])   : []
+      const heatmap      = heatmapRes.status   === 'fulfilled' ? (heatmapRes.value         ?? null) : null
 
-      if (!gangData) {
+      // Nothing to show if neither the profile nor the analytics resolved.
+      if (!details && !gangData) {
         setNotFound(true)
         return
       }
 
-      const topLocations = gangData.top_locations ?? []
+      // Both maps share one location list (heatmap totals) + one geocode cache.
+      const heatLocs     = buildHeatLocations(heatmap)
+      const topLocations = heatLocs.map(l => ({ location: l.location, count: l.doc_count }))
 
-      const threat      = dominantThreat(gangData.by_threat_level)
-      const topCrimes   = (gangData.top_crime_types ?? []).map((c, i) => ({ rank: i + 1, name: c.crime_type, count: c.count ?? 0 }))
-      const totalDocs   = (gangData.by_threat_level ?? []).reduce((s, x) => s + (x.count ?? 0), 0) || 1
-      const highCount   = (gangData.by_threat_level ?? []).find(x => x.threat_level?.toLowerCase() === 'high')?.count ?? 0
+      const threat      = dominantThreat(gangData?.by_threat_level)
+      const topCrimes   = (gangData?.top_crime_types ?? []).map((c, i) => ({ rank: i + 1, name: c.crime_type, count: c.count ?? 0 }))
+      const totalDocs   = (gangData?.by_threat_level ?? []).reduce((s, x) => s + (x.count ?? 0), 0) || 1
+      const highCount   = (gangData?.by_threat_level ?? []).find(x => x.threat_level?.toLowerCase() === 'high')?.count ?? 0
       const threatScore = Math.round((highCount / totalDocs) * 100)
+
+      const regions      = details?.regions ?? []
+      const aliasList    = details?.aliases ?? []
+      const primaryName  = details?.name ?? gangData?.affiliation ?? affiliationName
+      const otherAliases = aliasList.filter(a => a && a.toLowerCase() !== primaryName.toLowerCase())
 
       setRelatedNews(newsData.map(mapToNewsItem))
       setRelatedNewsHasMore(newsData.length > 0)
+
+      // Media = news articles that carry a thumbnail.
+      const media = newsData
+        .map((item, i) => {
+          const n = item.news ?? item
+          return {
+            id:    n.news_link ?? n.link ?? i,
+            image: n.thumbnail ?? null,
+            title: n.title ?? '—',
+            date:  n.published_date ? new Date(n.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+          }
+        })
+        .filter(m => m.image)
+
+      // Last updated = most recent related-article date (news is newest-first).
+      const latestNewsDate = newsData
+        .map(item => (item.news ?? item).published_date)
+        .filter(Boolean)[0]
+      const lastUpdated = latestNewsDate
+        ? new Date(latestNewsDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null
 
       const recentNews = newsData.slice(0, 3).map((item, i) => {
         const n = item.news ?? item
@@ -150,37 +209,54 @@ export default function GangDetailClient() {
       })
 
       const gang = {
-        name:               toTitleCase(gangData.affiliation ?? affiliationName),
+        name:               toTitleCase(primaryName),
         image:              null,
-        fullAlias:          '—',
+        fullAlias:          otherAliases.length ? otherAliases.join(', ') : '—',
         type:               '—',
-        lastUpdated:        '—',
+        lastUpdated,
         leader:             '—',
-        founded:            '—',
-        origin:             toTitleCase(gangData.top_locations?.[0]?.location ?? '—'),
-        activeRegionsCount: gangData.top_locations?.length ? `${gangData.top_locations.length}+ Regions` : '—',
-        activeMembers:      gangData.criminal_count ?? 0,
+        founded:            details?.founded ?? '—',
+        origin:             toTitleCase(regions[0] ?? heatLocs[0]?.location ?? '—'),
+        activeRegionsCount: regions.length ? `${regions.length}+ Regions` : (topLocations.length ? `${topLocations.length}+ Regions` : '—'),
+        activeMembers:      gangData?.criminal_count ?? 0,
         threat,
         threatScore,
         threatDescription:  '—',
         threatHighlights:   [],
-        overview:           '—',
-        crimesInvolved:     (gangData.top_crime_types ?? []).map(c => c.crime_type),
+        status:             details?.status ?? null,
+        summary:            details?.summary ?? '—',
+        overview:           details?.overview ?? '—',
+        crimesInvolved:     (details?.criminal_activities ?? (gangData?.top_crime_types ?? []).map(c => c.crime_type)),
         territories:        buildTerritories(topLocations, {}), // presence lists/tabs now; markers after geocode
         trendData:          buildTrendData(timelineData),
-        aliases:            [],
+        aliases:            aliasList,
         leaders:            [],
         topCrimes,
         recentNews,
+        media,
       }
 
       setPageData({ gang })
+      setMapLocations(heatLocs) // markers appear once coordinates resolve below
 
-      // Geocode territory markers in the background — the presence lists/tabs
-      // already render; the map dots fill in once coordinates resolve.
+      // The gang's most-active territory drives the Territories-tab news list + label.
+      const selectedLocation = heatLocs[0]?.location ?? regions[0] ?? ''
+      if (selectedLocation) {
+        setLocationLabel(toTitleCase(selectedLocation))
+        apiFetch('/api/news/filter' + buildQuery({ location: selectedLocation, page: 1 }))
+          .then(d => setLocationNews(d?.all_news ?? []))
+          .catch(() => setLocationNews([]))
+      }
+
+      // Geocode once; feed both the territorial map and the territories-tab heatmap
+      // from the same cached coordinates. Presence lists already render meanwhile.
       geocodeAll(topLocations.map(l => l.location ?? ''))
-        .then(coordMap => setTerritories(buildTerritories(topLocations, coordMap)))
+        .then(coordMap => {
+          setTerritories(buildTerritories(topLocations, coordMap))
+          setMapLocations(withCoords(heatLocs, coordMap))
+        })
         .catch(() => {})
+        .finally(() => setMapsLoading(false))
 
       // Members = criminals affiliated with this gang.
       apiFetch('/api/criminals/filter' + buildQuery({ affiliation: affiliationName, page: 1 }))
@@ -219,6 +295,10 @@ export default function GangDetailClient() {
       relatedNewsHasMore={relatedNewsHasMore}
       relatedNewsLoading={relatedNewsLoading}
       onRelatedNewsLoadMore={loadMoreRelatedNews}
+      locationData={mapLocations}
+      locationNews={locationNews}
+      locationLabel={locationLabel}
+      mapsLoading={mapsLoading}
     />
   )
 }

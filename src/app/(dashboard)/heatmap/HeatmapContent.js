@@ -120,7 +120,7 @@ export default function HeatmapContent({ byLocationData = [], overviewData = nul
     if (crimeType !== 'All Crime Types') apiFilters.crime_type = crimeType
     Object.assign(apiFilters, timePeriodToParams(timePeriod))
 
-    apiFetch('/api/analytics/by-location' + buildQuery({ breakdown: true, size: 20, ...apiFilters }))
+    apiFetch('/api/analytics/by-location' + buildQuery({ breakdown: true, size: 50, ...apiFilters }))
       .then(async data => {
         if (fetchIdRef.current !== id) return
         const base = buildStaticData(data?.data ?? [], overviewData)

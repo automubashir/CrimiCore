@@ -24,7 +24,7 @@ const TABS = [
   { key: 'media',         label: 'Media' },
 ]
 
-export default function GangDetailContent({ gang, members = [], membersLoading = false, relatedNews = [], relatedNewsHasMore = false, relatedNewsLoading = false, onRelatedNewsLoadMore }) {
+export default function GangDetailContent({ gang, members = [], membersLoading = false, relatedNews = [], relatedNewsHasMore = false, relatedNewsLoading = false, onRelatedNewsLoadMore, locationData = [], locationNews = [], locationLabel, mapsLoading = false }) {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
@@ -52,10 +52,10 @@ export default function GangDetailContent({ gang, members = [], membersLoading =
               <div className={styles.profileInfo}>
                 <h1 className={styles.profileName}>{gang.name}</h1>
                 <span className={styles.profileAlias}>{gang.fullAlias}</span>
-                <span className={styles.profileType}>{gang.type}</span>
+                <span className={styles.profileType}>Founded: {gang.founded}</span>
               </div>
               <div className={styles.profileActions}>
-                <span className={styles.lastUpdated}>Last updated: {gang.lastUpdated}</span>
+                {gang.lastUpdated && <span className={styles.lastUpdated}>Last updated: {gang.lastUpdated}</span>}
                 {/* <div className={styles.actionButtons}>
                   <button className={styles.actionBtn} type="button">
                     <ExportIcon /> Export
@@ -122,11 +122,11 @@ export default function GangDetailContent({ gang, members = [], membersLoading =
             </div>
           <div className={styles.tabsArea}>
             <div className={styles.tabContent} role="tabpanel">
-              {activeTab === 'overview'      ? <OverviewTab gang={gang} /> :
+              {activeTab === 'overview'      ? <OverviewTab gang={gang} mapsLoading={mapsLoading} /> :
                activeTab === 'members'       ? <MembersTab members={members} loading={membersLoading} /> :
                activeTab === 'related-news'  ? <RelatedNewsTab similarNews={relatedNews} hasMore={relatedNewsHasMore} loadingMore={relatedNewsLoading} onLoadMore={onRelatedNewsLoadMore} height="52rem" /> :
-               activeTab === 'territories'   ? <LocationsMapTab /> :
-               activeTab === 'media'         ? <GangMediaTab gang={gang} /> :
+               activeTab === 'territories'   ? <LocationsMapTab locations={locationData} locationNews={locationNews} locationLabel={locationLabel} mapLoading={mapsLoading} /> :
+               activeTab === 'media'         ? <GangMediaTab gang={gang} members={members} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function GangDetailContent({ gang, members = [], membersLoading =
 
 /* ─────────────────── Tab components ─────────────────── */
 
-function OverviewTab({ gang }) {
+function OverviewTab({ gang, mapsLoading = false }) {
   return (
     <>
       {/* Top: left info + territorial map */}
@@ -171,12 +171,13 @@ function OverviewTab({ gang }) {
             <div className={styles.summaryItem}>
               <div className={styles.summaryLabelRow}>
                 <span className={styles.summaryLabel}>Status</span>
-                <Badge threat="low" variant="sm">Active</Badge>
+                {gang.status ? (
+                  <Badge threat="low" variant="sm">
+                    {gang.status.charAt(0).toUpperCase() + gang.status.slice(1)}
+                  </Badge>
+                ) : <span>—</span>}
               </div>
-              <p className={styles.summaryText}>
-                {gang.name} is still active, and operating in major South American regions,
-                including {gang.origin}, Central America and United States.
-              </p>
+              <p className={styles.summaryText}>{gang.summary}</p>
             </div>
             <div className={styles.summaryItem}>
               <div className={styles.summaryLabelRow}>
@@ -198,7 +199,7 @@ function OverviewTab({ gang }) {
             <span className={styles.territorialCardTitle}>Territorial Presence</span>
             <span className={styles.territorialCardSubtitle}>Detailed heatmap to showcase gang's presence</span>
           </div>
-          <GangTerritorialMap territories={gang.territories} />
+          <GangTerritorialMap territories={gang.territories} loading={mapsLoading} />
         </div>
       </div>
 

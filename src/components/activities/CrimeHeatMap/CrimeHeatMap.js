@@ -10,7 +10,7 @@ function toTitleCase(str) {
   return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
-export default function CrimeHeatMap({ locations = [] }) {
+export default function CrimeHeatMap({ locations = [], loading = false }) {
   const { hovered, setHovered, pos, onMouseMove } = useMapTooltip()
   const zoomCtl = useMapZoom()
   const maxCount = locations.length > 0 ? Math.max(...locations.map(l => l.doc_count ?? 0), 1) : 1
@@ -38,6 +38,7 @@ export default function CrimeHeatMap({ locations = [] }) {
         <h3 className={styles.title}>Crime Heat Map</h3>
       </div>
       <div className={styles.mapWrap} onMouseMove={onMouseMove}>
+        {loading && <div className={styles.mapLoadingOverlay}><span className={styles.mapLoadingText}>Loading…</span></div>}
         <ComposableMap
           projection="geoNaturalEarth1"
           projectionConfig={{ scale: 145, center: [10, 5] }}

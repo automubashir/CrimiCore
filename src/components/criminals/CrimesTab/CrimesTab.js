@@ -78,7 +78,9 @@ export default function CrimesTab({ criminal }) {
         <CriminalHistoryCard history={history} />
         <CrimesInvolvedCard crimes={criminal.crimesInvolved} />
       </div>
-      <CrimeReportsSection />
+      {/* Crime Reports hidden: no backing API for its report-type tabs
+          (Tweets/Vlogs/Editorials) or record counts. */}
+      {/* <CrimeReportsSection /> */}
     </>
   )
 }

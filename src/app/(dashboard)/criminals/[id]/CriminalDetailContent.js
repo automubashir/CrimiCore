@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer, LineChart, Line,
@@ -28,7 +28,7 @@ const TABS = [
 
 const TREND_PERIODS = ['This Month', 'Last 6 Months', 'Last Year']
 
-export default function CriminalDetailContent({ criminal, locationsLoading = false, members = [], membersLoading = false, activitiesNews = [], activitiesHasMore = false, activitiesLoading = false, onActivitiesLoadMore }) {
+export default function CriminalDetailContent({ criminal, locationsLoading = false, members = [], membersLoading = false, activitiesNews = [], activitiesHasMore = false, activitiesLoading = false, onActivitiesLoadMore, locationData = [], locationNews = [], locationLabel, mapsLoading = false }) {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
@@ -147,7 +147,7 @@ export default function CriminalDetailContent({ criminal, locationsLoading = fal
                activeTab === 'members'    ? <MembersTab members={members} loading={membersLoading} /> :
                activeTab === 'crimes'     ? <CrimesTab criminal={criminal} /> :
                activeTab === 'activities' ? <RelatedNewsTab similarNews={activitiesNews} hasMore={activitiesHasMore} loadingMore={activitiesLoading} onLoadMore={onActivitiesLoadMore} height="52rem" /> :
-               activeTab === 'locations'  ? <LocationsMapTab /> :
+               activeTab === 'locations'  ? <LocationsMapTab locations={locationData} locationNews={locationNews} locationLabel={locationLabel} mapLoading={mapsLoading} /> :
                activeTab === 'media'      ? <CriminalMediaTab criminal={criminal} /> :
                <ComingSoonTab label={TABS.find(t => t.key === activeTab)?.label} />}
             </div>
@@ -177,21 +177,20 @@ function OverviewTab({ criminal, locationsLoading = false }) {
         <SummaryCard criminal={criminal} />
       </div>
 
-      {/* Row 2: Gangs Associated + Key Connections */}
-      <div className={styles.overviewRow2}>
+      {/* Row 2: Gangs Associated (full width). Associates & Key Connections
+          hidden temporarily — no backing API. */}
+      <div className={styles.overviewRow2} style={{ gridTemplateColumns: '1fr' }}>
         <GangsAssociatedCard gangs={criminal.gangs} />
-        <KeyConnectionsCard connections={criminal.keyConnections} count={criminal.keyConnectionCount} />
       </div>
 
-      {/* Row 3: Activity Trends + Recent Activities */}
+      {/* Row 3: Known Locations + Recent Activities. Activity Trends hidden. */}
       <div className={styles.overviewRow3}>
-        <ActivityTrendsCard trendData={criminal.trendData} />
+        <KnownLocationsCard locations={criminal.locations} loading={locationsLoading} />
         <RecentActivitiesCard news={criminal.recentNews} count={criminal.recentNewsCount} />
       </div>
 
-      {/* Row 4: Known Locations + Media */}
-      <div className={styles.overviewRow4}>
-        <KnownLocationsCard locations={criminal.locations} loading={locationsLoading} />
+      {/* Row 4: Media (full width). */}
+      <div className={styles.overviewRow4} style={{ gridTemplateColumns: '1fr' }}>
         <MediaGridCard media={criminal.media} />
       </div>
     </>
@@ -318,10 +317,18 @@ function KeyConnectionsCard({ connections, count }) {
   )
 }
 
-function ActivityTrendsCard({ trendData }) {
+const PERIOD_MONTHS = { 'This Month': 1, 'Last 6 Months': 6, 'Last Year': 12 }
+
+function ActivityTrendsCard({ trendData = [] }) {
   const [mounted, setMounted] = useState(false)
   const [activePeriod, setActivePeriod] = useState('Last 6 Months')
   useEffect(() => { setMounted(true) }, [])
+
+  // The monthly buckets are oldest→newest; take the last N for the chosen period.
+  const periodData = useMemo(
+    () => trendData.slice(-(PERIOD_MONTHS[activePeriod] ?? 12)),
+    [trendData, activePeriod]
+  )
 
   return (
     <div className={styles.trendCard}>
@@ -344,7 +351,7 @@ function ActivityTrendsCard({ trendData }) {
       <div className={styles.chartWrap}>
         {mounted ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 8, right: 16, bottom: 0, left: -24 }}>
+            <LineChart data={periodData} margin={{ top: 8, right: 16, bottom: 0, left: -24 }}>
               <CartesianGrid stroke="#0F2D48" strokeDasharray="" vertical={true} />
               <XAxis dataKey="date" tick={{ fill: '#7589A0', fontSize: 10 }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fill: '#7589A0', fontSize: 10 }} tickLine={false} axisLine={false} />
@@ -447,11 +454,11 @@ function MediaGridCard({ media }) {
         <a href="#" className={styles.viewAllLink}>View All</a>
       </div>
       <div className={styles.mediaGrid}>
-        {media.map((src, i) => (
+        {media.map((m, i) => (
           <SafeImage
-            key={i}
-            src={src}
-            alt={`Media ${i + 1}`}
+            key={m.id ?? i}
+            src={m.image}
+            alt={m.title ?? `Media ${i + 1}`}
             className={styles.mediaThumb}
             width={200}
             height={150}

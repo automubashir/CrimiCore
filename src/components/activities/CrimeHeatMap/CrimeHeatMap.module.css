@@ -27,6 +27,27 @@
   min-height: 260px;
 }
 
+/* ── Map loading overlay ── */
+
+.mapLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 12, 20, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.mapLoadingText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-ibm-plex);
+}
+
 /* ── Active Operating Area overlay ── */
 
 .overlay {
