@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { logout } from '@/app/(dashboard)/actions'
+import CountrySelector from './CountrySelector'
 import styles from './Header.module.css'
 
 function LiveClock() {
@@ -41,7 +42,7 @@ export default function HeaderRight() {
   return (
     <div className={styles.right}>
       <LiveClock />
-
+      <CountrySelector />
       <div className={styles.userMenuWrapper} ref={wrapperRef}>
         <button
           className={styles.userBtn}

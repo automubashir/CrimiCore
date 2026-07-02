@@ -14,7 +14,11 @@
 }
 
 /* ── Logo ── */
-
+.logosm{
+  display: none;
+  opacity: 0;
+  height: 0;
+}
 .logo {
   height: 48px;
   width: auto;
@@ -154,6 +158,19 @@
   .navLink {
     padding: 5px 12px;
     font-size: var(--text-xs);
+  }
+}
+@media (max-width: 950px){
+  .logosm{
+    display: block;
+    width: auto;
+    height: 40px;
+    opacity: 1;
+  }
+  .logo{
+    display: none;
+    height: 0px;
+    width: 0px;
   }
 }
 
