@@ -44,27 +44,15 @@ const CATEGORY_META = {
   'extortion':    { label: 'Extortion',    cls: styles.catExtortion   },
 }
 
-const STATUS_CLS = {
-  Active:     styles.statusActive,
-  Convicted:  styles.statusConvicted,
-  'In-Trial': styles.statusInTrial,
-  Arrested:   styles.statusArrested,
-}
-
 const PAGE_SIZE     = 5
 const TOTAL_RECORDS = 2480
 
-/* ── History builder (deterministic from criminal data) ── */
+/* ── History builder — only `charge` is API-backed; Location/Year/Status
+   have no source in the API, so those columns are hidden below. ── */
 function buildCriminalHistory(criminal) {
-  const locs     = ['USA', 'USA', 'Mexico', 'Mexico', 'Colombia']
-  const statuses = ['Active', 'Active', 'Convicted', 'Convicted', 'Convicted']
-  const years    = [2023, 2022, 2021, 2018, 2016]
   return criminal.crimesInvolved.slice(0, 5).map((charge, i) => ({
     id: i + 1,
     charge,
-    location: locs[i] ?? 'Unknown',
-    year:     years[i],
-    status:   statuses[i] ?? 'Convicted',
   }))
 }
 
@@ -100,20 +88,12 @@ function CriminalHistoryCard({ history }) {
           <thead>
             <tr>
               <th className={styles.th}>Charge</th>
-              <th className={`${styles.th} ${styles.thCenter}`}>Location</th>
-              <th className={`${styles.th} ${styles.thCenter}`}>Year</th>
-              <th className={`${styles.th} ${styles.thRight}`}>Status</th>
             </tr>
           </thead>
           <tbody>
             {history.map(row => (
               <tr key={row.id} className={styles.historyRow}>
                 <td className={styles.td}>{row.charge}</td>
-                <td className={`${styles.td} ${styles.tdCenter}`}>{row.location}</td>
-                <td className={`${styles.td} ${styles.tdCenter}`}>{row.year}</td>
-                <td className={`${styles.td} ${styles.tdRight} ${STATUS_CLS[row.status] ?? styles.statusConvicted}`}>
-                  {row.status}
-                </td>
               </tr>
             ))}
           </tbody>
